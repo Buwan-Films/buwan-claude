@@ -1,0 +1,18 @@
+{
+  "name": "buwan-premiere",
+  "displayName": "Buwan Premiere Bridge",
+  "version": "1.0.0",
+  "description": "Connects Claude Code to Adobe Premiere Pro through premiere-pro-mcp 1.11.5 and the MCP Bridge panel. Install only if you cut in Premiere.",
+  "author": {
+    "name": "Buwan Films and Photography",
+    "url": "https://github.com/buwanfilms-svg"
+  },
+  "repository": "https://github.com/buwanfilms-svg/buwan-claude",
+  "dependencies": ["buwan"],
+  "mcpServers": {
+    "premiere-pro": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/launch-premiere-mcp.js"]
+    }
+  }
+}

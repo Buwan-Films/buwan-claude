@@ -1,0 +1,22 @@
+{
+  "name": "buwan-films",
+  "description": "Buwan Films and Photography: house editing rules, workflow skills, and app integrations for every editor.",
+  "owner": {
+    "name": "Buwan Films and Photography",
+    "url": "https://github.com/buwanfilms-svg"
+  },
+  "plugins": [
+    {
+      "name": "buwan",
+      "source": "./plugins/buwan",
+      "description": "Buwan house rules, Story-Lock plotting, proof gate, and Premiere / Final Cut / Resolve playbooks. Every editor installs this.",
+      "category": "video"
+    },
+    {
+      "name": "buwan-premiere",
+      "source": "./plugins/buwan-premiere",
+      "description": "Premiere Pro bridge (premiere-pro-mcp, pinned). Only for editors who cut in Premiere Pro.",
+      "category": "video"
+    }
+  ]
+}

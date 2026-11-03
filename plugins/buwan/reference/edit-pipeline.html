@@ -1,0 +1,312 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Buwan Films Edit Pipeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Cinzel:wght@400;500;600&family=Italiana&display=swap">
+<style>
+/* Layout: vertical pipeline rail on ink — gold hairline track, crescent gates, Buwan brand kit palette */
+:root{
+  --gold:#C9A24B; --gold2:#E6CE8C; --gold-dim:#8C7232;
+  --crimson:#58151F; --rose:#CE8490;
+  --bg:#0D0C0A; --panel:#17140F; --panel-2:#221E16;
+  --fg:#F2EBDD; --muted:#9A937F; --stone:#8F897B;
+  --line:rgba(201,162,75,.22);
+  --auto:#C9A24B; --you:#CE8490; --cond:#E6CE8C; --read:#8F897B; --gate:#C9A24B;
+  --display:'Cormorant Garamond',Georgia,serif;
+  --caps:'Cinzel',Georgia,serif;
+  --accent:'Italiana',Georgia,serif;
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F5F0E6; --panel:#ECE4D2; --panel-2:#E4DBC6;
+    --fg:#1B1711; --muted:#6E6757; --stone:#6E6757;
+    --line:rgba(140,114,50,.3);
+    --gold:#8C7232; --gold2:#8C7232; --rose:#8d3340;
+    --auto:#8C7232; --you:#8d3340; --cond:#a8842a; --read:#6E6757; --gate:#8C7232;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F5F0E6; --panel:#ECE4D2; --panel-2:#E4DBC6;
+  --fg:#1B1711; --muted:#6E6757; --stone:#6E6757;
+  --line:rgba(140,114,50,.3);
+  --gold:#8C7232; --gold2:#8C7232; --rose:#8d3340;
+  --auto:#8C7232; --you:#8d3340; --cond:#a8842a; --read:#6E6757; --gate:#8C7232;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:var(--display); font-size:17px; line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 72px;
+  margin:0;
+}
+.wrap{max-width:860px;margin:0 auto}
+.mono{font-family:var(--mono)}
+
+header{padding-block:46px 30px;border-bottom:1px solid var(--gold)}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.brand svg{flex:none}
+.brand .words{font-family:var(--caps);font-size:13px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);line-height:1.5}
+.brand .words small{display:block;font-size:8px;letter-spacing:.52em;color:var(--muted)}
+h1{font-family:var(--display);font-weight:500;font-size:clamp(34px,6vw,58px);line-height:1.05;margin:0 0 10px;text-wrap:balance}
+h1 i{font-family:var(--accent);font-style:normal;color:var(--gold)}
+.sub{color:var(--muted);margin:0;max-width:58ch;font-size:17px}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:10px 20px;padding-block:16px;border-bottom:1px solid var(--line);font-family:var(--caps);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.auto{background:var(--auto)} .dot.you{background:var(--you)}
+.dot.cond{background:var(--cond)} .dot.read{background:var(--read)}
+.diamond{width:8px;height:8px;background:var(--gate);transform:rotate(45deg);flex:none}
+
+/* reads row */
+.reads{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-block:26px 4px}
+@media (max-width:560px){.reads{grid-template-columns:1fr}}
+.read-card{border:1px dashed var(--read);padding:16px 18px;background:transparent}
+.read-card .tag{color:var(--stone)}
+.read-card h3{margin:6px 0 4px;font-family:var(--display);font-weight:600;font-size:21px}
+.read-card p{margin:0;font-size:15px;color:var(--muted);line-height:1.5}
+.reads-note{font-family:var(--caps);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:26px 0 0}
+
+/* pipeline rail */
+.rail{position:relative;margin-top:24px;padding-left:36px}
+.rail::before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:1px;background:var(--gold);opacity:.45}
+.stage{position:relative;margin-bottom:16px}
+.stage::before{content:"";position:absolute;left:-29px;top:22px;width:9px;height:9px;border-radius:50%;background:var(--stone);outline:4px solid var(--bg)}
+.stage.auto::before{background:var(--auto)}
+.stage.you::before{background:var(--you)}
+.stage.cond::before{background:var(--cond)}
+.card{background:var(--panel);border:1px solid var(--line);padding:18px 20px}
+.card.focus{border-color:var(--gold)}
+.tag{font-family:var(--caps);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.tag b{font-weight:500}
+.tag .auto{color:var(--auto)} .tag .you{color:var(--you)} .tag .cond{color:var(--cond)}
+.stage h3{margin:6px 0 6px;font-family:var(--display);font-size:24px;font-weight:600;line-height:1.15}
+.stage p{margin:0;font-size:15px;color:var(--muted);line-height:1.55}
+.spec{font-family:var(--mono);font-size:12px;color:var(--fg);background:var(--panel-2);padding:1px 7px;white-space:nowrap}
+
+/* gates — crescent on the rail */
+.gate{position:relative;margin:6px 0 20px;padding:4px 0}
+.gate::before{content:"";position:absolute;left:-28px;top:50%;width:10px;height:10px;transform:translateY(-50%) rotate(45deg);background:var(--gate);outline:4px solid var(--bg)}
+.gate .g-label{font-family:var(--caps);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gate)}
+.gate .g-desc{font-size:14px;color:var(--muted);font-style:italic}
+
+/* sub-steps */
+.substeps{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.substeps span{font-family:var(--caps);font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line);padding:6px 11px;color:var(--fg);background:var(--panel-2)}
+.substeps .arrow{border:none;background:none;color:var(--gold);padding:0}
+
+/* apps row */
+.apps{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.apps span{font-family:var(--caps);font-size:10px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--line);padding:6px 14px;color:var(--muted)}
+.apps .default{border-color:var(--gold);color:var(--gold)}
+
+/* beats aside */
+.aside{border-left:2px solid var(--gold);background:var(--panel-2);padding:13px 16px;margin-top:12px}
+.aside .tag{color:var(--gold)}
+.beats{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.beats span{font-family:var(--caps);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;background:var(--panel);border:1px solid var(--line);padding:4px 9px;color:var(--fg)}
+
+/* exports */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media (max-width:560px){.split{grid-template-columns:1fr}}
+.out{background:var(--panel-2);border:1px solid var(--line);padding:13px 15px}
+.out h4{margin:0 0 5px;font-family:var(--display);font-size:19px;font-weight:600}
+.out p{font-size:14px}
+.loop{font-size:14px;color:var(--muted);margin-top:10px;font-style:italic}
+.loop b{color:var(--fg);font-weight:600;font-style:normal}
+
+/* crescent divider + footer */
+.divider{display:flex;align-items:center;gap:18px;justify-content:center;margin-top:40px}
+.divider .rule{height:1px;background:var(--gold);width:min(180px,28vw)}
+.divider svg{flex:none}
+footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-align:center;font-style:italic;max-width:62ch;margin-inline:auto}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="brand">
+    <svg width="40" height="40" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="#C9A24B" stroke-width="1.6"/><path fill="#C9A24B" d="M63 9A42 42 0 1 0 63 91A39.5 39.5 0 0 1 63 9Z"/><g fill="#0D0C0A"><circle cx="37" cy="30" r="2.5"/><circle cx="31" cy="45" r="2.5"/><circle cx="38" cy="60" r="2.5"/><circle cx="49" cy="71" r="2.5"/></g></svg>
+    <div class="words">BUWAN<small>FILMS</small></div>
+  </div>
+  <h1>The <i>Edit</i> Pipeline</h1>
+  <p class="sub">End-to-end post-production flow for wedding SDEs, highlight films, and corporate event videos. Speech audio drives the story; every cut is measured before it moves on.</p>
+</header>
+
+<div class="legend">
+  <span><i class="dot auto"></i>Automatic</span>
+  <span><i class="dot you"></i>You · taste</span>
+  <span><i class="dot cond"></i>Depends on footage</span>
+  <span><i class="dot read"></i>A read, not a file</span>
+  <span><i class="diamond"></i>Check that must pass</span>
+</div>
+
+<p class="reads-note">Read before any timeline work</p>
+<div class="reads">
+  <div class="read-card">
+    <span class="tag">Read 1 · What</span>
+    <h3>The Look</h3>
+    <p>Style, numbers, specs — same in every app. Pacing targets, grade direction, framing (2:1 / 2.39:1), loudness specs.</p>
+  </div>
+  <div class="read-card">
+    <span class="tag">Read 2 · How</span>
+    <h3>App Playbook</h3>
+    <p>One per editing app. FCPXML / EDL / XML roundtrips, keyboard-driven techniques, export presets.</p>
+  </div>
+</div>
+
+<div class="rail">
+
+  <div class="stage">
+    <div class="card">
+      <span class="tag">00 · Shoot day · field</span>
+      <h3>Coverage — what the edit can use</h3>
+      <p>Prep → ceremony → post-nuptial → reception. Vows, letters, speeches and reception messages are the speech spine; reactions and BTS are the cutaway bank for fast-cut bursts; façades and empty venues are the breathing room. Photo and video teams move together; equipment check after every phase.</p>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="card">
+      <span class="tag">Source</span>
+      <h3>Raw footage &amp; audio</h3>
+      <p>Camera files, lav/recorder WAVs of vows, letters, and speeches. Originals never touched.</p>
+    </div>
+  </div>
+
+  <div class="stage auto">
+    <div class="card">
+      <span class="tag">01 · <b class="auto">Automatic</b></span>
+      <h3>Intake</h3>
+      <p>Copy, verify, organize by ceremony segment. Sources stay read-only.</p>
+    </div>
+  </div>
+
+  <div class="stage auto">
+    <div class="card focus">
+      <span class="tag">02 · <b class="auto">AI cut</b></span>
+      <h3>Rough cut — Story-Lock</h3>
+      <p>Lock the story before the edit, never find it in the edit. Transcribe speech once, tag every line into the audio layers below, pick the strongest lines, order for emotional build. Music is chosen after the audio — the audio leads, the music follows, tuned to the day's atmosphere. Rebuilt as real, trimmable clips — never a flat render.</p>
+      <div class="substeps">
+        <span>2a · Tag the 8 audio layers</span><span class="arrow">→</span>
+        <span>2b · Music after audio</span><span class="arrow">→</span>
+        <span>2c · Build the 4-part structure</span><span class="arrow">→</span>
+        <span>2d · B-roll last, serving the story</span>
+      </div>
+      <div class="aside">
+        <span class="tag">Film structure · Wedding</span>
+        <div class="beats">
+          <span>Intro · 60–90s · hook</span><span>Storyline · 2–2.5 min · context</span><span>Ceremony · climax</span><span>Outro · 2–3 min · resolution</span>
+        </div>
+        <p style="margin-top:10px">The intro passes the 5–10 second test — would you keep watching? No strong welcome remarks or power statements → let the music carry it. B-roll goes on only after the story is locked: every shot matches or elevates the audio's emotion, never decoration.</p>
+      </div>
+      <div class="aside">
+        <span class="tag">The 8 audio layers · Wedding</span>
+        <div class="beats">
+          <span>Welcome remarks</span><span>First looks</span><span>About the bride</span><span>About the groom</span><span>Power statements</span><span>Vows</span><span>Kiss</span><span>Final wishes</span>
+        </div>
+      </div>
+      <div class="aside">
+        <span class="tag">Story beats · Corporate</span>
+        <div class="beats">
+          <span>Welcome</span><span>Keynote soundbites</span><span>Exec pull-quotes</span><span>Panel highlights</span><span>Crowd energy</span><span>Awards</span><span>Partner mentions</span><span>Closing CTA</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gate">
+    <span class="g-label">Proof gate</span>
+    <span class="g-desc"> — every cut measured, on beat and on words. Wedding: ~1–2s bursts against 15–20s holds. Corporate: steady 1.5–2.5s, holds on speakers</span>
+  </div>
+
+  <div class="stage">
+    <div class="card">
+      <span class="tag">Steps 03–08 · On your timeline</span>
+      <h3>Your editing app</h3>
+      <div class="apps">
+        <span class="default">Premiere Pro · default</span><span>DaVinci Resolve</span><span>Final Cut Pro</span><span>After Effects · graphics</span><span>No app · on request</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage auto">
+    <div class="card">
+      <span class="tag">03 · <b class="auto">Measured</b></span>
+      <h3>Audio polish</h3>
+      <p>Dialogue to <span class="spec">−17 LUFS</span>, peaks <span class="spec">−6 dBFS</span>. Clean speech is the spine of the film.</p>
+    </div>
+  </div>
+
+  <div class="stage cond">
+    <div class="card">
+      <span class="tag">04 · <b class="cond">Camera only</b></span>
+      <h3>Grade</h3>
+      <p>Wedding: muted filmic look — warm/naturalistic or cool/desaturated per the palette, B&amp;W for the most intimate beats. Corporate: clean, brand-true grade; crimson reserved for award beats. Reels/raw screen-rec skip it.</p>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="card">
+      <span class="tag">05 · Graphics + captions</span>
+      <h3>Graphics &amp; captions</h3>
+      <div class="substeps">
+        <span>5a · Plan — storyboard every beat</span><span class="arrow">→</span>
+        <span>5b · Build — render &amp; place</span><span class="arrow">→</span>
+        <span>5c · Converge — fresh-eyes review</span>
+      </div>
+      <p class="loop">QA gate between build and converge · defects go back to rebuild, <b>3 rounds max</b></p>
+    </div>
+  </div>
+
+  <div class="stage auto">
+    <div class="card">
+      <span class="tag">06 · <b class="auto">Automatic</b></span>
+      <h3>SFX</h3>
+      <p>From placed graphics. Music bed <span class="spec">opt-in · flat −20 dB</span>.</p>
+    </div>
+  </div>
+
+  <div class="stage you">
+    <div class="card">
+      <span class="tag">07 · <b class="you">You</b></span>
+      <h3>Review — taste only</h3>
+      <p>Everything measurable already passed its gate. This pass is pacing feel and emotional build — wedding holds go to vows and first looks; corporate holds go to speakers and the keynote's key line.</p>
+    </div>
+  </div>
+
+  <div class="stage you">
+    <div class="card">
+      <span class="tag">08 · In your app</span>
+      <h3>Export</h3>
+      <p>Locked platform specs. Leaves the app here.</p>
+      <div class="split">
+        <div class="out">
+          <h4>Final</h4>
+          <p>Wedding: YouTube long-form master. Corporate: 16:9 recap + 1:1 LinkedIn cut. A copy lands in Downloads.</p>
+        </div>
+        <div class="out">
+          <h4>Clipper <span class="tag">· second entry</span></h4>
+          <p>Long-form → 9:16 reels/stories clips · re-enters the pipeline at 01.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="divider">
+  <div class="rule"></div>
+  <svg width="22" height="22" viewBox="0 0 100 100"><path fill="#C9A24B" d="M63 9A42 42 0 1 0 63 91A39.5 39.5 0 0 1 63 9Z"/></svg>
+  <div class="rule"></div>
+</div>
+<footer>
+  Same-day note — wedding SDEs and event-close sizzle reels run the pipeline compressed: gates still apply, rounds don't. Grade from a saved look, captions minimal, one converge pass.
+</footer>
+</div>
+
+</body></html>

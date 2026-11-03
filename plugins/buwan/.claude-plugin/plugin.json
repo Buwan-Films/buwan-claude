@@ -1,0 +1,27 @@
+{
+  "name": "buwan",
+  "displayName": "Buwan Films",
+  "version": "1.0.0",
+  "description": "Buwan Films house rules, Story-Lock plotting, proof gate, source protection, and per-app playbooks (Premiere Pro, Final Cut Pro, DaVinci Resolve).",
+  "author": {
+    "name": "Buwan Films and Photography",
+    "url": "https://github.com/buwanfilms-svg"
+  },
+  "repository": "https://github.com/buwanfilms-svg/buwan-claude",
+  "keywords": ["video", "wedding", "editing", "premiere", "final-cut", "resolve"],
+  "userConfig": {
+    "nle": {
+      "type": "string",
+      "title": "Your editing app",
+      "description": "The app you cut in. Claude follows that app's Buwan playbook.",
+      "options": ["premiere", "final-cut", "resolve"],
+      "default": "premiere"
+    },
+    "editor_name": {
+      "type": "string",
+      "title": "Editor name",
+      "description": "Your name, written into paper edits and revision notes.",
+      "required": true
+    }
+  }
+}
