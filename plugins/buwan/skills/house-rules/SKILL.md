@@ -48,6 +48,22 @@ templates/
 ## Pipeline
 00 Shoot-day coverage → Source (originals never touched) → **01 Intake** (copy, verify, organize by segment; sources read-only) → **02 Rough cut — Story-Lock** → **Proof gate** → 03 Audio polish → 04 Grade (camera only) → 05 Graphics + captions → 06 SFX → 07 Review (taste only, the editor) → 08 Export.
 
+Each stage has a skill. Run them in order; each one checks the previous stage is done:
+
+| Stage | Skill |
+|---|---|
+| 01 Intake | `/buwan:intake`, then `/buwan:organize` (clip log, bins, colors) |
+| 02 Story-Lock (2a–2c) | `/buwan:plot` |
+| 02 Rough cut (2d b-roll, picture cut) | `/buwan:rough-cut` |
+| Proof gate | `/buwan:proof-gate` |
+| 03 Audio polish | `/buwan:audio` |
+| 04 Grade | `/buwan:grade` |
+| 05 Graphics + captions | `/buwan:graphics` |
+| 06 SFX | `/buwan:sfx` |
+| 07 Review | `/buwan:review` |
+| 08 Export | `/buwan:export`, then `/buwan:clipper` for reels |
+| Same-day edit | `/buwan:sde` (the whole pipeline, compressed) |
+
 Before any timeline work, read two things: **The Look** (this file: pacing, grade, framing, loudness) and the **App playbook** for the editor's app.
 
 ### 02 Rough cut — Story-Lock (wedding)
@@ -76,13 +92,40 @@ Every cut measured, on beat and on words, with `/buwan:proof-gate`. Wedding: ~1�
 - Corporate: 16:9 recap + 1:1 LinkedIn cut; Clipper → 9:16 reels/stories.
 - Cut lists: CMX3600 EDL at 23.976 NDF (record TC 01:00:00:00) and/or FCPXML. Captions: SRT. Paper edits: markdown table with source timecodes and selection rationale.
 
+## Clip categories, bins and colors (same in every app)
+Every clip gets exactly one category. The bin, the color and the meaning are the same for every editor, so any timeline reads the same at a glance. `/buwan:organize` applies them.
+
+| # | Category (bin) | What goes in it | Premiere label | Resolve clip color | Final Cut role (color) |
+|---|---|---|---|---|---|
+| 01 | Speech | vows, letters, speeches, messages, interviews; corporate keynotes/talks | Mango | Orange | Dialogue (orange), subrole = speaker |
+| 02 | Prep & Details | getting ready, rings, dress, shoes, invites, decor, food | Tan | Tan | Video › Details (tan) |
+| 03 | Portraits | couple and formal shoots, family/entourage portraits | Yellow | Yellow | Video › Portraits (yellow) |
+| 04 | Ceremony | processional, rites, exchange of vows/rings, kiss, recessional (picture) | Violet | Violet | Video › Ceremony (purple) |
+| 05 | Reactions & BTS | reactions, tears, laughter, candid, behind the scenes — the burst bank | Rose | Pink | Video › Reactions (pink) |
+| 06 | Establishing | façades, venue, empty ballroom, landscapes — breathing room | Cerulean | Blue | Video › Establishing (blue) |
+| 07 | Reception & Party | program, games, first dance, party, crowd energy | Magenta | Purple | Video › Party (magenta) |
+| 08 | Drone | aerials | Teal | Teal | Video › Drone (teal) |
+| 09 | Music | music bed and songs | Forest | Green | Music (green) |
+| 10 | SFX & Ambience | SFX, room tone, ambience | Caribbean | Lime | Effects (light green) |
+| 11 | Graphics | kit clips, titles, captions | Lavender | Beige | Titles (lavender) |
+| 12 | Grade & Adjust | adjustment layers, LUT layers | Brown | Brown | Video › Adjust (brown) |
+| — | Sequences / Timelines | Rough Cut vN, Picture Lock vN, Reels | — | — | — |
+
+Corporate uses the same table: 01 = keynotes/talks/panels, 04 = main program, 05 = audience reactions, 07 = awards and networking, 02 = booths, branding, partner signage.
+Story-Lock selects are marked with **markers**, not colors: marker name = beat (e.g. `vows`, `about the bride`), marker color Orange.
+
+## Grade looks
+- Studio looks live in `kit/luts/`: `Buwan_Warm.cube`, `Buwan_Cool.cube`, `Buwan_BW.cube` (33-point, Rec.709 in/out). Apply AFTER the camera's own Log→Rec.709 conversion, at 60–100%.
+- Pick one look per film (warm or cool, from the day's palette); B&W only for the most intimate beats.
+- Every graded export is measured with `/buwan:grade` (grade check against `kit/grade/targets.json`). Targets are calibrated from the studio's reference stills.
+
 ## Shoot-day coverage → edit implications
 - Reception messages/reactions and prep-room letters are the speech spine.
 - Reactions and BTS are the cutaway bank for fast-cut bursts.
 - Empty-venue and façade shots are breathing-room material.
 
 ## Video Component Kit
-Every component is a true 1920×1080 frame (05 Social = 1080×1920). Rendered clips are named `<section>.<item>_<slug>.<ext>`, e.g. `07.02_vow-caption.mov`.
+Every component is a true 1920×1080 frame (05 Social = 1080×1920). Graphics are rendered by the Buwan kit renderer as **ProRes 4444 with alpha, 23.976** — one file that works in Premiere, Final Cut and Resolve — named `<section>.<item>_<slug>.mov`, e.g. `07.03_speaker-lower-third.mov`. Reusable pieces (logo, watermark, letterbox, transition mattes) are pre-rendered in `kit/`; everything with names, dates or quotes is rendered per job with the real text by `/buwan:graphics`. Never type a title by hand in the app when a kit component exists.
 - **01 Typography:** couple title · film title card · date & venue line · story text · highlight word · kinetic vows · stat number · vow quote · lower third · CTA text
 - **02 Containers & backgrounds:** full-screen background · gradient background · letterboxed frame · text panel · ivory card · border frame · image placeholder · video placeholder · split screen
 - **03 Transitions:** crossfade · dip to black · moonrise mask · gold line wipe · light leak · soft blur · whip pan · Ken Burns zoom

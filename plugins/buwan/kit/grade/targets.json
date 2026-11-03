@@ -1,0 +1,71 @@
+{
+  "warm": {
+    "note": "Starting targets from the written house look. Replace with: node grade-check.js calibrate <reference stills> --look warm",
+    "black": [
+      22,
+      58
+    ],
+    "white": [
+      140,
+      226
+    ],
+    "bright": [
+      55,
+      150
+    ],
+    "sat": [
+      8,
+      38
+    ],
+    "hue": [
+      100,
+      185
+    ],
+    "hue_note": "signalstats hue: ~125-140 = warm/orange, 180 = neutral, ~300-330 = cool/teal"
+  },
+  "cool": {
+    "note": "Starting targets from the written house look. Replace with: node grade-check.js calibrate <reference stills> --look cool",
+    "black": [
+      22,
+      58
+    ],
+    "white": [
+      140,
+      226
+    ],
+    "bright": [
+      55,
+      150
+    ],
+    "sat": [
+      6,
+      32
+    ],
+    "hue": [
+      175,
+      345
+    ],
+    "hue_note": "signalstats hue: ~125-140 = warm/orange, 180 = neutral, ~300-330 = cool/teal"
+  },
+  "bw": {
+    "note": "Starting targets from the written house look. Replace with: node grade-check.js calibrate <reference stills> --look bw",
+    "black": [
+      18,
+      55
+    ],
+    "white": [
+      150,
+      230
+    ],
+    "bright": [
+      55,
+      150
+    ],
+    "sat": [
+      0,
+      3
+    ],
+    "hue": null,
+    "hue_note": "signalstats hue: ~125-140 = warm/orange, 180 = neutral, ~300-330 = cool/teal"
+  }
+}
