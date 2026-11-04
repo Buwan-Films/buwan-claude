@@ -1,13 +1,13 @@
 {
   "name": "buwan",
   "displayName": "Buwan Films",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Buwan Films house rules, a skill for every pipeline stage (intake to clipper), shared clip colors, studio LUTs and grade check, kit graphics renderer, proof gate, source protection, and Premiere / Final Cut / Resolve playbooks.",
   "author": {
     "name": "Buwan Films and Photography",
-    "url": "https://github.com/buwanfilms-svg"
+    "url": "https://github.com/Buwan-Films"
   },
-  "repository": "https://github.com/buwanfilms-svg/buwan-claude",
+  "repository": "https://github.com/Buwan-Films/buwan-claude",
   "keywords": [
     "video",
     "wedding",

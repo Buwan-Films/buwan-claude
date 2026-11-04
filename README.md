@@ -22,7 +22,7 @@ Requirements: Claude Code, Node.js 20.19+, ffmpeg (Windows `winget install Gyan.
 1. Start Claude Code in your Buwan workspace folder (it has `projects/`).
 2. Install:
    ```
-   /plugin marketplace add buwanfilms-svg/buwan-claude
+   /plugin marketplace add Buwan-Films/buwan-claude
    /plugin install buwan@buwan-films
    ```
    Choose your editing app and type your name when asked.

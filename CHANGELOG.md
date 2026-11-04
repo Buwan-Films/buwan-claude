@@ -1,5 +1,8 @@
 # Changelog
 
+## buwan 1.1.1 · buwan-premiere 1.0.1 — 2026-11-05
+- Repo moved to the Buwan-Films org: install with `/plugin marketplace add Buwan-Films/buwan-claude`.
+
 ## buwan 1.1.0 — 2026-11-04  (kit changes: run /buwan:setup-kit)
 - A skill for every stage: organize, rough-cut, audio, grade, graphics, sfx, review, clipper, sde, setup-kit (plus intake, plot, proof-gate, export, check).
 - Shared clip categories, bins and colors for Premiere (labels), Resolve (clip colors) and Final Cut (roles).

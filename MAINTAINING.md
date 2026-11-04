@@ -27,7 +27,7 @@ The rules live in this repository. The claude.ai artifacts are the visual versio
 6. Update the Edit Pipeline / Video Kit artifact so the picture matches, and copy the new page into `plugins/buwan/reference/`.
 
 ## Adding an editor
-1. GitHub → this repo → Settings → Collaborators → add their GitHub account (Read access).
+1. GitHub → [Buwan-Films/buwan-claude](https://github.com/Buwan-Films/buwan-claude) → Settings → Collaborators and teams → add their GitHub account (Read access).
 2. They follow the README "Editor setup".
 
 ## Removing an editor
