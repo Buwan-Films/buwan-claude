@@ -8,11 +8,15 @@
     "url": "https://github.com/Buwan-Films"
   },
   "repository": "https://github.com/Buwan-Films/buwan-claude",
-  "dependencies": ["buwan"],
+  "dependencies": [
+    "buwan"
+  ],
   "mcpServers": {
     "premiere-pro": {
       "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/launch-premiere-mcp.js"]
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/scripts/launch-premiere-mcp.js"
+      ]
     }
   }
 }

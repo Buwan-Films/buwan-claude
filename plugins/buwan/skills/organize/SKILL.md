@@ -29,7 +29,11 @@ Follow the editor's playbook (`${user_config.nle}`):
 
 **DaVinci Resolve:** Studio with scripting enabled → create the bins and call `SetClipColor` on each MediaPoolItem (and TimelineItem if a timeline exists). Free version → write `edit/organize-resolve.md`: one section per bin with the clip list; the editor selects them and uses **right-click → Clip Color**.
 
-**Final Cut Pro:** write `edit/organize_vN.fcpxml` with an `<event>` containing every clip as an `<asset-clip>` with `videoRole`/`audioRole` set from the table (e.g. `videoRole="Video.Reactions"`, `audioRole="dialogue.Paolo Ramirez"`) and a `<keyword>` per category, plus keyword collections named like the bins. Tell the editor once: **Modify → Edit Roles** → set the role colors from the table (FCP remembers them per library).
+**Final Cut Pro (and Resolve via FCPXML):** never hand-write the XML. Save the categories as `edit/assemble/categories.json` (`{"<absolute clip path>": "<category>"}`), make sure `assemble.js scan` (and ideally `cull` + `sync`) have run, then:
+```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/assemble.js" organize <project> --multicam --event "<event name>"
+```
+It writes `edit/organize_vN.fcpxml` with every clip keyworded into the bins, roles set from the table, cull rejects as **Rejected** ratings, warnings as notes, and synced multicam clips. The file is validated against Apple's FCPXML DTD. Tell the editor once: **Modify → Edit Roles** → set the role colors from the table (FCP remembers them per library).
 
 ## 3. Report
 Table: category · clips · total duration · color. Then the low-confidence list and anything that couldn't be classified.

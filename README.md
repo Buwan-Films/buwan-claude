@@ -11,13 +11,14 @@ One studio standard for every Buwan editor, in every editing app. Claude Code lo
 | | How it's shared |
 |---|---|
 | **Organize** | `/buwan:intake` folders + `/buwan:organize`: same clip categories, bins and colors (Premiere labels, Resolve clip colors, Final Cut roles) |
-| **Cuts** | `/buwan:plot` Story-Lock + `/buwan:rough-cut`, measured by the proof gate (runs automatically on every EDL) |
+| **Footage prep** | `/buwan:assemble`: culls unusable clips, syncs every camera by sound (multicam, even with a wrong clock), analyses the two music tracks — all on the editor's machine, nothing uploaded |
+| **Cuts** | `/buwan:plot` Story-Lock, then the engine builds the timeline to the music (cuts on beats, burst on the peak, kiss on the peak, holds clean) — measured by the proof gate |
 | **Grade** | Studio LUTs `Buwan_Warm / Cool / BW.cube` (same file in all three apps) + `/buwan:grade` measures every export against the studio targets |
 | **Branding** | Brand fonts and logo installed by `/buwan:setup-kit`; every title, lower third and end card rendered from the kit as ProRes 4444 + alpha by the same renderer |
 | **Originals** | `sources/` is read-only — Claude can't delete, move or overwrite footage |
 
 ## Editor setup (once per computer)
-Requirements: Claude Code, Node.js 20.19+, ffmpeg (Windows `winget install Gyan.FFmpeg`, macOS `brew install ffmpeg`), and read access to this repository.
+Requirements: Claude Code, Node.js 20.19+, Python 3.9+, ffmpeg (Windows `winget install Gyan.FFmpeg`, macOS `brew install ffmpeg`), and read access to this repository. For transcription: whisper.cpp (`brew install whisper-cpp`; Claude installs the model on first use).
 
 1. Start Claude Code in your Buwan workspace folder (it has `projects/`).
 2. Install:
@@ -41,7 +42,8 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 |---|---|
 | 01 Intake | `/buwan:intake`, then `/buwan:organize` |
 | 02 Story-Lock | `/buwan:plot` |
-| 02 Rough cut | `/buwan:rough-cut` |
+| Prep | `/buwan:assemble` (scan · cull · music · sync · organize) |
+| 02 Rough cut | `/buwan:rough-cut` → `assemble build` (music-driven timeline + edit map) |
 | Proof gate | `/buwan:proof-gate` (also automatic on every EDL) |
 | 03 Audio | `/buwan:audio` |
 | 04 Grade | `/buwan:grade` |
@@ -52,3 +54,6 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 | Same-day edit | `/buwan:sde` |
 
 Example: `/buwan:intake 2026-11-15_Santos-Reyes wedding E:\Cards\Santos-Reyes`
+
+### The music-driven SDE in one line
+Put the footage and a `music/` folder (`01_intro.wav`, `02_story.wav`) next to each other, then: `/buwan:sde <project>`. The engine culls, syncs the cameras, organizes, and — after you approve the Story-Lock — builds the timeline cut to your music, with the kiss on the music's peak. Import the FCPXML and refine.

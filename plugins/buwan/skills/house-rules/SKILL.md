@@ -52,9 +52,9 @@ Each stage has a skill. Run them in order; each one checks the previous stage is
 
 | Stage | Skill |
 |---|---|
-| 01 Intake | `/buwan:intake`, then `/buwan:organize` (clip log, bins, colors) |
+| 01 Intake | `/buwan:intake`, then `/buwan:assemble` (scan · cull · music · multicam sync) and `/buwan:organize` (categories → bins, colors) |
 | 02 Story-Lock (2a–2c) | `/buwan:plot` |
-| 02 Rough cut (2d b-roll, picture cut) | `/buwan:rough-cut` |
+| 02 Rough cut (2d b-roll, picture cut) | `/buwan:rough-cut` → `/buwan:assemble` build (music-driven) |
 | Proof gate | `/buwan:proof-gate` |
 | 03 Audio polish | `/buwan:audio` |
 | 04 Grade | `/buwan:grade` |
@@ -69,7 +69,7 @@ Before any timeline work, read two things: **The Look** (this file: pacing, grad
 ### 02 Rough cut — Story-Lock (wedding)
 Lock the story before the edit; never find it in the edit.
 - **2a** Tag every speech line into the 8 audio layers.
-- **2b** Music after audio — the audio leads, the music follows, tuned to the day's atmosphere.
+- **2b** Music after audio — the audio leads, the music follows, tuned to the day's atmosphere. The editor supplies **two tracks**: track 1 carries the intro (no speech), track 2 carries the story through the outro. The cut is timed to them: cuts on beats, long shots on bars, the burst montage on track 2's energy peak, the kiss on that peak.
 - **2c** Build the 4-part structure: **Intro 60–90s (hook)** · **Storyline 2–2.5 min (context)** · **Ceremony (climax)** · **Outro 2–3 min (resolution)**.
 - **2d** B-roll last, serving the story — every shot matches or elevates the audio's emotion, never decoration.
 - The intro passes the **5–10 second test**: would you keep watching? No strong welcome remarks or power statements → let the music carry the intro.

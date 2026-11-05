@@ -26,7 +26,8 @@ Tag every usable line with one beat: wedding = the 8 audio layers; corporate = t
 ## 4. Deliver (in `edit/`)
 1. `paper-edit_v<N>.md` — table: `# · part · beat · speaker · source clip · src in · src out · line (verbatim) · why picked`. Then **Left out** (line + reason) and **Music feel per part** and **B-roll needs per beat**. Header: project, editor (`${user_config.editor_name}`), date, version.
 2. `selects_v<N>.edl` — CMX3600, 23.976 NDF (timebase 24, non-drop), record TC starting `01:00:00:00`, events in story order, `* FROM CLIP NAME:` comment on every event, reel names ≤ 8 chars or `AX`. Speech selects only.
-3. `selects_v<N>.fcpxml` — when the editor's app is Final Cut Pro, or on request (see `/buwan:final-cut`). Real asset-clips referencing the source files, never a flattened render.
+3. `edit/assemble/selects.json` — the machine-readable Story-Lock: an ordered list of `{"clip": "<absolute path>", "in": <s>, "out": <s>, "beat": "<one of the 8 layers>", "part": "Intro|Storyline|Ceremony|Outro", "speaker": "<name>", "text": "<verbatim line>", "hold": true|false}`. Then build the review project with the engine (never hand-write FCPXML):
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/assemble.js" selects <project> --selects edit/assemble/selects.json --multicam --event "<event>"` → `edit/selects_vN.fcpxml` (Final Cut and Resolve import it).
 4. `captions/selects_v<N>.srt` — the selected lines in record time, verbatim.
 5. **Proper nouns** — list every name, place, church, venue and brand found, for spot-checking before captions ship.
 

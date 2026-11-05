@@ -16,6 +16,7 @@ The rules live in this repository. The claude.ai artifacts are the visual versio
 | Grade targets | `plugins/buwan/kit/grade/targets.json` — recalibrate: `node plugins/buwan/scripts/grade-check.js calibrate <reference stills> --look warm --targets plugins/buwan/kit/grade/targets.json` |
 | Fonts and logo | `plugins/buwan/kit/fonts`, `plugins/buwan/kit/logo` (fonts are SIL OFL — keep the OFL-*.txt files) |
 | Kit graphics | Edit the Video Kit artifact, then save its page as `plugins/buwan/reference/video-kit.html` (and any images into `reference/assets/`). The renderer reads that file, so every editor's graphics update after `/buwan:setup-kit` |
+| Assemble engine (cull thresholds, cut-rate targets, b-roll-by-beat table, music levels) | `plugins/buwan/assemble/` — `cull.py` (MIN_SEC, thresholds), `timeline.py` (BEAT_BROLL, targets, defaults in `build_plan`), `fcpxml.py` (writer). Run `assemble.js selftest <folder>` after any change; it must print SELFTEST PASS |
 | Premiere bridge version | `plugins/buwan-premiere/scripts/launch-premiere-mcp.js` (and reinstall the panel at the same version on every Premiere machine) |
 
 ## Releasing a change
@@ -27,7 +28,7 @@ The rules live in this repository. The claude.ai artifacts are the visual versio
 6. Update the Edit Pipeline / Video Kit artifact so the picture matches, and copy the new page into `plugins/buwan/reference/`.
 
 ## Adding an editor
-1. GitHub → [Buwan-Films/buwan-claude](https://github.com/Buwan-Films/buwan-claude) → Settings → Collaborators and teams → add their GitHub account (Read access).
+1. GitHub → this repo → Settings → Collaborators → add their GitHub account (Read access).
 2. They follow the README "Editor setup".
 
 ## Removing an editor

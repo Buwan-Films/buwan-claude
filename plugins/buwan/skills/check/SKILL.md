@@ -14,5 +14,6 @@ Make no changes. Report a PASS / FAIL table with a fix for each FAIL:
 5. Fonts — Cormorant Garamond, Cinzel and Italiana installed for this user (Windows: `%LOCALAPPDATA%\Microsoft\Windows\Fonts`; macOS: `~/Library/Fonts`). If not, `/buwan:setup-kit`.
 5b. Renderer — `node "${CLAUDE_PLUGIN_ROOT}/scripts/render-kit.js" list` prints the component list (Playwright installed).
 6. Tools — `node --version` ≥ 20.19, `ffmpeg -version`, `ffprobe -version`.
+6b. Assemble engine — `node "${CLAUDE_PLUGIN_ROOT}/scripts/assemble.js" --help` prints the command list (Python env from setup-kit). On a brand-new machine run `assemble.js selftest <temp folder>` once: it must print `SELFTEST PASS`, and importing its `sde-cut_v1.fcpxml` into the editing app proves the builder there.
 7. Source protection — confirm the read-only hook is active by explaining what you would refuse to do in a `sources/` folder (do not test it by writing there).
 8. App bridge — Premiere: run "Verify Premiere connection" (needs the buwan-premiere plugin and the MCP Bridge panel open). Final Cut: none, FCPXML import. Resolve: none by default, EDL/FCPXML import.

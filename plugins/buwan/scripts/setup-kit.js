@@ -87,7 +87,7 @@ if (!flag("skip-render")) {
     if (r.status === 0) ok("Renderer installed", `Playwright ${PLAYWRIGHT_VERSION} + Chromium in ${deps}`);
     else bad("Chromium install", "playwright install chromium failed");
   }
-  if (report.every((x) => x[0] === "PASS")) {
+  if (report.every((x) => x[0] !== "FAIL")) {
     const r = spawnSync(process.execPath, [path.join(__dirname, "render-kit.js"), "prerender", path.join(ws, "kit")], {
       stdio: "inherit",
       env: { ...process.env, BUWAN_DEPS: deps },
@@ -95,6 +95,29 @@ if (!flag("skip-render")) {
     if (r.status === 0) ok("Reusable kit clips rendered", "logo, logo reveal, logo placement, watermark, letterbox, placeholders, moonrise matte, gold wipe edge + matte, light leak");
     else bad("Kit clip render", "see errors above");
   }
+}
+
+// 5. Python environment for the assemble engine (cull, music analysis, multicam sync, FCPXML builder)
+if (!flag("skip-python")) {
+  const venv = path.join(os.homedir(), ".buwan", "venv");
+  const py = isWin ? path.join(venv, "Scripts", "python.exe") : path.join(venv, "bin", "python");
+  const sysPy = ["python3", "python"].find((p) => spawnSync(p, ["-c", "import sys; assert sys.version_info >= (3, 9)"], { stdio: "ignore", shell: isWin }).status === 0);
+  if (!sysPy) bad("Python 3.9+", isMac ? "Install: brew install python" : isWin ? "Install: winget install Python.Python.3.12" : "Install python3");
+  else {
+    if (!fs.existsSync(py)) spawnSync(sysPy, ["-m", "venv", venv], { stdio: "inherit", shell: isWin });
+    const r = spawnSync(py, ["-m", "pip", "install", "-q", "--upgrade", "pip", "-r", path.join(ROOT, "assemble", "requirements.txt")], { stdio: "inherit" });
+    if (r.status === 0) ok("Assemble engine (Python)", `numpy, scipy, librosa, soundfile, pillow in ${venv}`);
+    else bad("Assemble engine (Python)", "pip install failed — see errors above");
+  }
+  // FCPXML DTD for validation (Apple's DTD, mirrored in the CommandPost project)
+  const dtdDir = path.join(os.homedir(), ".buwan", "dtd");
+  const dtd = path.join(dtdDir, "FCPXMLv1_11.dtd");
+  if (!fs.existsSync(dtd)) {
+    fs.mkdirSync(dtdDir, { recursive: true });
+    const url = "https://raw.githubusercontent.com/CommandPost/CommandPost/develop/src/extensions/cp/apple/fcpxml/dtd/FCPXMLv1_11.dtd";
+    const r = spawnSync("curl", ["-fsSL", "-o", dtd, url], { stdio: "ignore", shell: isWin });
+    if (r.status === 0) ok("FCPXML DTD", "downloaded for validation"); else report.push(["INFO", "FCPXML DTD", "not downloaded (validation will be skipped)"]);
+  } else ok("FCPXML DTD", "present");
 }
 
 console.log("\nBUWAN KIT SETUP");

@@ -10,9 +10,10 @@ Gates still apply, rounds don't. Saved look, minimal captions, one converge pass
 
 | Stage | Same-day version |
 |---|---|
-| 01 Intake | `/buwan:intake` — copy only the prep + ceremony cards needed; lock sources. Skip `/buwan:organize` thumbnails; categorize from folders and audio only. |
-| 02 Story-Lock | `/buwan:plot` same-day mode: one pass, letters/vows/messages only, music carries the intro if the speech isn't strong. |
-| 02 Rough cut | `/buwan:rough-cut` straight from the paper edit, no shot-plan file. |
+| 01 Intake | `/buwan:intake` — reference the cards in place (no copy); lock them read-only. Ask for the two music tracks (01 intro, 02 story). |
+| Prep | `/buwan:assemble` steps 1–5: scan → cull → music → sync → categorize from folders + audio (no thumbnails) → organize FCPXML. |
+| 02 Story-Lock | `/buwan:plot` same-day mode: one pass, letters/vows/messages only; write `selects.json`. |
+| 02 Rough cut | `/buwan:assemble` step 7: `assemble.js build … --name "SDE Cut"`. Read the edit map; the kiss must sit on the music peak. |
 | Gate | `/buwan:proof-gate` — must pass (or a one-line override). |
 | 03 Audio | Auto-match to −17 LUFS + limiter −6 dBFS, one measurement. |
 | 04 Grade | Saved look (Warm or Cool) on an adjustment layer, grade check on 6 stills. |

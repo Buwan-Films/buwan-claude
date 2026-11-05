@@ -26,8 +26,9 @@ These studio rules apply to every editing task in this session:
 - Load /buwan:house-rules before any edit work, and ${playbook} for app steps. They define brand, beats, Story-Lock, pacing, audio specs and deliverables.
 - Determine shoot type first: wedding or corporate.
 - sources/ folders are read-only. Writes, moves and deletes there are blocked by a hook.
-- Workflow skills: /buwan:intake -> /buwan:organize -> /buwan:plot -> /buwan:rough-cut -> /buwan:proof-gate -> /buwan:audio -> /buwan:grade -> /buwan:graphics -> /buwan:sfx -> /buwan:review -> /buwan:export -> /buwan:clipper. /buwan:sde = same-day mode. /buwan:check and /buwan:setup-kit for setup.
+- Workflow skills: /buwan:intake -> /buwan:assemble (cull, music, multicam sync) -> /buwan:organize -> /buwan:plot -> /buwan:rough-cut -> /buwan:proof-gate -> /buwan:audio -> /buwan:grade -> /buwan:graphics -> /buwan:sfx -> /buwan:review -> /buwan:export -> /buwan:clipper. /buwan:sde = same-day mode. /buwan:check and /buwan:setup-kit for setup.
 - Clip colors, bins, LUTs and kit graphics are shared studio standards (see house rules). Use them exactly.
+- Never hand-write FCPXML: organize/selects/timelines come from the assemble engine (node scripts/assemble.js), which validates against Apple's DTD.
 - Graphics come from the Buwan Video Component Kit only; never invent off-brand graphics.
 - Keep vows and speeches verbatim (Taglish). Flag proper nouns before captions ship.${isWorkspace ? "" : `
 - Note: ${cwd} is not a Buwan workspace (no projects/ and kit/ folders). If this is editing work, ask the editor to start Claude in their Buwan workspace folder.`}`;
