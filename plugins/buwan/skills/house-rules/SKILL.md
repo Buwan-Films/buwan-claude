@@ -87,6 +87,18 @@ Every cut measured, on beat and on words, with `/buwan:proof-gate`. Wedding: ~1�
 
 **Same-day mode** (SDE / event-close sizzle): compressed pipeline — gates still apply, rounds don't. Grade from a saved look, minimal captions, one converge pass.
 
+### The SDE shape (from the measured reference film — `reference/sde-reference.html`)
+Measured from the Adrian & Lara reference (6:52, 146 cuts, 2.8 s average). These override the generic wedding shape when the deliverable is an SDE:
+1. **Open cold, on "before".** Four ~3 s shots with no faces of the couple: a vehicle, the empty venue, a detail, one person alone. No title, no speech, music under.
+2. **The first voice is a letter, not a priest.** The bride's or groom's letter opens the speech spine at ~0:13 and returns throughout. Ceremony audio ("do you take… I do") is cut *between* letter lines as punctuation, never as its own block.
+3. **Two peaks, not one.** Peak 1 at ~1:00 (first look, entourage, 2.2 s cuts, rings/invite insert on the drop). Peak 2 at ~75 % of runtime (entrance → reception → kiss, 1.5 s cuts, ≥15 in 30 s). Two dialogue valleys between them where the cut rate halves and the music drops ~15 dB.
+4. **Go quiet right after the first burst.** Three slow shots, music down ~17 dB, before the ceremony.
+5. **Hold the vow.** Two-shot of the couple, 3–4 s per shot, at most two cutaways. No b-roll churn under the vow lines. It sits in the quietest part of the film.
+6. **Move the kiss to peak 2.** Chronology bends for the music.
+7. **Three B&W shots, intimate only** — a smile in prep, a parent's embrace, a tear. Never a wide, never the entourage.
+8. **End on one long hold with the last vow lines.** 25–30 s, one shot, no cuts. Then the title card and the logo — **the title closes an SDE** (highlight films keep the title on the first hit).
+9. Gate numbers for SDE (`/buwan:proof-gate --mode sde`): avg shot 2.5–3 s · burst ≥15 cuts/30 s at ~1.5 s · vow shots 3–4 s · final hold 25–30 s · two peaks · title in the last 10 s.
+
 ## Deliverables
 - Wedding: YouTube long-form master; Clipper → 9:16 reels (re-enters the pipeline at 01).
 - Corporate: 16:9 recap + 1:1 LinkedIn cut; Clipper → 9:16 reels/stories.
@@ -113,6 +125,11 @@ Every clip gets exactly one category. The bin, the color and the meaning are the
 
 Corporate uses the same table: 01 = keynotes/talks/panels, 04 = main program, 05 = audience reactions, 07 = awards and networking, 02 = booths, branding, partner signage.
 Story-Lock selects are marked with **markers**, not colors: marker name = beat (e.g. `vows`, `about the bride`), marker color Orange.
+
+## Sound, dead air and the grade are applied by the engine
+- **Enhance:** every speech clip is measured (loudness, noise floor, SNR, peaks). Final Cut gets native, non-destructive enhancements written into the XML (loudness toward −17 LUFS, noise reduction and voice isolation scaled to the SNR, voice EQ). Premiere/Resolve editors get cleaned WAVs in `edit/audio/clean/` (high-pass, denoise, −17 LUFS, −6 dBTP) to lay under the picture. Sources are never modified. Clips under 15 dB SNR are flagged: use the lav/recorder file.
+- **Dead air:** speech clips are scanned for silence (≥0.9 s under −38 dB). The kept speech ranges become **Favorites** on the clips, transcription runs on them only, and the **A-Roll clean** project is every speech clip with the silences cut out — the timeline to read the day from.
+- **Grade:** one studio look per film. Final Cut: Custom LUT effect on camera clips (experimental via XML; otherwise apply the installed Buwan LUT from the Custom LUT list). Resolve: `Workspace → Scripts → buwan_grade` puts the LUT on node 2 of every camera clip. Premiere: `/buwan-premiere:premiere-apply grade` puts Lumetri Creative Look with the studio LUT on every camera clip of the sequence. Music and kit graphics are never graded.
 
 ## Grade looks
 - Studio looks live in `kit/luts/`: `Buwan_Warm.cube`, `Buwan_Cool.cube`, `Buwan_BW.cube` (33-point, Rec.709 in/out). Apply AFTER the camera's own Log→Rec.709 conversion, at 60–100%.

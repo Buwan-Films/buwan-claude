@@ -140,7 +140,9 @@ class Pool:
 def build_plan(clips: dict[str, Clip], categories: dict, cull: list[dict], music: dict, selects: list[dict],
                sync: dict | None, name: str, event: str, library: str | None = None, options: dict | None = None) -> dict:
     opt = {"music_bed_db": -20.0, "intro_music_db": -3.0, "burst_music_db": -10.0, "fade_out": 3.0, "logo_lead": 4.5,
-           "title_after_s": 12.0, "connected_lane": 1, "hold_min": 15.0}
+           "title_after_s": 12.0, "connected_lane": 1, "hold_min": 15.0,
+           # SDE reference (Adrian & Lara): cold open on "before", title closes the film, one long final hold
+           "cold_open_s": 12.0, "title_at": "hit", "final_hold_s": 0.0, "face_s": 3.0}
     opt.update(options or {})
     cull_by = {m["path"]: m for m in cull}
     pool = Pool(clips, categories, cull_by, sync)
@@ -159,17 +161,28 @@ def build_plan(clips: dict[str, Clip], categories: dict, cull: list[dict], music
         order = [ESTAB, DRONE, PREP, PREP, PORTRAITS, ESTAB, PREP, PORTRAITS]
         hits = [h for h in intro["hits"] if h >= opt["title_after_s"]]
         title_t = hits[0] if hits else (intro["bars"][min(len(intro["bars"]) - 1, max(0, len(intro["bars"]) * 3 // 5))] if intro["bars"] else D1 * 0.6)
+        if opt["cold_open_s"] > 0:
+            # cold open: ~3 s shots of "before" (venue, details), no portraits, then the music's own cut points
+            co = opt["cold_open_s"]
+            cold = [x * 3.0 for x in range(int(co // 3))] + [co]
+            cuts = cold + [c for c in cuts if c > co + MIN_SHOT]
+            if cuts[-1] < D1:
+                cuts.append(D1)
         for i in range(len(cuts) - 1):
             a, b = cuts[i], cuts[i + 1]
             need = b - a
             if need < MIN_SHOT:
                 continue
-            cats = [order[i % len(order)]] + [PREP, PORTRAITS, ESTAB]
+            if a < opt["cold_open_s"]:
+                cats = [ESTAB, PREP, DRONE]
+            else:
+                cats = [order[i % len(order)]] + [PREP, PORTRAITS, ESTAB]
             pk = pool.pick(cats, need, prefer_slowmo=(_energy_at(intro, a) > 0.6))
             if pk:
                 pk.update({"at": a, "lane": opt["connected_lane"], "video_role": "Video.B-roll"})
                 connected.append(pk)
-        markers_global.append({"at": title_t, "name": "GRAPHIC: 07.07 SDE title plate (render with /buwan:graphics)", "todo": True})
+        if opt["title_at"] == "hit":
+            markers_global.append({"at": title_t, "name": "GRAPHIC: 07.07 SDE title plate (render with /buwan:graphics)", "todo": True})
         t = D1
 
     # ---------- Track 2: main ----------
@@ -239,6 +252,8 @@ def build_plan(clips: dict[str, Clip], categories: dict, cull: list[dict], music
         spine.append({"gap": True, "at": pos, "dur": film_end - pos, "markers": [{"t": 0.0, "name": "PART: Outro", "chapter": True}] if not any(i.get("part", "").lower().startswith("out") for i in items) else []})
     # b-roll over the main track: everywhere except holds, and the speaker stays on camera for the opening of each part
     holds = [(it["at"], it["at"] + it["dur"]) for it in items if it.get("hold") or it.get("beat") in HOLD_BEATS]
+    if opt["final_hold_s"] > 0 and items:
+        holds.append((film_end - opt["final_hold_s"], film_end))
     seen_parts = set()
     for it in items:
         if it.get("part") not in seen_parts:
@@ -280,8 +295,25 @@ def build_plan(clips: dict[str, Clip], categories: dict, cull: list[dict], music
         if pk:
             pk.update({"at": a, "lane": opt["connected_lane"], "video_role": "Video.B-roll"})
             connected.append(pk)
+    if opt["final_hold_s"] > 0 and items:
+        hs = max(T2, film_end - opt["final_hold_s"])
+        last = items[-1]
+        last_end = last["at"] + last["dur"]
+        # one single shot (silhouette / night wide) covers the hold wherever the speech clip doesn't
+        start = hs if last["at"] >= hs or last_end <= hs else last_end
+        if film_end - start > 1.0:
+            pk = pool.pick([PORTRAITS, ESTAB, DRONE], film_end - start)
+            if pk:
+                pk.update({"at": start, "lane": opt["connected_lane"], "video_role": "Video.B-roll", "name": "FINAL HOLD"})
+                connected.append(pk)
     markers_global.append({"at": peak[0], "name": "MUSIC PEAK — burst montage", "chapter": False})
-    markers_global.append({"at": max(T2, film_end - opt["logo_lead"]), "name": "GRAPHIC: 06.02 logo reveal + 06.07 end credits", "todo": True})
+    if opt["title_at"] == "end":
+        markers_global.append({"at": max(T2, film_end - 10.0), "name": "GRAPHIC: 07.07 title card — The Wedding of … (title closes the film)", "todo": True})
+        markers_global.append({"at": max(T2, film_end - 4.0), "name": "GRAPHIC: 06.02 logo reveal", "todo": True})
+    else:
+        markers_global.append({"at": max(T2, film_end - opt["logo_lead"]), "name": "GRAPHIC: 06.02 logo reveal + 06.07 end credits", "todo": True})
+    if opt["final_hold_s"] > 0:
+        markers_global.append({"at": max(T2, film_end - opt["final_hold_s"]), "name": f"FINAL HOLD — one shot, {opt['final_hold_s']:.0f}s, last vow lines over it", "todo": False})
     # pin global markers to the gap/clip they fall in
     for m in markers_global:
         host = next((s for s in spine if s["at"] <= m["at"] < s["at"] + s["dur"]), spine[-1])

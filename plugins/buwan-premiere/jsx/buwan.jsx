@@ -1,0 +1,658 @@
+/*  Buwan Films — Premiere Pro apply library (ExtendScript, ES3)
+ *
+ *  Runs inside Premiere through the MCP bridge (execute_extendscript) and applies what the
+ *  assemble engine decided, from edit/premiere/manifest.json (assemble.js premiere <project>).
+ *
+ *  Load + run (one execute_extendscript call, ES3, raise timeout_ms for big steps):
+ *      $.evalFile("<buwan-premiere plugin>/jsx/buwan.jsx");
+ *      return __result(BUWAN.run("organize", "<project>/edit/premiere/manifest.json", "{limit:200}"));
+ *
+ *  Steps (the basics, in house order):
+ *      status    what is in the project vs the manifest (new clips from shooters, missing ones)
+ *      import    import manifest clips that are not in the project yet, straight into their bins
+ *      organize  bins per category + Premiere label colors (rejects -> 00 Rejected (cull), Brown)
+ *      cull      only the rejects, with reasons
+ *      grade     Lumetri Color + studio LUT on every camera clip of a sequence (opts.sequence or active)
+ *      enhance   speech clips of a sequence: measured gain, DeNoise, Hard Limiter
+ *      deadair   subclips of the speech ranges (dead air removed), bin "01 Speech/Speech ranges"
+ *      aroll     the A-Roll clean sequence: every speech range back to back
+ *      sync      one stacked SYNC sequence per multicam group, clips at their audio-sync offsets
+ *      build     the music-driven timeline from the plan (speech V1/A1, b-roll V2, music A3/A4, markers)
+ *      all       import, organize, deadair, aroll, sync, build (if plan), grade, enhance
+ *
+ *  Nothing here deletes, renames or re-encodes footage. Everything is additive and undoable.
+ */
+
+var BUWAN = (function () {
+  var TICKS = 254016000000;            // ticks per second
+  var FRAME_TICKS = 10594584000;       // one frame at 23.976 (254016000000 * 1001 / 24000)
+  var MAX_LOG = 400;
+  var M = null;                        // manifest
+  var index = null;                    // normalized media path -> {item, parent}
+  var binCache = null;                 // "A/B" -> bin item
+  var logs = [];
+
+  // ---------- small helpers ----------
+  function log(s) { if (logs.length < MAX_LOG) logs.push(String(s)); try { $.writeln("[buwan] " + s); } catch (e) {} }
+  function has(arr, v) { for (var i = 0; i < arr.length; i++) if (arr[i] === v) return true; return false; }
+  function trim(s) { return String(s).replace(/^\s+|\s+$/g, ""); }
+  function norm(p) {
+    if (!p) return "";
+    var s = String(p).replace(/\\/g, "/");
+    if (s.indexOf("file://") === 0) s = File.decode(s.substring(7));
+    return s.toLowerCase();
+  }
+  function basename(p) { var s = String(p).replace(/\\/g, "/"); return s.substring(s.lastIndexOf("/") + 1); }
+  function ticks(sec) { return String(Math.round(sec * TICKS)); }
+  function ticksFrame(sec) { return String(Math.round(sec * 24000 / 1001) * FRAME_TICKS); }
+  function dB(db) { return Math.pow(10, db / 20); }
+  function fmt(sec) {
+    var m = Math.floor(sec / 60), s = Math.floor(sec - m * 60);
+    return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+  }
+  function readFile(path) {
+    var f = new File(path);
+    if (!f.exists) throw new Error("file not found: " + path);
+    f.encoding = "UTF-8";
+    if (!f.open("r")) throw new Error("cannot open: " + path);
+    var t = f.read();
+    f.close();
+    return t;
+  }
+  function loadManifest(path) {
+    var txt = readFile(path);
+    M = eval("(" + txt + ")");
+    if (!M || !M.clips) throw new Error("not a Buwan manifest: " + path);
+    M._path = path;
+    return M;
+  }
+  function parseOpts(o) {
+    if (!o) return {};
+    if (typeof o === "string") { try { return eval("(" + o + ")") || {}; } catch (e) { throw new Error("opts must be an object literal: " + o); } }
+    return o;
+  }
+
+  // ---------- project index ----------
+  function walk(bin, parent, fn) {
+    for (var i = 0; i < bin.children.numItems; i++) {
+      var it = bin.children[i];
+      fn(it, bin);
+      if (it.type === 2) walk(it, bin, fn);
+    }
+  }
+  function reindex() {
+    index = {}; binCache = {};
+    var root = app.project.rootItem;
+    walk(root, null, function (it, parent) {
+      if (it.type === 2) return;
+      var mp = "";
+      try { if (!it.isSequence()) mp = it.getMediaPath(); } catch (e) {}
+      if (mp) {
+        var k = norm(mp);
+        // the imported master (named like the file) wins over subclips that share the path
+        var isMaster = String(it.name).toLowerCase() === basename(mp).toLowerCase();
+        if (!index[k] || (isMaster && !index[k].master)) index[k] = { item: it, parent: parent, master: isMaster };
+      }
+    });
+    return index;
+  }
+  function itemFor(path) {
+    if (!index) reindex();
+    var e = index[norm(path)];
+    return e ? e.item : null;
+  }
+  function parentOf(path) {
+    if (!index) reindex();
+    var e = index[norm(path)];
+    return e ? e.parent : null;
+  }
+  function childBin(parent, name) {
+    for (var i = 0; i < parent.children.numItems; i++) {
+      var it = parent.children[i];
+      if (it.type === 2 && it.name === name) return it;
+    }
+    return null;
+  }
+  function bin(pathName) {           // "01 Speech" or "01 Speech/Speech ranges"; created when missing
+    if (!binCache) binCache = {};
+    if (binCache[pathName]) return binCache[pathName];
+    var parts = String(pathName).split("/"), cur = app.project.rootItem, acc = "";
+    for (var i = 0; i < parts.length; i++) {
+      var name = trim(parts[i]);
+      if (!name) continue;
+      acc = acc ? acc + "/" + name : name;
+      var b = binCache[acc] || childBin(cur, name);
+      if (!b) {
+        var made = cur.createBin(name);
+        b = (made && made.type === 2) ? made : childBin(cur, name);
+        if (!b) throw new Error("could not create bin " + acc);
+        log("bin created: " + acc);
+      }
+      binCache[acc] = b;
+      cur = b;
+    }
+    return cur;
+  }
+  function manifestClip(path) {
+    var k = norm(path);
+    for (var i = 0; i < M.clips.length; i++) if (norm(M.clips[i].path) === k) return M.clips[i];
+    return null;
+  }
+  function clipMap() {
+    var m = {};
+    for (var i = 0; i < M.clips.length; i++) m[norm(M.clips[i].path)] = M.clips[i];
+    return m;
+  }
+
+  // ---------- sequences ----------
+  function findSequence(name) {
+    for (var i = 0; i < app.project.sequences.numSequences; i++) {
+      var s = app.project.sequences[i];
+      if (s.name === name || s.sequenceID === name) return s;
+    }
+    return null;
+  }
+  function uniqueSeqName(name) {
+    var n = name, k = 2;
+    while (findSequence(n)) { n = name + " v" + k; k++; }
+    return n;
+  }
+  function listPresets() {
+    var found = [], roots = [];
+    var isWin = $.os.indexOf("Windows") >= 0;
+    var base = new Folder(isWin ? "C:/Program Files/Adobe" : "/Applications");
+    if (base.exists) {
+      var subs = base.getFiles();
+      for (var i = 0; i < subs.length; i++) {
+        if (!(subs[i] instanceof Folder) || !/Adobe Premiere Pro/.test(subs[i].displayName)) continue;
+        if (isWin) roots.push(new Folder(subs[i].fsName + "/Settings/SequencePresets"));
+        else {
+          var apps = subs[i].getFiles();
+          for (var j = 0; j < apps.length; j++) if (/\.app$/.test(apps[j].displayName)) roots.push(new Folder(apps[j].fsName + "/Contents/Settings/SequencePresets"));
+        }
+      }
+    }
+    function dig(folder, depth) {
+      if (depth > 4 || !folder.exists) return;
+      var fs = folder.getFiles();
+      for (var i = 0; i < fs.length; i++) {
+        if (fs[i] instanceof Folder) dig(fs[i], depth + 1);
+        else if (/\.sqpreset$/i.test(fs[i].displayName)) found.push(fs[i].fsName);
+      }
+    }
+    for (var r = 0; r < roots.length; r++) dig(roots[r], 0);
+    return found;
+  }
+  function pickPreset(preferred) {
+    if (preferred) { var f = new File(preferred); if (f.exists) return f.fsName; }
+    if (M && M.sequence && M.sequence.preset) { var g = new File(M.sequence.preset); if (g.exists) return g.fsName; }
+    var all = listPresets();
+    var pats = [/1080p\s*(23\.976|24)\b/i, /DSLR[\\\/].*1080p24/i, /1080p24/i, /1080p/i, /./];
+    for (var p = 0; p < pats.length; p++) for (var i = 0; i < all.length; i++) if (pats[p].test(all[i])) return all[i];
+    return null;
+  }
+  function applyHouseSettings(seq) {
+    try {
+      var st = seq.getSettings();
+      st.videoFrameWidth = 1920; st.videoFrameHeight = 1080;
+      try { st.videoFrameRate.ticks = String(FRAME_TICKS); } catch (e1) {}
+      seq.setSettings(st);
+    } catch (e) { log("sequence settings not changed (" + e + ") — check 1920x1080 @ 23.976 in Sequence Settings"); }
+    try { seq.setZeroPoint(String(3600 * TICKS)); } catch (e2) { try { seq.zeroPoint = String(3600 * TICKS); } catch (e3) { log("start timecode not set — set 01:00:00:00 in Sequence Settings"); } }
+  }
+  function createSequence(name, opts, seedItem) {
+    name = uniqueSeqName(name);
+    var seq = null, preset = pickPreset(opts && opts.preset);
+    app.enableQE();
+    if (preset) {
+      try {
+        qe.project.newSequence(name, preset);
+        seq = app.project.activeSequence;
+        if (!seq || seq.name !== name) seq = findSequence(name);
+      } catch (e) { log("preset sequence failed: " + e); seq = null; }
+    }
+    if (!seq && seedItem) {
+      try { seq = app.project.createNewSequenceFromClips(name, [seedItem]); } catch (e4) { log("createNewSequenceFromClips failed: " + e4); }
+      if (seq) {   // that puts the seed clip on the timeline: remove it
+        try { for (var t = 0; t < seq.videoTracks.numTracks; t++) while (seq.videoTracks[t].clips.numItems) seq.videoTracks[t].clips[0].remove(false, false); } catch (e5) {}
+        try { for (var a = 0; a < seq.audioTracks.numTracks; a++) while (seq.audioTracks[a].clips.numItems) seq.audioTracks[a].clips[0].remove(false, false); } catch (e6) {}
+      }
+    }
+    if (!seq) throw new Error("could not create a sequence: no .sqpreset found (pass {preset:'<path>.sqpreset'}) and no clip to seed from");
+    applyHouseSettings(seq);
+    try { app.project.openSequence(seq.sequenceID); } catch (e7) {}
+    try { app.project.activeSequence = seq; } catch (e8) {}
+    try {   // keep the project tidy
+      var pi = findSequenceItem(seq.name);
+      if (pi) pi.moveBin(bin("Timelines"));
+    } catch (e9) {}
+    log("sequence created: " + name + (preset ? "  (preset " + basename(preset) + ")" : ""));
+    return seq;
+  }
+  function findSequenceItem(name) {
+    var hit = null;
+    walk(app.project.rootItem, null, function (it) { if (!hit && it.type !== 2 && it.name === name) { try { if (it.isSequence()) hit = it; } catch (e) {} } });
+    return hit;
+  }
+  function ensureTracks(seq, nVideo, nAudio) {
+    var needV = nVideo - seq.videoTracks.numTracks, needA = nAudio - seq.audioTracks.numTracks;
+    if (needV <= 0 && needA <= 0) return true;
+    try {
+      app.enableQE();
+      var qs = qe.project.getActiveSequence();
+      // addTracks(numVideo, videoIndex, numAudio, audioChannelType(1=mono,2=stereo), audioIndex, numSubmix, submixType, submixIndex)
+      qs.addTracks(Math.max(0, needV), seq.videoTracks.numTracks, Math.max(0, needA), 2, seq.audioTracks.numTracks, 0, 2, 0);
+    } catch (e) { log("could not add tracks (" + e + "); add " + Math.max(0, needV) + " video / " + Math.max(0, needA) + " audio tracks by hand"); }
+    return seq.videoTracks.numTracks >= nVideo && seq.audioTracks.numTracks >= nAudio;
+  }
+  function place(seq, item, srcIn, srcOut, at, vTrack, aTrack) {
+    // in/out on the project item, then overwrite at `at` (seconds of sequence time, 0 = sequence start)
+    var ok = false;
+    try { item.setInPoint(ticks(srcIn), 4); item.setOutPoint(ticks(srcOut), 4); } catch (e) {
+      try { item.setInPoint(ticks(srcIn), 1); item.setOutPoint(ticks(srcOut), 1); item.setInPoint(ticks(srcIn), 2); item.setOutPoint(ticks(srcOut), 2); } catch (e2) {}
+    }
+    try {
+      if (typeof seq.overwriteClip === "function") { seq.overwriteClip(item, ticksFrame(at), vTrack, aTrack); ok = true; }
+      else if (vTrack >= 0) { seq.videoTracks[vTrack].overwriteClip(item, at); ok = true; }
+      else { seq.audioTracks[aTrack].overwriteClip(item, at); ok = true; }
+    } catch (e3) { log("place failed for " + item.name + " at " + fmt(at) + ": " + e3); }
+    try { item.clearInPoint(4); item.clearOutPoint(4); } catch (e4) {}
+    return ok;
+  }
+  function clipAt(track, atSec) {       // the track clip that starts at/near atSec
+    var want = Math.round(atSec * TICKS), best = null, bestD = 1e18;
+    for (var i = 0; i < track.clips.numItems; i++) {
+      var d = Math.abs(parseFloat(track.clips[i].start.ticks) - want);
+      if (d < bestD) { bestD = d; best = track.clips[i]; }
+    }
+    return bestD <= FRAME_TICKS * 1.5 ? best : null;
+  }
+  function marker(seq, at, name, comment, color) {
+    try {
+      var mk = seq.markers.createMarker(at);
+      mk.name = name;
+      if (comment) mk.comments = comment;
+      if (color !== undefined) { try { mk.setColorByIndex(color); } catch (e) {} }
+      return mk;
+    } catch (e2) { log("marker failed at " + fmt(at) + ": " + e2); return null; }
+  }
+  function qeItemFor(qeTrack, domClip, domIndex) {
+    // QE track items include gaps, so match by start ticks; fall back to the DOM index (the bridge's own approach)
+    var want = String(domClip.start.ticks);
+    for (var i = 0; i < qeTrack.numItems; i++) {
+      var q = qeTrack.getItemAt(i);
+      try { if (q && q.start && String(q.start.ticks) === want && q.type !== "Empty") return q; } catch (e) {}
+    }
+    try { var f = qeTrack.getItemAt(domIndex); if (f && f.name === domClip.name) return f; } catch (e2) {}
+    return null;
+  }
+  function component(clip, displayName) {
+    for (var i = 0; i < clip.components.numItems; i++) if (clip.components[i].displayName === displayName) return clip.components[i];
+    return null;
+  }
+  function property(comp, displayName) {
+    for (var p = 0; p < comp.properties.numItems; p++) if (comp.properties[p].displayName === displayName) return comp.properties[p];
+    return null;
+  }
+  function addVideoEffect(qeSeq, trackIndex, domClip, effectName, domIndex) {
+    var qt = qeSeq.getVideoTrackAt(trackIndex), q = qeItemFor(qt, domClip, domIndex);
+    if (!q) throw new Error("QE item not found for " + domClip.name);
+    var fx = qe.project.getVideoEffectByName(effectName);
+    if (!fx) throw new Error("effect not installed: " + effectName);
+    q.addVideoEffect(fx);
+  }
+  function addAudioEffect(qeSeq, trackIndex, domClip, effectName, domIndex) {
+    var qt = qeSeq.getAudioTrackAt(trackIndex), q = qeItemFor(qt, domClip, domIndex);
+    if (!q) throw new Error("QE item not found for " + domClip.name);
+    var fx = qe.project.getAudioEffectByName(effectName);
+    if (!fx) throw new Error("audio effect not installed: " + effectName);
+    q.addAudioEffect(fx);
+  }
+  function targetSequence(opts) {
+    var seq = opts && opts.sequence ? findSequence(opts.sequence) : app.project.activeSequence;
+    if (!seq) throw new Error(opts && opts.sequence ? "sequence not found: " + opts.sequence : "no active sequence (open one, or pass {sequence:'name'})");
+    try { app.project.activeSequence = seq; } catch (e) {}
+    return seq;
+  }
+
+  // ---------- steps ----------
+  function stepStatus() {
+    reindex();
+    var missing = [], present = 0, byCat = {}, newOnes = [];
+    var cm = clipMap();
+    for (var i = 0; i < M.clips.length; i++) {
+      if (M.clips[i].enhance && M.clips[i].enhance.clean) cm[norm(M.clips[i].enhance.clean)] = M.clips[i];   // cleaned WAVs are ours, not new footage
+      if (itemFor(M.clips[i].path)) present++; else missing.push(M.clips[i].name);
+      var c = M.clips[i].category || "(uncategorized)";
+      byCat[c] = (byCat[c] || 0) + 1;
+    }
+    for (var k in index) if (index.hasOwnProperty(k) && !cm[k]) newOnes.push(basename(index[k].item.name));
+    return { manifest: M._path, generated: M.generated, project: app.project.name, clips_in_manifest: M.clips.length, in_project: present,
+             not_imported: missing.length, not_imported_names: missing.slice(0, 30),
+             in_project_but_not_in_manifest: newOnes.length, new_names: newOnes.slice(0, 30),
+             categories: byCat, multicam_groups: M.multicams ? M.multicams.length : 0, plan: M.plan ? M.plan.name : null, grade: M.grade ? M.grade.look : null,
+             hint: newOnes.length ? "new footage in the project that the engine has not seen: re-run /buwan:assemble scan → cull → … then `assemble.js premiere` and this step again" : "" };
+  }
+  function stepImport(opts) {
+    reindex();
+    var limit = opts.limit || 150, groups = {}, order = [], todo = 0;
+    for (var i = 0; i < M.clips.length; i++) {
+      var c = M.clips[i];
+      if (itemFor(c.path)) continue;
+      var f = new File(c.path);
+      if (!f.exists) { log("missing on disk: " + c.path); continue; }
+      if (!groups[c.bin]) { groups[c.bin] = []; order.push(c.bin); }
+      groups[c.bin].push(f.fsName); todo++;
+    }
+    if (M.use_clean) {
+      for (var j = 0; j < M.clips.length; j++) {
+        var e = M.clips[j].enhance;
+        if (e && e.clean && !itemFor(e.clean) && new File(e.clean).exists) {
+          if (!groups["01 Speech/Clean audio"]) { groups["01 Speech/Clean audio"] = []; order.push("01 Speech/Clean audio"); }
+          groups["01 Speech/Clean audio"].push(new File(e.clean).fsName); todo++;
+        }
+      }
+    }
+    var done = 0;
+    for (var g = 0; g < order.length && done < limit; g++) {
+      var paths = groups[order[g]], target = bin(order[g]);
+      while (paths.length && done < limit) {
+        var batch = paths.splice(0, Math.min(50, limit - done));
+        var ok = app.project.importFiles(batch, true, target, false);
+        if (!ok) log("import returned false for " + batch.length + " files into " + order[g]);
+        done += batch.length;
+      }
+    }
+    reindex();
+    return { imported: done, remaining: todo - done, hint: todo - done > 0 ? "run import again (same call) for the rest" : "" };
+  }
+  function stepOrganize(opts, onlyRejects) {
+    reindex();
+    var moved = 0, labeled = 0, missing = 0, rejects = [], warned = 0;
+    for (var i = 0; i < M.clips.length; i++) {
+      var c = M.clips[i];
+      if (onlyRejects && !(c.reject && c.reject.length)) continue;
+      var it = itemFor(c.path);
+      if (!it) { missing++; continue; }
+      var target = bin(c.bin), parent = parentOf(c.path);
+      if (!parent || parent.nodeId !== target.nodeId) {
+        try { it.moveBin(target); moved++; } catch (e) { log("move failed " + c.name + ": " + e); }
+      }
+      if (c.label >= 0) {
+        var cur = -1; try { cur = it.getColorLabel(); } catch (e2) {}
+        if (cur !== c.label) { try { it.setColorLabel(c.label); labeled++; } catch (e3) { log("label failed " + c.name + ": " + e3); } }
+      }
+      if (c.reject && c.reject.length) rejects.push(c.name + " (" + c.reject.join(", ") + ")");
+      if (c.warn && c.warn.length) warned++;
+    }
+    reindex();
+    return { moved: moved, labeled: labeled, not_in_project: missing, rejected: rejects.length, rejected_clips: rejects.slice(0, 40), with_warnings: warned,
+             bins: M.bins, labels: M.labels, hint: missing ? "run the import step first for the " + missing + " clips not in the project" : "" };
+  }
+  function stepGrade(opts) {
+    if (!M.grade || !M.grade.lut) throw new Error("no grade in the manifest: assemble.js premiere <project> --grade warm|cool|bw (and run /buwan:setup-kit for the LUTs)");
+    var lutFile = new File(M.grade.lut);
+    if (!lutFile.exists) throw new Error("LUT not found: " + M.grade.lut);
+    var lut = lutFile.fsName, seq = targetSequence(opts);
+    app.enableQE();
+    var qeSeq = qe.project.getActiveSequence();
+    reindex();
+    var cm = clipMap(), applied = 0, skipped = 0, failed = [], already = 0, used = "";
+    for (var t = 0; t < seq.videoTracks.numTracks; t++) {
+      var track = seq.videoTracks[t];
+      for (var i = 0; i < track.clips.numItems; i++) {
+        var clip = track.clips[i], mp = "";
+        try { mp = clip.projectItem.getMediaPath(); } catch (e) {}
+        var mc = mp ? cm[norm(mp)] : null;
+        if (!mc || has(M.grade.skip_categories, mc.category) || mc.kind !== "video") { skipped++; continue; }
+        try {
+          var comp = component(clip, "Lumetri Color");
+          if (!comp) { addVideoEffect(qeSeq, t, clip, "Lumetri Color", i); comp = component(clip, "Lumetri Color"); }
+          if (!comp) throw new Error("Lumetri not added");
+          var look = property(comp, "Look"), inLut = property(comp, "Input LUT");
+          var cur = null; try { cur = (look || inLut).getValue(); } catch (e1) {}
+          if (cur && norm(cur) === norm(lut)) { already++; continue; }
+          if (look && opts.slot !== "input") {
+            look.setValue(lut, true); used = "Creative > Look";
+            var inten = property(comp, "Intensity"); if (inten) { try { inten.setValue(M.grade.intensity, true); } catch (e2) {} }
+          } else if (inLut) { inLut.setValue(lut, true); used = "Basic > Input LUT"; }
+          else throw new Error("no LUT slot on Lumetri");
+          var back = null; try { back = (look && opts.slot !== "input" ? look : inLut).getValue(); } catch (e3) {}
+          if (back && norm(back) !== norm(lut)) throw new Error("Premiere did not keep the LUT (read back " + back + ")");
+          applied++;
+        } catch (e4) { failed.push(clip.name + ": " + e4); }
+      }
+    }
+    return { sequence: seq.name, look: M.grade.look, lut: lut, slot: used, intensity: M.grade.intensity, applied: applied, already: already, skipped_non_camera: skipped,
+             failed: failed.length, failed_clips: failed.slice(0, 20),
+             hint: failed.length ? "Lumetri property writes are known to no-op on some Premiere 26.3 builds — if every clip failed, select all camera clips, apply Lumetri once and pick the LUT from Creative > Look (the studio LUTs are in kit/luts), then copy/paste attributes." : "" };
+  }
+  function stepEnhance(opts) {
+    var seq = targetSequence(opts);
+    app.enableQE();
+    var qeSeq = qe.project.getActiveSequence();
+    reindex();
+    var cm = clipMap(), leveled = 0, denoised = 0, limited = 0, failed = [], seen = 0;
+    for (var t = 0; t < seq.audioTracks.numTracks; t++) {
+      var track = seq.audioTracks[t];
+      for (var i = 0; i < track.clips.numItems; i++) {
+        var clip = track.clips[i], mp = "";
+        try { mp = clip.projectItem.getMediaPath(); } catch (e) {}
+        var mc = mp ? cm[norm(mp)] : null;
+        if (!mc || mc.category !== "01 Speech") continue;
+        seen++;
+        var rec = mc.enhance || { gain_db: 0, noise_reduction: 0 };
+        try {
+          var vol = component(clip, "Volume"), lvl = vol ? property(vol, "Level") : null;
+          if (lvl && rec.gain_db) {
+            var want = dB(rec.gain_db);
+            lvl.setValue(want, true);
+            var got = Number(lvl.getValue());
+            if (!isNaN(got) && Math.abs(got - want) < 0.001) leveled++; else failed.push(clip.name + ": level write ignored");
+          }
+          if (rec.noise_reduction > 0 && !component(clip, "DeNoise")) {
+            addAudioEffect(qeSeq, t, clip, "DeNoise", i);
+            var dn = component(clip, "DeNoise"), amt = dn ? property(dn, "Amount") : null;
+            if (amt) { try { amt.setValue(rec.noise_reduction, true); } catch (e1) {} }
+            denoised++;
+          }
+          if (!component(clip, "Hard Limiter")) {
+            addAudioEffect(qeSeq, t, clip, "Hard Limiter", i);
+            var hl = component(clip, "Hard Limiter"), mx = hl ? property(hl, "Maximum Amplitude") : null;
+            if (mx) { try { mx.setValue(-6, true); } catch (e2) {} }
+            limited++;
+          }
+        } catch (e3) { failed.push(clip.name + ": " + e3); }
+      }
+    }
+    return { sequence: seq.name, speech_clips: seen, leveled: leveled, denoised: denoised, limited: limited, failed: failed.length, failed_clips: failed.slice(0, 20),
+             targets: "dialogue -17 LUFS, peaks -6 dBFS; verify with Essential Sound > Loudness > Auto-Match on the dialogue clips, then Window > Loudness Radar on the mix",
+             hint: seen === 0 ? "no 01 Speech clips in this sequence (categories come from /buwan:organize)" : "" };
+  }
+  function stepDeadair(opts) {
+    reindex();
+    var limit = opts.limit || 400, made = 0, exists = 0, missing = 0, clipsDone = 0;
+    var target = bin("01 Speech/Speech ranges"), names = {};
+    for (var i = 0; i < target.children.numItems; i++) names[target.children[i].name] = true;
+    for (var c = 0; c < M.clips.length && made < limit; c++) {
+      var mc = M.clips[c];
+      if (!mc.speech_ranges || !mc.speech_ranges.length) continue;
+      var it = itemFor(mc.path);
+      if (!it) { missing++; continue; }
+      clipsDone++;
+      for (var r = 0; r < mc.speech_ranges.length && made < limit; r++) {
+        var a = mc.speech_ranges[r][0], b = mc.speech_ranges[r][1];
+        var nm = mc.name + " - speech " + (r + 1 < 10 ? "0" : "") + (r + 1) + " [" + fmt(a) + "-" + fmt(b) + "]";
+        if (names[nm]) { exists++; continue; }
+        try {
+          var sub = it.createSubClip(nm, ticks(a), ticks(b), 0, 1, 1);
+          if (sub) { try { sub.moveBin(target); } catch (e) {} try { sub.setColorLabel(M.labels["01 Speech"]); } catch (e2) {} made++; names[nm] = true; }
+        } catch (e3) { log("subclip failed " + nm + ": " + e3); }
+      }
+    }
+    reindex();
+    return { speech_clips: clipsDone, subclips_created: made, already_there: exists, not_in_project: missing, bin: "01 Speech/Speech ranges",
+             hint: made >= limit ? "run deadair again for the rest" : "" };
+  }
+  function orderedSpeech() {
+    var list = [];
+    for (var i = 0; i < M.clips.length; i++) if (M.clips[i].speech_ranges && M.clips[i].speech_ranges.length) list.push(M.clips[i]);
+    list.sort(function (x, y) {
+      var a = x.sync_offset === null || x.sync_offset === undefined ? 1e12 : x.sync_offset, b = y.sync_offset === null || y.sync_offset === undefined ? 1e12 : y.sync_offset;
+      return a !== b ? a - b : (x.name < y.name ? -1 : 1);
+    });
+    return list;
+  }
+  function stepAroll(opts) {
+    reindex();
+    var list = orderedSpeech();
+    if (!list.length) throw new Error("no speech ranges in the manifest (run assemble.js deadair first)");
+    var seed = null;
+    for (var s = 0; s < list.length && !seed; s++) seed = itemFor(list[s].path);
+    if (!seed) throw new Error("speech clips are not in the project yet — run the import step");
+    var seq = createSequence(opts.name || "A-Roll clean", opts, seed);
+    var t = 0, placed = 0, missing = 0, gap = opts.gap === undefined ? 0.3 : opts.gap;
+    for (var i = 0; i < list.length; i++) {
+      var mc = list[i], it = itemFor(mc.path);
+      if (!it) { missing++; continue; }
+      for (var r = 0; r < mc.speech_ranges.length; r++) {
+        var a = mc.speech_ranges[r][0], b = mc.speech_ranges[r][1];
+        if (place(seq, it, a, b, t, 0, 0)) { placed++; if (r === 0) marker(seq, t, mc.name, "speech " + fmt(a) + "-" + fmt(b) + (mc.camera ? " · " + mc.camera : ""), 7); }
+        t += (b - a) + gap;
+      }
+    }
+    return { sequence: seq.name, segments: placed, minutes: Math.round(t / 6) / 10, clips_not_in_project: missing };
+  }
+  function stepSync(opts) {
+    reindex();
+    if (!M.multicams || !M.multicams.length) throw new Error("no multicam groups in the manifest (run assemble.js sync first)");
+    var out = [];
+    for (var g = 0; g < M.multicams.length; g++) {
+      var mc = M.multicams[g];
+      if (opts.group && mc.id !== opts.group && mc.name !== opts.group) continue;
+      if (findSequence("SYNC " + mc.name)) { out.push({ group: mc.name, sequence: "SYNC " + mc.name, skipped: "exists" }); continue; }
+      var seed = null;
+      for (var a0 = 0; a0 < mc.angles.length && !seed; a0++) for (var c0 = 0; c0 < mc.angles[a0].clips.length && !seed; c0++) seed = itemFor(mc.angles[a0].clips[c0].clip);
+      if (!seed) { out.push({ group: mc.name, error: "clips not in project" }); continue; }
+      var seq = createSequence("SYNC " + mc.name, opts, seed);
+      ensureTracks(seq, mc.angles.length, mc.angles.length);
+      var placed = 0, missing = 0;
+      for (var a = 0; a < mc.angles.length; a++) {
+        var v = Math.min(a, seq.videoTracks.numTracks - 1), au = Math.min(a, seq.audioTracks.numTracks - 1);
+        for (var c = 0; c < mc.angles[a].clips.length; c++) {
+          var e = mc.angles[a].clips[c], it = itemFor(e.clip);
+          if (!it) { missing++; continue; }
+          var m2 = manifestClip(e.clip), dur = m2 ? m2.duration : 0;
+          if (place(seq, it, 0, dur, e.offset, v, au)) placed++;
+        }
+        marker(seq, a * 1.0, "Angle " + (a + 1) + ": " + mc.angles[a].name, "V" + (v + 1) + "/A" + (au + 1), 6);
+      }
+      out.push({ group: mc.name, sequence: seq.name, angles: mc.angles.length, clips_placed: placed, missing: missing });
+    }
+    return { sync_sequences: out, next: "In the Project panel select each SYNC sequence → right-click → Multi-Camera → Enable, then edit it as a multicam clip (Program Monitor → Multi-Camera view)." };
+  }
+  function stepBuild(opts) {
+    if (!M.plan) throw new Error("no plan in the manifest: assemble.js premiere <project> --plan edit/<cut>.plan.json");
+    reindex();
+    var P = M.plan, cm = clipMap();
+    var seed = null;
+    for (var s = 0; s < P.spine.length && !seed; s++) if (!P.spine[s].gap) seed = itemFor(P.spine[s].clip);
+    for (var s2 = 0; s2 < P.connected.length && !seed; s2++) seed = itemFor(P.connected[s2].clip);
+    if (!seed) throw new Error("plan clips are not in the project — run the import step");
+    var seq = createSequence(opts.name || P.name, opts, seed);
+    var useClean = !!M.use_clean;
+    // V1 speech, V2 b-roll | A1 speech, A2 clean speech (optional), A3 music intro, A4 music story
+    var A_CLEAN = 1, A_INTRO = useClean ? 2 : 1, A_STORY = useClean ? 3 : 2;
+    ensureTracks(seq, 2, A_STORY + 1);
+    var placedSpeech = 0, placedBroll = 0, placedMusic = 0, missing = [], slowmo = [], levelFails = 0;
+    // speech spine
+    for (var i = 0; i < P.spine.length; i++) {
+      var sp = P.spine[i];
+      for (var k = 0; sp.markers && k < sp.markers.length; k++) {
+        var mk = sp.markers[k];
+        marker(seq, sp.at + mk.t, mk.name, mk.todo ? "TODO" : "", mk.chapter ? 2 : (mk.todo ? 3 : (/PEAK|HOLD/.test(mk.name) ? 1 : 0)));
+      }
+      if (sp.gap) continue;
+      var it = itemFor(sp.clip);
+      if (!it) { missing.push(basename(sp.clip)); continue; }
+      if (place(seq, it, sp["in"], sp.out, sp.at, 0, 0)) {
+        placedSpeech++;
+        if (useClean) {
+          var mcs = cm[norm(sp.clip)], cl = mcs && mcs.enhance && mcs.enhance.clean ? itemFor(mcs.enhance.clean) : null;
+          if (cl) {
+            place(seq, cl, sp["in"], sp.out, sp.at, -1, A_CLEAN);
+            var camA = clipAt(seq.audioTracks[0], sp.at);          // mute the camera audio under it
+            if (camA) { var v0 = component(camA, "Volume"), l0 = v0 ? property(v0, "Level") : null; if (l0) { try { l0.setValue(0, true); } catch (e0) {} } }
+          }
+        }
+      }
+    }
+    // b-roll + music
+    for (var j = 0; j < P.connected.length; j++) {
+      var c = P.connected[j], item = itemFor(c.clip);
+      if (!item) { missing.push(basename(c.clip)); continue; }
+      if (c.role === "music") {
+        var isIntro = /intro/i.test(c.name || ""), aT = isIntro ? A_INTRO : A_STORY;
+        if (place(seq, item, c["in"], c.out, c.at, -1, aT)) {
+          placedMusic++;
+          var mclip = clipAt(seq.audioTracks[aT], c.at), gdb = (c.gain_db !== undefined && c.gain_db !== null) ? c.gain_db : (isIntro ? -3 : -20);
+          if (mclip) { var vm = component(mclip, "Volume"), lm = vm ? property(vm, "Level") : null; if (lm) { try { lm.setValue(dB(gdb), true); if (Math.abs(Number(lm.getValue()) - dB(gdb)) > 0.001) levelFails++; } catch (e1) { levelFails++; } } }
+          marker(seq, c.at, (c.name || "Music") + " " + gdb + " dB", "music bed " + gdb + " dB", 0);
+        }
+        continue;
+      }
+      var mcc = cm[norm(c.clip)], a = c["in"], b = c.out;
+      if (c.slowmo && mcc && mcc.fps > 24.5) {
+        var factor = mcc.fps / (24000 / 1001);
+        try { item.setOverrideFrameRate(24000 / 1001); a = c["in"] * factor; b = c.out * factor; if (!has(slowmo, item.name)) slowmo.push(item.name); } catch (e2) { marker(seq, c.at, "SPEED: slow-mo " + Math.round(100 / factor) + "% — set by hand", "Clip > Speed/Duration", 3); }
+      }
+      if (place(seq, item, a, b, c.at, 1, -1)) placedBroll++;
+    }
+    var st = P.stats || {};
+    return { sequence: seq.name, speech_clips: placedSpeech, broll_shots: placedBroll, music: placedMusic, slowmo_interpreted: slowmo.length, slowmo_clips: slowmo.slice(0, 20),
+             music_level_writes_failed: levelFails, missing: missing.length, missing_names: missing.slice(0, 20), total_s: st.total_s || 0, lines: st.speech_lines || 0,
+             edl: P.edl || null, notes: P.notes || [],
+             next: "Open the sequence; chapter markers (purple) mark the parts, red = peak/final hold, orange = graphics TODO (render with /buwan:graphics). Run grade and enhance on this sequence next." };
+  }
+
+  function run(step, manifestPath, opts) {
+    logs = [];
+    var t0 = new Date().getTime();
+    try {
+      if (!app.project) throw new Error("no project open in Premiere");
+      loadManifest(manifestPath);
+      var o = parseOpts(opts), r;
+      switch (String(step)) {
+        case "status": r = stepStatus(o); break;
+        case "import": r = stepImport(o); break;
+        case "organize": r = stepOrganize(o, false); break;
+        case "cull": r = stepOrganize(o, true); break;
+        case "grade": r = stepGrade(o); break;
+        case "enhance": r = stepEnhance(o); break;
+        case "deadair": r = stepDeadair(o); break;
+        case "aroll": r = stepAroll(o); break;
+        case "sync": r = stepSync(o); break;
+        case "build": r = stepBuild(o); break;
+        case "all":
+          r = { "import": stepImport({ limit: 100000 }), organize: stepOrganize(o, false), deadair: stepDeadair({ limit: 100000 }) };
+          r.aroll = stepAroll(o);
+          if (M.multicams && M.multicams.length) { try { r.sync = stepSync(o); } catch (e1) { r.sync = { error: String(e1) }; } }
+          if (M.plan) {
+            r.build = stepBuild(o);
+            var so = { sequence: r.build.sequence };
+            if (M.grade && M.grade.lut) { try { r.grade = stepGrade(so); } catch (e2) { r.grade = { error: String(e2) }; } }
+            try { r.enhance = stepEnhance(so); } catch (e3) { r.enhance = { error: String(e3) }; }
+          }
+          break;
+        default: throw new Error("unknown step: " + step + " (status, import, organize, cull, grade, enhance, deadair, aroll, sync, build, all)");
+      }
+      r.ok = true; r.step = step; r.seconds = Math.round((new Date().getTime() - t0) / 100) / 10; r.log = logs;
+      try { app.project.save(); r.saved = true; } catch (e4) { r.saved = false; }
+      return r;
+    } catch (err) {
+      return { ok: false, step: step, error: String(err), line: err && err.line ? err.line : null, log: logs };
+    }
+  }
+
+  return { run: run, version: "1.0.0", steps: ["status", "import", "organize", "cull", "grade", "enhance", "deadair", "aroll", "sync", "build", "all"] };
+})();

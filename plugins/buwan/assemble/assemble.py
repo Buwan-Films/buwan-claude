@@ -158,6 +158,79 @@ def cmd_sync(a):
     log(f"{len(mcs)} multicam groups")
 
 
+def _speech_clips(project: Path, clips: dict[str, Clip], categories: dict) -> list[Clip]:
+    sp = [c for p, c in clips.items() if categories.get(p) == "01 Speech" and c.has_audio]
+    return sp or [c for c in clips.values() if c.has_audio and c.camera != "music"]
+
+
+def cmd_enhance(a):
+    from enhance import enhance, render_clean
+    project = Path(a.project)
+    clips = load_clips(project)
+    cats = load_categories(project, a.categories)
+    sp = _speech_clips(project, clips, cats)
+    res = enhance(sp, a.workers)
+    if a.render:
+        for c in sp:
+            if res.get(c.path, {}).get("recipe"):
+                res[c.path]["clean"] = render_clean(c, res[c.path]["measure"], project / "edit" / "audio" / "clean")
+    save_json(adir(project) / "enhance.json", res)
+    noisy = [Path(p).name for p, v in res.items() if v.get("measure", {}).get("snr_db") is not None and v["measure"]["snr_db"] < 15]
+    log(f"measured {len(res)} speech clips; noisy (SNR<15dB): {noisy[:15]}")
+
+
+def cmd_deadair(a):
+    from deadair import dead_air
+    project = Path(a.project)
+    clips = load_clips(project)
+    cats = load_categories(project, a.categories)
+    res = dead_air(_speech_clips(project, clips, cats), a.workers)
+    save_json(adir(project) / "speech_ranges.json", res)
+    log(f"speech kept {sum(v['kept_s'] for v in res.values())/60:.1f} min, dead air removed {sum(v['removed_s'] for v in res.values())/60:.1f} min")
+
+
+def _grade_opt(a):
+    if not getattr(a, "grade", None):
+        return None
+    lut = {"warm": "Buwan_Warm", "cool": "Buwan_Cool", "bw": "Buwan_BW"}.get(a.grade.lower(), a.grade)
+    return {"lut": lut, "mix": a.lut_mix, "fcp_filter": bool(a.fcp_lut)}
+
+
+def _enhance_opt(project: Path, a):
+    p = adir(project) / "enhance.json"
+    if getattr(a, "no_enhance", False) or not p.exists():
+        return {}
+    return {k: v["recipe"] for k, v in load_json(p).items() if v.get("recipe")}
+
+
+def cmd_aroll(a):
+    """A-Roll clean: every speech clip, silences removed, in sync/time order, enhanced."""
+    from fcpxml import write_plan
+    project = Path(a.project)
+    clips = load_clips(project)
+    cats = load_categories(project, a.categories)
+    rp = adir(project) / "speech_ranges.json"
+    if not rp.exists():
+        sys.exit("run `deadair` first")
+    ranges = load_json(rp)
+    sync = load_json(adir(project) / "sync.json") if (adir(project) / "sync.json").exists() else {"clips": {}}
+    order = sorted(ranges.keys(), key=lambda p: (sync["clips"].get(p, {}).get("offset") if sync["clips"].get(p, {}).get("offset") is not None else 1e12, clips[p].rel if p in clips else p))
+    spine, t = [], 0.0
+    for p in order:
+        if p not in clips:
+            continue
+        for a0, b0 in ranges[p]["ranges"]:
+            d = b0 - a0
+            spine.append({"clip": p, "in": a0, "out": b0, "at": t, "dur": d, "role": "dialogue", "audio_role": f"dialogue.{clips[p].camera or 'speech'}",
+                          "name": clips[p].name, "markers": [{"t": 0.0, "name": f"{clips[p].name} {a0:.1f}s"}]})
+            t += d + 0.3
+    plan = {"name": a.name or "A-Roll clean", "event": a.event or project.name, "library": a.library, "clips": {p: c.to_json() for p, c in clips.items()},
+            "spine": spine, "connected": [], "include_event_clips": False, "enhance": _enhance_opt(project, a), "grade": _grade_opt(a)}
+    out = Path(a.out) if a.out else next_version(project, "aroll-clean", ".fcpxml")
+    write_plan(plan, out)
+    log(f"wrote {out}: {len(spine)} speech segments, {t/60:.1f} min (dead air removed)")
+
+
 def _roles_for(categories: dict, clips: dict[str, Clip]):
     vrole = {"02 Prep & Details": "Video.Details", "03 Portraits": "Video.Portraits", "04 Ceremony": "Video.Ceremony", "05 Reactions & BTS": "Video.Reactions",
              "06 Establishing": "Video.Establishing", "07 Reception & Party": "Video.Party", "08 Drone": "Video.Drone", "11 Graphics": "Titles", "12 Grade & Adjust": "Video.Adjust"}
@@ -192,8 +265,11 @@ def cmd_organize(a):
             kw[p].append("warn")
     roles, vroles = _roles_for(cats, clips)
     mcs = load_json(adir(project) / "multicams.json") if (adir(project) / "multicams.json").exists() else []
+    rp = adir(project) / "speech_ranges.json"
+    favorites = {p: v["ranges"] for p, v in load_json(rp).items()} if rp.exists() else {}
     plan = {"name": "", "event": a.event or project.name, "library": a.library, "clips": {p: c.to_json() for p, c in clips.items()},
-            "keywords": kw, "rejected": rejected, "notes": notes, "roles": roles, "video_roles": vroles, "multicams": mcs if a.multicam else []}
+            "keywords": kw, "rejected": rejected, "notes": notes, "roles": roles, "video_roles": vroles, "multicams": mcs if a.multicam else [],
+            "favorites": favorites}
     out = Path(a.out) if a.out else next_version(project, "organize", ".fcpxml")
     write_plan(plan, out)
     log(f"wrote {out}: {len(clips)} clips, {len(rejected)} rejected, {len(plan['multicams'])} multicams")
@@ -234,7 +310,8 @@ def cmd_selects(a):
         t += d + 0.4
         last_part = s.get("part")
     plan = {"name": a.name or "Story-Lock Selects", "event": a.event or project.name, "library": a.library, "clips": {p: c.to_json() for p, c in clips.items()},
-            "spine": spine, "connected": [], "include_event_clips": False, "multicams": [m for m in mcs if a.multicam and m["id"] in {e.get("mc") for e in spine}]}
+            "spine": spine, "connected": [], "include_event_clips": False, "multicams": [m for m in mcs if a.multicam and m["id"] in {e.get("mc") for e in spine}],
+            "enhance": _enhance_opt(project, a), "grade": _grade_opt(a)}
     out = Path(a.out) if a.out else next_version(project, "selects", ".fcpxml")
     write_plan(plan, out)
     log(f"wrote {out}: {len(spine)} lines, {t:.1f}s")
@@ -264,6 +341,8 @@ def cmd_build(a):
     opts = json.loads(a.options) if a.options else {}
     plan = build_plan(clips, cats, cull_res, music, sel, sync, a.name or "SDE Cut", a.event or project.name, a.library, opts)
     plan["multicams"] = [m for m in mcs if a.multicam and m["id"] in {e.get("mc") for e in plan["spine"]}]
+    plan["enhance"] = _enhance_opt(project, a)
+    plan["grade"] = _grade_opt(a)
     out = Path(a.out) if a.out else next_version(project, slug(a.name or "sde-cut"), ".fcpxml")
     write_plan(plan, out)
     save_json(out.with_suffix(".plan.json"), {k: v for k, v in plan.items() if k != "clips"})
@@ -280,6 +359,19 @@ def cmd_build(a):
         log("  " + n)
 
 
+def cmd_premiere(a):
+    from premiere import cmd_premiere as run_premiere
+    project = Path(a.project)
+    clips = load_clips(project)
+    for k, v in (load_json(adir(project) / "music.json") if (adir(project) / "music.json").exists() else {}).items():
+        if isinstance(v, dict) and v.get("path") and v["path"] not in clips:
+            c = probe_clip(Path(v["path"]), Path(v["path"]).parent)
+            if c:
+                c.camera = "music"
+                clips[c.path] = c
+    run_premiere(a, clips, load_categories(project, a.categories))
+
+
 def cmd_selftest(a):
     from selftest import run_selftest
     run_selftest(Path(a.out))
@@ -292,14 +384,26 @@ def main():
     s = sub.add_parser("cull"); s.add_argument("project"); s.add_argument("--workers", type=int, default=4); s.set_defaults(f=cmd_cull)
     s = sub.add_parser("music"); s.add_argument("project"); s.add_argument("--intro"); s.add_argument("--main", required=True); s.set_defaults(f=cmd_music)
     s = sub.add_parser("sync"); s.add_argument("project"); s.add_argument("--anchor"); s.add_argument("--trusted", nargs="*"); s.set_defaults(f=cmd_sync)
-    for name, fn in (("organize", cmd_organize), ("selects", cmd_selects), ("build", cmd_build)):
+    s = sub.add_parser("enhance"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=4); s.add_argument("--render", action="store_true", help="also write cleaned WAVs to edit/audio/clean"); s.set_defaults(f=cmd_enhance)
+    s = sub.add_parser("deadair"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=4); s.set_defaults(f=cmd_deadair)
+    for name, fn in (("organize", cmd_organize), ("selects", cmd_selects), ("build", cmd_build), ("aroll", cmd_aroll)):
         s = sub.add_parser(name); s.add_argument("project"); s.add_argument("--out"); s.add_argument("--event"); s.add_argument("--library")
         s.add_argument("--multicam", action="store_true"); s.add_argument("--categories")
+        s.add_argument("--grade", help="warm | cool | bw — tag the timeline with the studio look"); s.add_argument("--lut-mix", type=float, default=0.8)
+        s.add_argument("--fcp-lut", action="store_true", help="EXPERIMENTAL: write Final Cut's Custom LUT effect on every camera clip")
+        s.add_argument("--no-enhance", action="store_true")
+        if name in ("selects", "build"):
+            s.add_argument("--selects", required=True)
         if name != "organize":
-            s.add_argument("--selects", required=True); s.add_argument("--name")
+            s.add_argument("--name")
         if name == "build":
             s.add_argument("--options", help='JSON, e.g. {"music_bed_db":-18}')
         s.set_defaults(f=fn)
+    s = sub.add_parser("premiere", help="write edit/premiere/manifest.json for the Premiere apply library (buwan-premiere/jsx/buwan.jsx)")
+    s.add_argument("project"); s.add_argument("--plan", help="a *.plan.json written by `build` — adds the timeline to the manifest")
+    s.add_argument("--categories"); s.add_argument("--grade", help="warm | cool | bw"); s.add_argument("--lut-mix", type=float, default=0.8)
+    s.add_argument("--use-clean", action="store_true", help="build lays the cleaned WAVs (enhance --render) under each speech clip")
+    s.add_argument("--out"); s.set_defaults(f=cmd_premiere)
     s = sub.add_parser("selftest"); s.add_argument("out"); s.set_defaults(f=cmd_selftest)
     a = ap.parse_args()
     a.f(a)

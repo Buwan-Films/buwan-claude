@@ -152,9 +152,13 @@ def run_selftest(out: Path):
     run("cull", str(proj), "--workers", "4")
     run("music", str(proj), "--intro", str(out / "music" / "01_intro.wav"), "--main", str(out / "music" / "02_story.wav"))
     run("sync", str(proj), "--anchor", "A-Main", "--trusted", "A-Main", "B-Second", "D-Drone")
+    run("enhance", str(proj), "--render")
+    run("deadair", str(proj))
     run("organize", str(proj), "--multicam", "--event", "Selftest")
+    run("aroll", str(proj), "--event", "Selftest", "--grade", "warm")
     run("selects", str(proj), "--selects", str(proj / "edit" / "assemble" / "selects.json"), "--multicam", "--event", "Selftest")
-    run("build", str(proj), "--selects", str(proj / "edit" / "assemble" / "selects.json"), "--multicam", "--event", "Selftest", "--name", "SDE Cut")
+    run("build", str(proj), "--selects", str(proj / "edit" / "assemble" / "selects.json"), "--multicam", "--event", "Selftest", "--name", "SDE Cut",
+        "--grade", "warm", "--fcp-lut", "--options", '{"title_at":"end","final_hold_s":26}')
     # ---- checks ----
     ok = True
     cull = json.load(open(proj / "edit" / "assemble" / "cull.json"))
@@ -171,12 +175,26 @@ def run_selftest(out: Path):
     mus = json.load(open(proj / "edit" / "assemble" / "music.json"))
     log(f"CHECK music: intro {mus['intro']['tempo_bpm']} bpm (100), main {mus['main']['tempo_bpm']} bpm (120), peak {mus['main']['sections']['peak']} (70-95)")
     ok &= abs(mus["intro"]["tempo_bpm"] - 100) < 3 and abs(mus["main"]["tempo_bpm"] - 120) < 3 and abs(mus["main"]["sections"]["peak"][0] - 70) < 8
+    import shutil, os
+    dtd = os.environ.get("BUWAN_FCPXML_DTD") or os.path.expanduser("~/.buwan/dtd/FCPXMLv1_11.dtd")
     for f in sorted((proj / "edit").glob("*.fcpxml")):
         xml.dom.minidom.parse(str(f))  # well-formed
-        log(f"CHECK xml well-formed: {f.name} ({f.stat().st_size//1024} KB)")
+        valid = ""
+        if shutil.which("xmllint") and os.path.exists(dtd):
+            r = subprocess.run(["xmllint", "--noout", "--dtdvalid", dtd, str(f)], capture_output=True, text=True)
+            valid = " DTD-valid" if r.returncode == 0 else " DTD-INVALID"
+            ok &= r.returncode == 0
+        log(f"CHECK xml well-formed{valid}: {f.name} ({f.stat().st_size//1024} KB)")
+    enh = json.load(open(proj / "edit" / "assemble" / "enhance.json"))
+    sr = json.load(open(proj / "edit" / "assemble" / "speech_ranges.json"))
+    log(f"CHECK enhance: {len(enh)} speech clips measured, clean renders: {sum(1 for v in enh.values() if v.get('clean'))}")
+    log(f"CHECK dead air: removed {sum(v['removed_s'] for v in sr.values()):.1f}s, kept {sum(v['kept_s'] for v in sr.values()):.1f}s over {len(sr)} clips")
+    ok &= len(enh) >= 2 and len(sr) >= 2
     plan = json.load(open(next((proj / "edit").glob("sde-cut_v1.plan.json"))))
     log(f"CHECK build: {plan['stats']}  notes={plan['notes']}")
     ok &= plan["stats"]["broll_shots"] > 10
+    gate = subprocess.run(["node", str(Path(__file__).parent.parent / "scripts" / "proof-gate.js"), str(proj / "edit" / "sde-cut_v1.edl"), "--mode", "sde"], capture_output=True, text=True)
+    log("CHECK sde gate:\n" + "\n".join(l for l in gate.stdout.splitlines() if "PASS" in l or "FAIL" in l or "WARN" in l))
     log("SELFTEST " + ("PASS" if ok else "FAIL") + f"\nImport to verify in Final Cut: {proj / 'edit'}")
     return ok
 

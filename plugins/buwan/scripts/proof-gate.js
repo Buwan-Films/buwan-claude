@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Buwan proof gate: measures an EDL against the house pacing targets.
-// Usage: node proof-gate.js <file.edl> [--type wedding|corporate] [--mode speech|cut] [--fps 23.976]
+// Usage: node proof-gate.js <file.edl> [--type wedding|corporate] [--mode speech|cut|sde] [--fps 23.976]
+//   sde = the picture cut of a same-day edit, measured against the SDE reference (two peaks, vow 3-4s shots, final hold 25-30s, title last)
 // Exit code: 0 = all PASS, 1 = at least one FAIL, 2 = could not read the EDL.
 const fs = require("fs");
 
@@ -57,7 +58,7 @@ if (!events.length) {
 }
 
 // Picture cut = video events; speech = whatever is there. Merge duplicates (same record in/out).
-let pool = mode === "cut" ? events.filter((e) => /V/.test(e.track)) : events;
+let pool = mode === "cut" || mode === "sde" ? events.filter((e) => /V/.test(e.track)) : events;
 if (!pool.length) pool = events;
 const seen = new Map();
 for (const e of pool) seen.set(`${e.recIn}-${e.recOut}`, e);
@@ -100,6 +101,28 @@ if (mode === "speech") {
       add("4-part structure marked", "* PART: <name> comments", "none found", "WARN");
     }
   }
+} else if (mode === "sde") {
+  add("Average shot length", "2.5-3.0s (+/-10%)", fmt(avg), avg >= 2.25 && avg <= 3.3 ? "PASS" : "FAIL");
+  // two peaks: count 30s windows with >= 12 cuts, separated by >= 90s
+  const wins = [];
+  for (let i = 0; i < shots.length; i++) {
+    const limit = shots[i].recIn + 30 * realFps;
+    let n = 0;
+    for (let j = i; j < shots.length && shots[j].recIn < limit; j++) n++;
+    wins.push([shots[i].recIn, n]);
+  }
+  const best = Math.max(0, ...wins.map((w) => w[1]));
+  add("Peak burst (cuts in 30s)", ">= 15 at ~1.5s", String(best), best >= 15 ? "PASS" : "FAIL");
+  const peaks = [];
+  for (const [at, n] of wins) if (n >= 12 && (!peaks.length || at - peaks[peaks.length - 1] > 90 * realFps)) peaks.push(at);
+  add("Two music peaks", "2 bursts >= 90s apart", String(peaks.length), peaks.length >= 2 ? "PASS" : "WARN", peaks.map((p) => tcOf(p)).join(" "));
+  const vowish = shots.filter((e, i) => durs[i] >= 3 && durs[i] <= 4.5).length;
+  add("Vow shots 3-4s", "present (held, <= 2 cutaways)", `${vowish} shots of 3-4.5s`, vowish >= 3 ? "PASS" : "WARN");
+  const lastDur = durs[durs.length - 1];
+  add("Final hold", "25-30s, one shot, last vow lines", fmt(lastDur), lastDur >= 24 && lastDur <= 32 ? "PASS" : "FAIL", `#${shots[shots.length - 1].num}`);
+  add("Title in the last 10s", "title + logo close the film", "marker check", "CHECK", "confirm the GRAPHIC markers sit in the last 10s");
+  add("Cold open", "4 x ~3s shots, no faces, no speech", `first 4 shots: ${durs.slice(0, 4).map(fmt).join(" ")}`, durs.slice(0, 4).every((d) => d >= 2 && d <= 4.5) ? "PASS" : "WARN");
+  add("Film length (SDE)", "4-7 min", `${(total / 60).toFixed(1)} min`, total >= 240 && total <= 420 ? "PASS" : "WARN");
 } else if (type === "wedding") {
   add("Average shot length", "2.5-3.0s (+/-10%)", fmt(avg), avg >= 2.25 && avg <= 3.3 ? "PASS" : "FAIL");
 

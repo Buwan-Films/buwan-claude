@@ -7,6 +7,9 @@ description: Buwan app playbook for Adobe Premiere Pro (the studio default) — 
 
 House rules come first (`/buwan:house-rules`). This file is only the "how" in Premiere.
 
+## The basics, applied by code (buwan-premiere plugin)
+Organize → color → grade → sound → cull → dead air → sync → the SDE Cut are not done by hand in Premiere: the engine decides (`/buwan:assemble`), `assemble.js premiere <project>` writes `edit/premiere/manifest.json`, and `/buwan-premiere:premiere-apply` applies it in the open project through the bridge (bins + label colors, `00 Rejected (cull)`, speech-range subclips, A-Roll clean, SYNC sequences, the plan as a sequence, Lumetri + studio LUT, measured gain + DeNoise + limiter). On a wedding day run `/buwan-premiere:wedding-day`. Hand steps below are for what the apply layer reports it could not do.
+
 ## Live bridge (buwan-premiere plugin)
 - Before any timeline work: run "Verify Premiere connection". Needs Premiere open, a project open, an active sequence, and **Window → Extensions → MCP Bridge** showing the connector running.
 - On client projects, never edit the editor's working sequence in place. Duplicate it, or build into a NEW sequence (`Rough Cut v<N>`, `Picture Lock v<N>`), and tell the editor which one.
@@ -28,7 +31,7 @@ House rules come first (`/buwan:house-rules`). This file is only the "how" in Pr
 - Verify with **Window → Loudness Radar** or by measuring the export.
 
 ## 04 Grade
-- Lumetri on an **adjustment layer** per scene; saved looks in `kit/luts/`. Camera clips only. B&W only for the most intimate beats.
+- Studio LUT per camera clip via the apply layer (`grade` step: Lumetri Creative → Look, 80%); by hand: Lumetri on an **adjustment layer** per scene with the same `kit/luts/Buwan_*.cube`. Camera clips only. B&W only for the most intimate beats.
 
 ## 05 Graphics + captions
 - Kit clips from `kit/` on upper tracks. Text built in Premiere uses the brand fonts and hex codes only. Grain overlay 5–6% on graphic frames.

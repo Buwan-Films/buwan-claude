@@ -135,7 +135,8 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
     <div class="words">BUWAN<small>FILMS</small></div>
   </div>
   <h1>The <i>Edit</i> Pipeline</h1>
-  <p class="sub">End-to-end post-production flow for wedding SDEs, highlight films, and corporate event videos. Speech audio drives the story; every cut is measured before it moves on.</p>
+  <p class="sub">End-to-end post-production flow for wedding SDEs, highlight films, and corporate event videos. The footage is prepared by machine, the story is locked by hand, the cut is timed to the music you choose — and every cut is measured before it moves on. Runs on the editor's own Mac or PC; nothing is uploaded.</p>
+  <div class="apps" style="margin-top:16px"><span class="default">/buwan:intake</span><span class="default">/buwan:assemble</span><span>/buwan:organize</span><span>/buwan:plot</span><span>/buwan:rough-cut</span><span>/buwan:proof-gate</span><span>/buwan:audio</span><span>/buwan:grade</span><span>/buwan:graphics</span><span>/buwan:sfx</span><span>/buwan:review</span><span>/buwan:export</span><span>/buwan:clipper</span><span class="default">/buwan:sde</span></div>
 </header>
 
 <div class="legend">
@@ -173,8 +174,8 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
   <div class="stage">
     <div class="card">
       <span class="tag">Source</span>
-      <h3>Raw footage &amp; audio</h3>
-      <p>Camera files, lav/recorder WAVs of vows, letters, and speeches. Originals never touched.</p>
+      <h3>Raw footage, audio &amp; your two tracks</h3>
+      <p>Camera files (any mix of cameras and frame rates), lav/recorder WAVs of vows, letters and speeches, and a <span class="spec">music/</span> folder with <span class="spec">01 · intro</span> and <span class="spec">02 · story</span> — the editor chooses the songs. Originals are locked read-only and never touched.</p>
     </div>
   </div>
 
@@ -182,7 +183,37 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
     <div class="card">
       <span class="tag">01 · <b class="auto">Automatic</b></span>
       <h3>Intake</h3>
-      <p>Copy, verify, organize by ceremony segment. Sources stay read-only.</p>
+      <p>Reference the cards in place (or copy and verify). Project folder created, footage locked read-only. <span class="spec">/buwan:intake</span></p>
+    </div>
+  </div>
+
+  <div class="stage auto">
+    <div class="card focus">
+      <span class="tag">01b · <b class="auto">Automatic</b> · the assemble engine</span>
+      <h3>Assemble — the footage prepares itself</h3>
+      <p>One run, on the editor's machine, deterministic: same footage in, same result out. Rejects are flags, never deletions; the editor can un-reject anything by name. <span class="spec">/buwan:assemble</span></p>
+      <div class="substeps">
+        <span>Scan · probe every file</span><span class="arrow">→</span>
+        <span>Cull · false starts, black, blown, dark, soft, shaky, dead</span><span class="arrow">→</span>
+        <span>Music · tempo, beats, bars, energy, peak</span><span class="arrow">→</span>
+        <span>Sync · every camera aligned by sound</span><span class="arrow">→</span>
+        <span>Organize · bins, colors, roles, multicam</span><span class="arrow">→</span>
+        <span>Enhance · dialogue levelled, denoised</span><span class="arrow">→</span>
+        <span>Dead air · silences out, A-Roll clean</span><span class="arrow">→</span>
+        <span>Grade · the studio look on every camera clip</span>
+      </div>
+      <div class="aside">
+        <span class="tag">The basics, in order — what the editor opens first</span>
+        <p style="margin-top:6px"><b>Organize</b> — every clip in one of the 12 studio bins. <b>Color</b> — the same colors in every app: Premiere labels, Final Cut roles, Resolve clip colors. <b>Grade</b> — one look per film (<span class="spec">Buwan_Warm</span> · <span class="spec">Cool</span> · <span class="spec">BW</span>) on every camera clip, never on music or graphics. <b>Enhance</b> — each speech clip measured (loudness, noise floor, SNR) and levelled toward −17 LUFS with noise reduction and voice isolation scaled to the noise; non-destructive in Final Cut, cleaned WAVs for Premiere and Resolve. <b>Dead air</b> — silences found and removed; speech ranges become Favorites and the <b>A-Roll clean</b> project is the whole day's speech back to back. <b>Cull</b> — the unusable is flagged Rejected, never deleted.</p>
+      </div>
+      <div class="aside">
+        <span class="tag">Sync by sound, not by clock</span>
+        <p style="margin-top:6px">Cameras are matched on their audio, so a camera whose clock was never set still lands to the frame. Overlapping cameras become multicam clips with the angles aligned. Clips are grouped into one of the 12 studio categories — the same bins, the same colors, in Premiere, Final Cut and Resolve.</p>
+      </div>
+      <div class="aside">
+        <span class="tag">Imports as</span>
+        <p style="margin-top:6px">A validated FCPXML (Final Cut, Resolve; Premiere via the bridge): every clip keyworded into its bin, rejects marked <span class="spec">Rejected</span>, warnings as notes, synced multicam clips ready to cut.</p>
+      </div>
     </div>
   </div>
 
@@ -190,12 +221,30 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
     <div class="card focus">
       <span class="tag">02 · <b class="auto">AI cut</b></span>
       <h3>Rough cut — Story-Lock</h3>
-      <p>Lock the story before the edit, never find it in the edit. Transcribe speech once, tag every line into the audio layers below, pick the strongest lines, order for emotional build. Music is chosen after the audio — the audio leads, the music follows, tuned to the day's atmosphere. Rebuilt as real, trimmable clips — never a flat render.</p>
+      <p>Lock the story before the edit, never find it in the edit. Transcribe speech once (Taglish kept verbatim), tag every line into the audio layers below, pick the strongest lines, order for emotional build. The audio leads, the music follows — the editor's two tracks become the clock the film is cut to. Rebuilt as real, trimmable clips — never a flat render. <span class="spec">/buwan:plot</span> → <span class="spec">/buwan:rough-cut</span></p>
       <div class="substeps">
         <span>2a · Tag the 8 audio layers</span><span class="arrow">→</span>
         <span>2b · Music after audio</span><span class="arrow">→</span>
         <span>2c · Build the 4-part structure</span><span class="arrow">→</span>
-        <span>2d · B-roll last, serving the story</span>
+        <span>2d · B-roll last, cut to the music</span>
+      </div>
+      <div class="aside">
+        <span class="tag">The music-driven cut · two tracks</span>
+        <div class="beats">
+          <span>Track 1 · Intro · b-roll on bars · title plate on the first hit</span><span>Track 2 · Story → Ceremony → Outro</span>
+        </div>
+        <p style="margin-top:10px">Cuts land on beats, long shots on bars. The cut rate follows the music's energy: ~3 s shots when quiet, ~2 s as it builds, 1–2 s in the <b>burst montage on the peak</b>. Breathing room is added at part boundaries so the <b>kiss lands on the music's peak</b>. Vows and first looks are holds — no cutaways. The speaker stays on camera for the opening of each part. Slow motion is conformed. The outro resolves on the track's tail; the logo reveal lands before the final beat. Track 1 plays at −3 dB; track 2 sits under dialogue as a −20 dB bed.</p>
+      </div>
+      <div class="aside">
+        <span class="tag">The SDE shape · measured from the reference film</span>
+        <div class="beats">
+          <span>Cold open · 4 × 3 s · "before"</span><span>Letter opens the spine · 0:13</span><span>Peak 1 · ~1:00 · first look, entourage</span><span>Valley · music −17 dB</span><span>"I do" as punctuation</span><span>Vow held · 3–4 s shots</span><span>Peak 2 · ~75 % · entrance → reception → kiss</span><span>Final hold · 25–30 s</span><span>Title + logo close the film</span>
+        </div>
+        <p style="margin-top:10px">Taken apart from the Adrian &amp; Lara reference (6:52, 146 cuts, 2.8 s average, two music peaks). Two peaks, two dialogue valleys, one long exhale. The engine builds this with <span class="spec">title_at: end</span> and <span class="spec">final_hold_s: 27</span>; the gate measures it with <span class="spec">--mode sde</span>. Full breakdown: <a href="https://claude.ai/artifact/RDUxcBdi9RpZuzmnE9Ysh3" style="color:var(--gold)">Buwan SDE Reference</a>.</p>
+      </div>
+      <div class="aside">
+        <span class="tag">What comes out</span>
+        <p style="margin-top:6px">The timeline as FCPXML (speech on the primary storyline, b-roll connected above, music on the lanes below, markers for parts, holds, the peak and the graphics to render) · a picture EDL for the proof gate · an <b>edit map</b> — one picture of the whole cut to review before importing.</p>
       </div>
       <div class="aside">
         <span class="tag">Film structure · Wedding</span>
@@ -221,7 +270,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
 
   <div class="gate">
     <span class="g-label">Proof gate</span>
-    <span class="g-desc"> — every cut measured, on beat and on words. Wedding: ~1–2s bursts against 15–20s holds. Corporate: steady 1.5–2.5s, holds on speakers</span>
+    <span class="g-desc"> — every cut measured, automatically, on every EDL: average shot 2.5–3 s, ≥15 cuts in the 30 s burst, holds of 15–20 s, no flash frames. Corporate: steady 1.5–2.5 s, holds on speakers. On-beat and on-word timing is confirmed by eye.</span>
   </div>
 
   <div class="stage">
@@ -238,7 +287,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
     <div class="card">
       <span class="tag">03 · <b class="auto">Measured</b></span>
       <h3>Audio polish</h3>
-      <p>Dialogue to <span class="spec">−17 LUFS</span>, peaks <span class="spec">−6 dBFS</span>. Clean speech is the spine of the film.</p>
+      <p>Dialogue to <span class="spec">−17 LUFS</span>, peaks <span class="spec">−6 dBFS</span>, measured on the export. Clean speech is the spine of the film. <span class="spec">/buwan:audio</span></p>
     </div>
   </div>
 
@@ -246,7 +295,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
     <div class="card">
       <span class="tag">04 · <b class="cond">Camera only</b></span>
       <h3>Grade</h3>
-      <p>Wedding: muted filmic look — warm/naturalistic or cool/desaturated per the palette, B&amp;W for the most intimate beats. Corporate: clean, brand-true grade; crimson reserved for award beats. Reels/raw screen-rec skip it.</p>
+      <p>Studio looks as one <span class="spec">.cube</span> per mood — <span class="spec">Buwan_Warm</span> · <span class="spec">Buwan_Cool</span> · <span class="spec">Buwan_BW</span> — the same file in every app, applied after the camera's Log→709. B&amp;W only for the most intimate beats. Every graded export is measured by the grade check against the studio targets. Corporate: clean, brand-true; crimson reserved for award beats. <span class="spec">/buwan:grade</span></p>
     </div>
   </div>
 
@@ -259,6 +308,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
         <span>5b · Build — render &amp; place</span><span class="arrow">→</span>
         <span>5c · Converge — fresh-eyes review</span>
       </div>
+      <p style="margin-top:10px">Every title, lower third and end card is rendered from the Video Component Kit with the job's real names — ProRes 4444 with alpha, identical in Premiere, Final Cut and Resolve. Never typed by hand in the app. <span class="spec">/buwan:graphics</span></p>
       <p class="loop">QA gate between build and converge · defects go back to rebuild, <b>3 rounds max</b></p>
     </div>
   </div>
@@ -267,7 +317,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
     <div class="card">
       <span class="tag">06 · <b class="auto">Automatic</b></span>
       <h3>SFX</h3>
-      <p>From placed graphics. Music bed <span class="spec">opt-in · flat −20 dB</span>.</p>
+      <p>From placed graphics: risers into titles, a hit on the logo, swishes on lower thirds. Music bed <span class="spec">flat −20 dB</span> under dialogue. <span class="spec">/buwan:sfx</span></p>
     </div>
   </div>
 
@@ -275,7 +325,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
     <div class="card">
       <span class="tag">07 · <b class="you">You</b></span>
       <h3>Review — taste only</h3>
-      <p>Everything measurable already passed its gate. This pass is pacing feel and emotional build — wedding holds go to vows and first looks; corporate holds go to speakers and the keynote's key line.</p>
+      <p>Everything measurable already passed its gate. This pass is pacing feel and emotional build — wedding holds go to vows and first looks; corporate holds go to speakers and the keynote's key line. Which moments make the film is still the editor's call. <span class="spec">/buwan:review</span></p>
     </div>
   </div>
 
@@ -291,7 +341,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
         </div>
         <div class="out">
           <h4>Clipper <span class="tag">· second entry</span></h4>
-          <p>Long-form → 9:16 reels/stories clips · re-enters the pipeline at 01.</p>
+          <p>Long-form → 9:16 reels/stories clips · re-enters the pipeline at 01. <span class="spec">/buwan:clipper</span></p>
         </div>
       </div>
     </div>
@@ -305,7 +355,8 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
   <div class="rule"></div>
 </div>
 <footer>
-  Same-day note — wedding SDEs and event-close sizzle reels run the pipeline compressed: gates still apply, rounds don't. Grade from a saved look, captions minimal, one converge pass.
+  Same-day note — <span class="spec">/buwan:sde</span> runs the whole pipeline compressed for a reception screening: assemble → Story-Lock → the music-driven cut → gates → title plate and end card → export. Gates still apply, rounds don't. Grade from a saved look, captions minimal, one converge pass.<br><br>
+  Shared by every editor through the <span class="spec">buwan</span> Claude Code plugin (github.com/Buwan-Films/buwan-claude): Hailo-style footage prep (cull, sync, organize), Plotline-style story work (transcripts, speakers, focus, exclusions, Story-Lock), the studio's own rules, and your music. A thin panel inside Premiere / Final Cut / Resolve can sit on top of the same engine later; the rules and the builder live here.
 </footer>
 </div>
 

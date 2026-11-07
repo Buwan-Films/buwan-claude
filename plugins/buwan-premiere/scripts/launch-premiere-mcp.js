@@ -10,7 +10,8 @@ const isWin = process.platform === "win32";
 const child = spawn(isWin ? "npx.cmd" : "npx", ["-y", PINNED], {
   stdio: "inherit",
   shell: isWin,
-  env: process.env,
+  // Buwan steps (import/organize/build) run long inside Premiere; give the bridge 2 minutes before it gives up
+  env: { PREMIERE_TIMEOUT_MS: "120000", ...process.env },
 });
 
 child.on("error", (err) => {

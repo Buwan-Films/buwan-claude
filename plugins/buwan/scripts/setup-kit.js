@@ -67,6 +67,16 @@ try {
   for (const d of ["logo", "fonts", "luts", "grade"]) if (fs.existsSync(path.join(KIT, d))) n += copyDir(path.join(KIT, d), path.join(ws, "kit", d));
   for (const d of ["wedding", "corporate", "transitions", "overlays"]) fs.mkdirSync(path.join(ws, "kit", d), { recursive: true });
   ok("Kit files copied", `${n} files into ${path.join(ws, "kit")}`);
+  // Studio looks where the apps can see them
+  try {
+    const luts = fs.readdirSync(path.join(KIT, "luts")).filter((f) => /\.cube$/i.test(f));
+    const fcpLut = isMac ? path.join(os.homedir(), "Library", "Application Support", "ProApps", "Custom LUTs") : null;
+    const resolveScripts = isMac ? path.join(os.homedir(), "Library", "Application Support", "Blackmagic Design", "DaVinci Resolve", "Fusion", "Scripts", "Edit")
+      : isWin ? path.join(process.env.APPDATA || "", "Blackmagic Design", "DaVinci Resolve", "Support", "Fusion", "Scripts", "Edit") : null;
+    if (fcpLut) { fs.mkdirSync(fcpLut, { recursive: true }); for (const f of luts) fs.copyFileSync(path.join(KIT, "luts", f), path.join(fcpLut, f)); }
+    if (resolveScripts && fs.existsSync(path.dirname(path.dirname(resolveScripts)))) { fs.mkdirSync(resolveScripts, { recursive: true }); fs.copyFileSync(path.join(ROOT, "assemble", "resolve_grade.py"), path.join(resolveScripts, "buwan_grade.py")); }
+    ok("Studio looks installed", [fcpLut && "Final Cut Custom LUTs", resolveScripts && fs.existsSync(resolveScripts) && "Resolve Scripts > Edit > buwan_grade"].filter(Boolean).join(", ") || "copied to kit/luts (install in your app's LUT folder)");
+  } catch (e) { report.push(["INFO", "Studio looks", e.message]); }
 } catch (e) {
   bad("Kit files", e.message);
 }

@@ -9,7 +9,7 @@ argument-hint: "[project folder]"
 Clean speech is the spine of the film. Targets: **dialogue −17 LUFS integrated**, **true peak ≤ −6 dBFS**, **music bed flat −20 dB** (opt-in), SFX under the dialogue.
 
 1. **Check the gate** — the proof gate must have passed (or been overridden in the paper edit).
-2. **Measure the speech clips** in the cut: for each source clip used on the speech tracks, `ffmpeg -i <clip> -af ebur128=peak=true -f null -` and list integrated LUFS, true peak and loudness range. Flag clips with noise floor above −50 dBFS, clipping, or wind/handling noise.
+2. **Measure the speech clips** in the cut (or read `edit/assemble/enhance.json` from `/buwan:assemble`, which already holds per-clip loudness, noise floor and SNR; Final Cut timelines built by the engine already carry the loudness / noise-reduction / voice-isolation recipe on each speech clip, and `edit/audio/clean/` holds cleaned WAVs for Premiere/Resolve): for each source clip used on the speech tracks, `ffmpeg -i <clip> -af ebur128=peak=true -f null -` and list integrated LUFS, true peak and loudness range. Flag clips with noise floor above −50 dBFS, clipping, or wind/handling noise.
 3. **Fix per app** (editor's playbook):
    - Premiere: Essential Sound → Dialogue → Repair (Reduce Noise ≤ 4, DeHum, DeReverb only if needed) → Loudness Auto-Match to −17 LUFS → Hard Limiter on the dialogue submix at −6 dB. Music clips: Essential Sound → Music → volume −20 dB.
    - Resolve (Fairlight): Noise Reduction on noisy clips → Normalize Audio Levels (BS.1770, −17 LUFS, true peak −6) on dialogue → Limiter on the dialogue bus at −6 → music clip gain −20 dB.

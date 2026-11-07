@@ -11,10 +11,10 @@ Gates still apply, rounds don't. Saved look, minimal captions, one converge pass
 | Stage | Same-day version |
 |---|---|
 | 01 Intake | `/buwan:intake` — reference the cards in place (no copy); lock them read-only. Ask for the two music tracks (01 intro, 02 story). |
-| Prep | `/buwan:assemble` steps 1–5: scan → cull → music → sync → categorize from folders + audio (no thumbnails) → organize FCPXML. |
+| Prep | `/buwan:assemble` steps 1–6: scan → cull → music → sync → categorize from folders + audio (no thumbnails) → enhance + dead air → organize FCPXML + A-Roll clean. |
 | 02 Story-Lock | `/buwan:plot` same-day mode: one pass, letters/vows/messages only; write `selects.json`. |
-| 02 Rough cut | `/buwan:assemble` step 7: `assemble.js build … --name "SDE Cut"`. Read the edit map; the kiss must sit on the music peak. |
-| Gate | `/buwan:proof-gate` — must pass (or a one-line override). |
+| 02 Rough cut | `/buwan:assemble` step 8: `assemble.js build … --name "SDE Cut" --grade <look> --options '{"title_at":"end","final_hold_s":27}'`. Read the edit map: cold open, letter first, two peaks, vow held, kiss on peak 2, one 25–30 s final hold, title last (house rules → "The SDE shape"). |
+| Gate | `/buwan:proof-gate <edl> --mode sde` — must pass (or a one-line override). |
 | 03 Audio | Auto-match to −17 LUFS + limiter −6 dBFS, one measurement. |
 | 04 Grade | Saved look (Warm or Cool) on an adjustment layer, grade check on 6 stills. |
 | 05 Graphics | SDE title plate (07.07) + end card (06.02/06.07) only; captions only where speech is unclear. One converge pass. |

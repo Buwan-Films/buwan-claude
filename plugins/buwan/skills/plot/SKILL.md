@@ -10,11 +10,14 @@ Follow the house rules (`/buwan:house-rules`). Arguments: $ARGUMENTS
 
 ## 1. Transcribe once
 - Use existing transcripts first: the app's transcript export (Premiere Text panel, Resolve transcription, FCP captions) or `edit/transcripts/*`.
+- If `edit/assemble/speech_ranges.json` exists, transcribe only those ranges (the dead air is already removed).
 - Otherwise transcribe the speech clips (local Whisper if installed) and save to `edit/transcripts/<clip>.srt` with source timecodes. Never write transcripts into `sources/`.
 - Expect **Taglish**. Keep the original wording. Never clean up, translate or "fix" vows or speeches. Mark unclear words `[?]`.
 
 ## 2. Tag
-Tag every usable line with one beat: wedding = the 8 audio layers; corporate = the 8 corporate beats. Note the speaker.
+Tag every usable line with one beat: wedding = the 8 audio layers; corporate = the 8 corporate beats. Note the speaker (camera + voice; confirm names with the editor — "Speaker 3 = Tito Terry").
+
+**Controls the editor can set (ask once; defaults in brackets):** speakers to include [couple + family + best friends; MC/host excluded]; story focus [personal vows & journey, family, friends' stories, ceremony moments]; content to exclude [legal formalities, MC talking, vendor/supplier mentions, "thank you for coming" speeches]; film length [SDE 4–7 min, highlights 6–10]; dialogue density [medium]. SDE: the letters outrank the ceremony audio — a letter opens the spine; "do you take / I do" is punctuation between letter lines.
 
 ## 3. Select and order
 - Pick the strongest lines. **Callbacks** (a line echoed later by someone else) and **paired constructions** (bride/groom answering each other, "before/now") rank highest.

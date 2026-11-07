@@ -1,7 +1,7 @@
 {
   "name": "buwan",
   "displayName": "Buwan Films",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Buwan Films house rules, a skill for every pipeline stage, the assemble engine (cull, multicam sync by audio, music-driven cut, FCPXML builder), shared clip colors, studio LUTs and grade check, kit graphics renderer, proof gate, source protection, and Premiere / Final Cut / Resolve playbooks.",
   "author": {
     "name": "Buwan Films and Photography",

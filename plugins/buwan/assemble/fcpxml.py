@@ -103,6 +103,46 @@ class Writer:
         self.mc_meta[mc["id"]] = mc
         return rid
 
+    def lut_effect(self) -> str | None:
+        """Experimental: Final Cut's built-in Custom LUT effect. The LUT must be installed in FCP's Custom LUT list
+        (setup-kit copies kit/luts/*.cube to ~/Library/Application Support/ProApps/Custom LUTs/)."""
+        g = self.plan.get("grade") or {}
+        if not g.get("fcp_filter"):
+            return None
+        if getattr(self, "_lut_id", None):
+            return self._lut_id
+        rid = self._rid()
+        self.res.append(f'<effect id="{rid}" name="Custom LUT" uid=".../Effects.localized/Color.localized/Custom LUT.localized/Custom LUT.moef"/>')
+        self._lut_id = rid
+        return rid
+
+    def enhancement_xml(self, item: dict, c: Clip) -> str:
+        """Native FCP audio enhancement for dialogue clips, from the measured recipe."""
+        rec = (self.plan.get("enhance") or {}).get(item["clip"])
+        if not rec or not (item.get("role") == "dialogue" or str(item.get("audio_role", "")).startswith("dialogue")):
+            return ""
+        ch = ", ".join(str(i + 1) for i in range(max(1, min(c.audio_channels, 2))))
+        role = item.get("audio_role") or "dialogue"
+        inner = f'<adjust-loudness amount="{rec["loudness_amount"]}" uniformity="{rec["loudness_uniformity"]}"/>'
+        if rec.get("noise_reduction"):
+            inner += f'<adjust-noiseReduction amount="{rec["noise_reduction"]}"/>'
+        if rec.get("eq"):
+            inner += f'<adjust-EQ mode="{rec["eq"]}"/>'
+        if rec.get("voice_isolation"):
+            inner += f'<adjust-voiceIsolation amount="{rec["voice_isolation"]}"/>'
+        return f'<audio-channel-source srcCh="{ch}" role={quoteattr(role)}>{inner}</audio-channel-source>'
+
+    def grade_xml(self, item: dict, c: Clip) -> str:
+        g = self.plan.get("grade") or {}
+        if c.kind != "video" or item.get("no_grade") or item.get("role") == "music":
+            return ""
+        rid = self.lut_effect()
+        if not rid:
+            return ""
+        return (f'<filter-video ref="{rid}" name="Custom LUT">'
+                f'<param name="LUT" key="9999/10000/2/100/1" value={quoteattr(g.get("lut", "Buwan_Warm"))}/>'
+                f'<param name="Mix" key="9999/10000/2/100/5" value="{g.get("mix", 0.8)}"/></filter-video>')
+
     # ---------- clips in a timeline ----------
     def _markers(self, markers, clip_start_s, fps=SEQ_FPS):
         out = []
@@ -144,9 +184,10 @@ class Writer:
             inner_p = f'<param name="amount">{fi}{fo}</param>' if (fi or fo) else ""
             body = f'<adjust-volume amount="{item.get("gain_db", 0):.1f}dB">{inner_p}</adjust-volume>' + body
         body += self._markers(item.get("markers"), item["in"])
+        body += self.enhancement_xml(item, c) + self.grade_xml(item, c)
         fades = ""
         role_attrs = ""
-        if role:
+        if role and not (item.get("audio_role") and (c.kind == "audio" or role.startswith(("music", "effects", "dialogue")))):
             if c.kind == "audio" or role in ("music", "effects") or role.startswith(("music", "effects", "dialogue")):
                 role_attrs += f" audioRole={quoteattr(role)}"
             else:
@@ -156,6 +197,7 @@ class Writer:
         if item.get("audio_role"):
             role_attrs += f" audioRole={quoteattr(item['audio_role'])}"
         if item.get("mc"):
+            body = body.replace(self.enhancement_xml(item, c), "").replace(self.grade_xml(item, c), "")
             mc = self.mc_meta[item["mc"]]
             ref = self.mc_ids[item["mc"]]
             angle = next(a for a in mc["angles"] if any(cl["clip"] == item["clip"] for cl in a["clips"]))
@@ -233,6 +275,8 @@ class Writer:
                 inner += f'<keyword start="0s" duration="{dur}" value={quoteattr(k)}/>'
             if path in rej:
                 inner += f'<rating start="0s" duration="{dur}" value="reject" note={quoteattr(notes.get(path, ""))}/>'
+            for a, b in (p.get("favorites") or {}).get(path, []):
+                inner += f'<rating start="{rt(a, fps) if fps else rt_samples(a, c.audio_rate)}" duration="{rt(b - a, fps) if fps else rt_samples(b - a, c.audio_rate)}" value="favorite" name="speech"/>'
             role_attr = ""
             r = roles.get(path)
             if r:
