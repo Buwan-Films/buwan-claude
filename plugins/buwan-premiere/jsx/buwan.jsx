@@ -18,7 +18,7 @@
  *      deadair   subclips of the speech ranges (dead air removed), bin "01 Speech/Speech ranges"
  *      aroll     the A-Roll clean sequence: every speech range back to back
  *      sync      one stacked SYNC sequence per multicam group, clips at their audio-sync offsets
- *      relink    point project items at the BY_CATEGORY clones (batches: {start, limit}); trimmed best cuts stay on RAW_COPY
+ *      relink    point clips and their subclips at the BY_CATEGORY clones (batches: {limit}); trimmed best cuts stay on RAW_COPY
  *      steady    shaky Creative/Glider clips: best cut first (subclips in <category>/Steady picks); only gimbal shots with no steady stretch get Warp Stabilizer, on their best cut, in a STABILIZE sequence
  *      skeleton  (optional) an empty assembly sequence with section markers — only when asked
  *      build     the music-driven timeline from the plan (speech V1/A1, b-roll V2, music A3/A4, markers)
@@ -414,38 +414,67 @@ var BUWAN = (function () {
              bins: M.bins, labels: M.labels, hint: missing ? "run the import step first for the " + missing + " clips not in the project" : "" };
   }
   function stepRelink(opts) {
-    // Point project items at the BY_CATEGORY clones (assemble.js bycategory). Same bytes, so subclips, speech ranges
-    // and sequence clips are unaffected. Clips trimmed to their best cut keep their RAW_COPY link (their subclips and
-    // the STABILIZE ranges are timed on the full clip). Batches: repeat while remaining > 0.
-    var start = opts.start || 0, limit = opts.limit || 150, done = 0, already = 0, missing = 0, kept = 0, failed = [], i;
-    var todo = [];
-    for (i = 0; i < M.clips.length; i++) if (M.clips[i].category_file) todo.push(M.clips[i]);
-    reindex();
-    var end = Math.min(todo.length, start + limit);
-    for (i = start; i < end; i++) {
-      var c = todo[i];
-      if (c.category_file_trimmed) { kept++; continue; }
-      var it = itemFor(c.path);
-      if (!it) { missing++; continue; }
-      var cur = ""; try { cur = it.getMediaPath(); } catch (e0) {}
-      if (norm(cur) === norm(c.category_file)) { already++; continue; }
-      if (!new File(c.category_file).exists) { failed.push(c.name + ": category file missing"); continue; }
-      try { if (it.canChangeMediaPath && !it.canChangeMediaPath()) throw new Error("Premiere refuses"); it.changeMediaPath(c.category_file, true); done++; }
-      catch (e1) { failed.push(c.name + ": " + e1); }
+    // Point project items at the BY_CATEGORY clones (assemble.js bycategory): master clips AND their subclips
+    // (speech ranges, steady picks keep their own media path in Premiere). Same bytes, so in/out points and
+    // sequence clips are unaffected. Clips trimmed to their best cut keep their RAW_COPY link (their subclips and
+    // the STABILIZE ranges are timed on the full clip). Batches of items: repeat while remaining > 0.
+    var start = opts.start || 0, limit = opts.limit || 150, done = 0, already = 0, kept = 0, failed = [], i;
+    var dest = {}, trimmed = {};
+    for (i = 0; i < M.clips.length; i++) {
+      var c = M.clips[i];
+      if (!c.category_file) continue;
+      if (c.category_file_trimmed) trimmed[norm(c.path)] = true; else dest[norm(c.path)] = c.category_file;
     }
-    return { relinked: done, already: already, kept_on_raw_copy_trimmed: kept, not_in_project: missing, failed: failed.length, failed_clips: failed.slice(0, 20),
-             next_start: end, total: todo.length, remaining: todo.length - end,
-             hint: todo.length - end > 0 ? "run relink again with {start:" + end + "}" : "all clips point at BY_CATEGORY" };
+    var items = [];
+    walk(app.project.rootItem, null, function (it) {
+      if (it.type === 2) return;
+      var mp = ""; try { if (it.isSequence()) return; mp = it.getMediaPath(); } catch (e) { return; }
+      if (!mp) return;
+      var k = norm(mp);
+      if (trimmed[k]) { kept++; return; }
+      if (dest[k]) items.push([it, dest[k]]);
+      else if (aliasOf()[k]) already++;
+    });
+    var end = Math.min(items.length, start + limit);
+    for (i = start; i < end; i++) {
+      var it2 = items[i][0], to = items[i][1];
+      if (!new File(to).exists) { failed.push(it2.name + ": category file missing"); continue; }
+      try { if (it2.canChangeMediaPath && !it2.canChangeMediaPath()) throw new Error("Premiere refuses"); it2.changeMediaPath(to, true); done++; }
+      catch (e1) { failed.push(it2.name + ": " + e1); }
+    }
+    reindex();
+    return { relinked: done, already_on_by_category: already, kept_on_raw_copy_trimmed: kept, failed: failed.length, failed_clips: failed.slice(0, 20),
+             still_on_raw_copy: items.length - done, remaining: Math.max(0, items.length - end),
+             hint: items.length - end > 0 ? "run relink again (same call): the rest are still on RAW_COPY" : "every clip and subclip points at BY_CATEGORY" };
+  }
+  function lumetriLook(comp) {          // the Creative > Look popup and its loaded asset (Premiere 26.x)
+    var look = null, asset = null;
+    for (var p = 0; p < comp.properties.numItems; p++) {
+      var pr = comp.properties[p];
+      if (!look && pr.displayName === "Look") look = pr;
+      if (pr.displayName === "LookAsset") asset = pr;
+    }
+    return { look: look, asset: asset };
   }
   function stepGrade(opts) {
+    // Per camera clip: Lumetri Basic Correction > Exposure = the engine's exposure fix (assemble.js exposure), then the
+    // studio look. Premiere 26.x refuses a LUT file path from a script and a list position doesn't load a user LUT, so the
+    // look is copied from a reference clip where the editor picked it once (opts.look_from = "<sequence>/<clip index>"),
+    // else left for one manual pick on the sequence's adjustment layer. The exposure fix never depends on the look.
     if (!M.grade || !M.grade.lut) throw new Error("no grade in the manifest: assemble.js premiere <project> --grade warm|cool|bw (and run /buwan:setup-kit for the LUTs)");
-    var lutFile = new File(M.grade.lut);
-    if (!lutFile.exists) throw new Error("LUT not found: " + M.grade.lut);
-    var lut = lutFile.fsName, seq = targetSequence(opts);
+    var seq = targetSequence(opts);
     app.enableQE();
     var qeSeq = qe.project.getActiveSequence();
     reindex();
-    var cm = clipMap(), applied = 0, skipped = 0, failed = [], already = 0, used = "", exposed = 0;
+    var cm = clipMap(), lumetri = 0, skipped = 0, failed = [], exposed = 0, looked = 0, lookPending = 0;
+    var start = opts.start || 0, limit = opts.limit || 100000, seen = 0;   // batches of camera clips: big sequences in several calls
+    var ref = null;
+    if (opts.look_from) {
+      var parts = String(opts.look_from).split("/"), rs = findSequence(parts[0]), rc = rs ? rs.videoTracks[0].clips[parseInt(parts[1] || "0", 10)] : null;
+      var rcomp = rc ? component(rc, "Lumetri Color") : null, rl = rcomp ? lumetriLook(rcomp) : null;
+      if (rl && rl.look && rl.asset) { ref = { look: rl.look.getValue(), asset: rl.asset.getValue() }; }
+      if (!ref || String(ref.asset).length < 8) throw new Error("no look picked on the reference clip " + opts.look_from + " (Lumetri > Creative > Look)");
+    }
     for (var t = 0; t < seq.videoTracks.numTracks; t++) {
       var track = seq.videoTracks[t];
       for (var i = 0; i < track.clips.numItems; i++) {
@@ -453,31 +482,30 @@ var BUWAN = (function () {
         try { mp = clip.projectItem.getMediaPath(); } catch (e) {}
         var mc = mp ? cm[norm(mp)] : null;
         if (!mc || has(M.grade.skip_categories, mc.category) || mc.kind !== "video") { skipped++; continue; }
+        seen++;
+        if (seen <= start || seen > start + limit) continue;
         try {
           var comp = component(clip, "Lumetri Color");
           if (!comp) { addVideoEffect(qeSeq, t, clip, "Lumetri Color", i); comp = component(clip, "Lumetri Color"); }
           if (!comp) throw new Error("Lumetri not added");
-          var look = property(comp, "Look"), inLut = property(comp, "Input LUT");
+          lumetri++;
           var ev = mc.exposure_ev || 0, expo = property(comp, "Exposure");
-          if (ev && expo) {   // the per-clip exposure fix (assemble.js exposure) goes in Basic Correction, before the look
-            try { if (Math.abs((expo.getValue() || 0) - ev) > 0.005) { expo.setValue(ev, true); exposed++; } } catch (eX) { failed.push(clip.name + ": exposure not set (" + eX + ")"); }
-          } else if (ev && !expo) failed.push(clip.name + ": no Exposure control on Lumetri");
-          var cur = null; try { cur = (look || inLut).getValue(); } catch (e1) {}
-          if (cur && norm(cur) === norm(lut)) { already++; continue; }
-          if (look && opts.slot !== "input") {
-            look.setValue(lut, true); used = "Creative > Look";
-            var inten = property(comp, "Intensity"); if (inten) { try { inten.setValue(M.grade.intensity, true); } catch (e2) {} }
-          } else if (inLut) { inLut.setValue(lut, true); used = "Basic > Input LUT"; }
-          else throw new Error("no LUT slot on Lumetri");
-          var back = null; try { back = (look && opts.slot !== "input" ? look : inLut).getValue(); } catch (e3) {}
-          if (back && norm(back) !== norm(lut)) throw new Error("Premiere did not keep the LUT (read back " + back + ")");
-          applied++;
+          if (expo) { if (Math.abs((expo.getValue() || 0) - ev) > 0.005) { expo.setValue(ev, true); } if (ev) exposed++; }
+          else if (ev) failed.push(clip.name + ": no Exposure control on Lumetri");
+          var lk = lumetriLook(comp);
+          if (ref && lk.look && lk.asset) {
+            try { lk.asset.setValue(ref.asset, true); lk.look.setValue(ref.look, true); var inten = null;
+                  for (var q = comp.properties.numItems - 1; q >= 0; q--) if (comp.properties[q].displayName === "Intensity") { inten = comp.properties[q]; break; }
+                  if (inten) inten.setValue(M.grade.intensity, true); looked++; }
+            catch (eL) { failed.push(clip.name + ": look not copied (" + eL + ")"); lookPending++; }
+          } else lookPending++;
         } catch (e4) { failed.push(clip.name + ": " + e4); }
       }
     }
-    return { sequence: seq.name, look: M.grade.look, lut: lut, slot: used, intensity: M.grade.intensity, applied: applied, already: already, exposure_fixed: exposed, skipped_non_camera: skipped,
-             failed: failed.length, failed_clips: failed.slice(0, 20),
-             hint: failed.length ? "Lumetri property writes are known to no-op on some Premiere 26.3 builds — if every clip failed, select all camera clips, apply Lumetri once and pick the LUT from Creative > Look (the studio LUTs are in kit/luts), then copy/paste attributes." : "" };
+    return { sequence: seq.name, look: M.grade.look, lut_file: M.grade.lut, camera_clips: seen, next_start: Math.min(seen, start + limit), remaining: Math.max(0, seen - start - limit), lumetri_clips: lumetri, exposure_fixed: exposed, look_applied: looked, look_pending: lookPending,
+             skipped_non_camera: skipped, failed: failed.length, failed_clips: failed.slice(0, 20),
+             hint: lookPending ? "Exposure is set. For the look: select one clip, Lumetri > Creative > Look > " + basename(M.grade.lut).replace(/\.cube$/i, "") +
+                   " (installed by setup-kit), Intensity " + M.grade.intensity + ", then run grade again with {look_from:\"" + seq.name + "/<that clip's index on V1>\"}." : "" };
   }
   function stepEnhance(opts) {
     var seq = targetSequence(opts);
@@ -772,7 +800,7 @@ var BUWAN = (function () {
           try { r.aroll = stepAroll(o); } catch (eB1) { r.aroll = { error: String(eB1) }; }
           try { r.steady = stepSteady(o); } catch (eB2) { r.steady = { error: String(eB2) }; }
           if (M.clips.length && M.clips[0].category_file !== undefined) {
-            try { r.relink = stepRelink({ start: 0, limit: 100000 }); } catch (eB3) { r.relink = { error: String(eB3) }; }
+            try { r.relink = stepRelink({ limit: 100000 }); } catch (eB3) { r.relink = { error: String(eB3) }; }
           }
           if (M.grade && M.grade.lut) {   // the Buwan look + per-clip exposure on the sequences the basics made (no editor sequences)
             r.grade = {};

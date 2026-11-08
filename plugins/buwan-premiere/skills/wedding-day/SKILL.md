@@ -33,7 +33,7 @@ Result the editor opens:
 - category bins with the **house label colors**, `02 Prep & Details` split into **Bride prep** and **Groom prep** (objects on their own stay in `02`); `00 Rejected (cull)` for the unusable; `00 Flagged/Soft focus · Dark · Blown exposure · Frozen` for b-roll that shouldn't be a first pick (label kept, reason in Description);
 - `01 Speech/Speech ranges` subclips with the dead air gone; `01 Speech/Clean audio` WAVs; the **A-Roll clean** sequence — the whole day's speech back to back, no duplicates;
 - `<category>/Steady picks` — the best steady cut of each shaky Creative/Glider clip as a subclip; **STABILIZE – Warp** — the best cut of each gimbal shot with no steady stretch, placed with Warp Stabilizer applied (open it once so Premiere analyses in the background; copy a stabilized clip from there into the cut); handheld and too-shaky clips in `00 Flagged/Heavy motion`, not stabilized;
-- every clip linked to `BY_CATEGORY/` (the trimmed shaky clips stay on `RAW_COPY/` so their ranges hold); A-Roll clean and STABILIZE graded: exposure fix + the Buwan look.
+- every clip linked to `BY_CATEGORY/` (the trimmed shaky clips stay on `RAW_COPY/` so their ranges hold); A-Roll clean and STABILIZE carry Lumetri with the exposure fix; the editor picks Creative → Look → Buwan_Warm once on one clip, then `grade {look_from}` copies it (Premiere 26.x can't load a LUT from a script).
 
 Then `assemble.js handoff <project> --title "<Couple>"` → `<WORK>/EDITOR_START_HERE.md`. Report a table (step · result · check by hand) and **stop**.
 

@@ -138,7 +138,7 @@ Story-Lock selects are marked with **markers**, not colors: marker name = beat (
 
 ## Grade looks
 - Studio looks live in `kit/luts/`: `Buwan_Warm.cube`, `Buwan_Cool.cube`, `Buwan_BW.cube` (33-point, Rec.709 in/out). Apply AFTER the camera's own Log→Rec.709 conversion, at 60–100%.
-- **Exposure before the look:** every camera clip is measured (`assemble.js exposure`, 8-bit, keyframes). A clip whose average brightness is outside the look's band in `kit/grade/targets.json` (Warm 55–150) gets Lumetri Basic Correction > Exposure nudging it just inside the band, at most ±1.5 EV, never clipping its highlights. Low-key shots (dark average and nothing bright, e.g. rings on black) are left alone and listed. No fix ever re-encodes footage.
+- **Exposure before the look:** every camera clip is measured (`assemble.js exposure`, 8-bit, keyframes). A clip whose average brightness is outside the look's band in `kit/grade/targets.json` (Warm 55–150) gets Lumetri Basic Correction > Exposure nudging it just inside the band, at most ±1.5 EV, never clipping its highlights. Low-key shots (dark average and nothing bright, e.g. rings on black) are left alone and listed. No fix ever re-encodes footage. Premiere 26.x: a script can set Lumetri and Exposure but can't load a LUT, so the look is picked once by hand (Creative → Look → Buwan_*, listed after `/buwan:setup-kit` + a Premiere restart) and copied by the bridge.
 - Pick one look per film (warm or cool, from the day's palette); B&W only for the most intimate beats.
 - Every graded export is measured with `/buwan:grade` (grade check against `kit/grade/targets.json`). Targets are calibrated from the studio's reference stills.
 

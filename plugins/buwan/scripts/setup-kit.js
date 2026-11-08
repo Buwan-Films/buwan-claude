@@ -74,8 +74,12 @@ try {
     const resolveScripts = isMac ? path.join(os.homedir(), "Library", "Application Support", "Blackmagic Design", "DaVinci Resolve", "Fusion", "Scripts", "Edit")
       : isWin ? path.join(process.env.APPDATA || "", "Blackmagic Design", "DaVinci Resolve", "Support", "Fusion", "Scripts", "Edit") : null;
     if (fcpLut) { fs.mkdirSync(fcpLut, { recursive: true }); for (const f of luts) fs.copyFileSync(path.join(KIT, "luts", f), path.join(fcpLut, f)); }
+    // Premiere: Lumetri > Creative > Look lists the user's Creative LUT folder (restart Premiere after the first install)
+    const prLut = isMac ? path.join(os.homedir(), "Library", "Application Support", "Adobe", "Common", "LUTs", "Creative")
+      : isWin ? path.join(process.env.APPDATA || "", "Adobe", "Common", "LUTs", "Creative") : null;
+    if (prLut) { fs.mkdirSync(prLut, { recursive: true }); for (const f of luts) fs.copyFileSync(path.join(KIT, "luts", f), path.join(prLut, f)); }
     if (resolveScripts && fs.existsSync(path.dirname(path.dirname(resolveScripts)))) { fs.mkdirSync(resolveScripts, { recursive: true }); fs.copyFileSync(path.join(ROOT, "assemble", "resolve_grade.py"), path.join(resolveScripts, "buwan_grade.py")); }
-    ok("Studio looks installed", [fcpLut && "Final Cut Custom LUTs", resolveScripts && fs.existsSync(resolveScripts) && "Resolve Scripts > Edit > buwan_grade"].filter(Boolean).join(", ") || "copied to kit/luts (install in your app's LUT folder)");
+    ok("Studio looks installed", [prLut && "Premiere Lumetri > Creative > Look (restart Premiere)", fcpLut && "Final Cut Custom LUTs", resolveScripts && fs.existsSync(resolveScripts) && "Resolve Scripts > Edit > buwan_grade"].filter(Boolean).join(", ") || "copied to kit/luts (install in your app's LUT folder)");
   } catch (e) { report.push(["INFO", "Studio looks", e.message]); }
 } catch (e) {
   bad("Kit files", e.message);

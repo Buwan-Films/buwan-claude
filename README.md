@@ -18,7 +18,7 @@ The editor makes the project and places the music. Claude Code does **the basics
 | **Dead air** | silences found and removed; speech ranges become subclips / Favorites, the **A-Roll clean** is the whole day's speech back to back; cleaned −17 LUFS WAVs |
 | **Label colors** | the same colors in every app (Premiere labels, Final Cut roles, Resolve clip colors); soft / dark / blown / frozen b-roll parked in `00 Flagged/<reason>` |
 | **Copy by category** | `assemble.js bycategory`: `<raw>_WORK/BY_CATEGORY/<category>[/Bride prep · Groom prep]/` — APFS clones of the working copy (no extra space), rejects left out, shaky Creative clips trimmed to their best cut; Premiere relinks to it |
-| **Grade + exposure** | `assemble.js exposure`: gentle per-clip exposure fix toward the studio look's brightness band, then the Buwan look LUT — on the A-Roll clean and STABILIZE sequences; the editor's own sequences when asked |
+| **Grade + exposure** | `assemble.js exposure`: gentle per-clip exposure fix toward the studio look's brightness band, then the Buwan look LUT (in Premiere, picked once by hand on one clip and copied by the bridge) — on the A-Roll clean and STABILIZE sequences; the editor's own sequences when asked |
 | **Shaky — Creative/Glider only** | the best cut first (steady stretch → Steady pick); only **gimbal** shots are stabilized — Warp Stabilizer (Premiere) / Stabilization (Final Cut) on their best cut; handheld or too shaky → Flagged. Gimbal = camera folder named Glider/Gimbal/Ronin…, or listed in `edit/assemble/gimbal.txt` / `steady --gimbal` |
 
 On request only: `/buwan:multicam` (sync by audio: vows, interviews, ceremony), `/buwan:plot` (story), the cut, grading your own sequences, graphics, export.
