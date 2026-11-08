@@ -11,7 +11,7 @@ The rules live in this repository. The claude.ai artifacts are the visual versio
 | App steps | `plugins/buwan/skills/{premiere,final-cut,resolve}/SKILL.md` |
 | What's protected | `plugins/buwan/scripts/protect-sources.js` (`sources/`, `RAW_COPY/`, and every path in `~/.buwan/protected-paths.txt`, which `assemble.js workcopy` fills) |
 | Working copy, duplicates, hand-off note | `plugins/buwan/assemble/workcopy.py` (`workcopy`, `dedupe`, `handoff`); flagged-bin reasons in `assemble/premiere.py` (`FLAG_REASONS`) |
-| Shaky creative footage (which cameras count, steady thresholds) | `plugins/buwan/assemble/steady.py` (`CREATIVE_CAMERAS`, `STEADY_MAX`, `WARP_MAX_MEAN`, `MIN_STEADY_S`); Premiere side in `buwan.jsx` (`stepSteady`) |
+| Shaky creative footage (which cameras count, steady thresholds) | `plugins/buwan/assemble/steady.py` (`CREATIVE_CAMERAS`, `GIMBAL_CAMERAS`, `STEADY_MAX`, `WARP_MAX_MEAN`, `MIN_STEADY_S`, `BEST_CUT_S`; per job: `edit/assemble/gimbal.txt` or `steady --gimbal`); Premiere side in `buwan.jsx` (`stepSteady`) |
 | The basics scope (what runs on a new project) | `plugins/buwan/skills/basics/SKILL.md`, `buwan-premiere/skills/wedding-day/SKILL.md`, bridge step `basics` in `buwan.jsx` |
 | Per-app pipeline pages | `plugins/buwan/reference/pipeline-premiere.html`, `pipeline-final-cut.html` — edit the artifact, save the page here |
 | Rule card every session starts with | `plugins/buwan/scripts/session-start.js` |

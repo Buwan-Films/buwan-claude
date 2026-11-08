@@ -11,7 +11,7 @@ Gates still apply, rounds don't. Saved look, minimal captions, one converge pass
 | Stage | Same-day version |
 |---|---|
 | 01 Intake | `/buwan:intake … --work-copy` — a verified working copy next to the raw folder on the SSD (`<raw>_WORK/RAW_COPY/`), byte-identical duplicates skipped, originals never read again. No room → `--in-place` with `scan --dedupe`. Ask for the two music tracks (01 intro, 02 story). |
-| Prep — **the basics** | `/buwan:basics`: dedupe (working copy) → cull → categorize → dead air + A-Roll clean → label colors → shaky Creative/Glider (best cut / Warp Stabilizer). Premiere through the bridge (`basics`), Final Cut through the organize + aroll FCPXML. **The editor made the project and placed the music; the run stops here.** Multicam only on request: `/buwan:multicam`. |
+| Prep — **the basics** | `/buwan:basics`: dedupe (working copy) → cull → categorize → dead air + A-Roll clean → label colors → shaky Creative/Glider (best cut first; Warp only on gimbal shots, on the best cut). Premiere through the bridge (`basics`), Final Cut through the organize + aroll FCPXML. **The editor made the project and placed the music; the run stops here.** Multicam only on request: `/buwan:multicam`. |
 | 02 Story-Lock | `/buwan:plot` same-day mode: one pass, letters/vows/messages only; write `selects.json`. |
 | 02 Rough cut | `/buwan:assemble` step 8: `assemble.js build … --name "SDE Cut" --grade <look> --options '{"title_at":"end","final_hold_s":27}'`. Read the edit map: cold open, letter first, two peaks, vow held, kiss on peak 2, one 25–30 s final hold, title last (house rules → "The SDE shape"). |
 | Gate | `/buwan:proof-gate <edl> --mode sde` — must pass (or a one-line override). |

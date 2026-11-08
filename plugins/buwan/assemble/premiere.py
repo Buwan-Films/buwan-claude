@@ -90,7 +90,7 @@ def build_manifest(project: Path, clips: dict[str, Clip], categories: dict, grad
         flags = [w for w in warn if w in FLAG_REASONS and c.kind == "video" and cat != "01 Speech"]
         st = steady.get(p)
         if st and st["decision"] in ("best-cut", "warp"):
-            flags = [w for w in flags if w != "heavy-motion"]   # saved: it has a steady cut or goes to Warp Stabilizer
+            flags = [w for w in flags if w != "heavy-motion"]   # saved: it has a steady cut, or it is a gimbal shot whose best cut goes to Warp Stabilizer
         entry = {
             "path": p, "name": c.name, "camera": c.camera, "kind": c.kind, "duration": round(c.duration, 3),
             "fps": round(c.fps_num / c.fps_den, 3) if c.fps_num else 0, "has_audio": bool(c.has_audio),
@@ -102,7 +102,7 @@ def build_manifest(project: Path, clips: dict[str, Clip], categories: dict, grad
             "flag_bin": f"{FLAG_BIN}/{FLAG_REASONS[flags[0]]}" if flags and not rej else None,
             "sync_offset": (sync["clips"].get(p) or {}).get("offset"),
             "speech_ranges": (ranges.get(p) or {}).get("ranges") or [],
-            "steady": ({"decision": st["decision"], "range": st.get("range"), "reason": st.get("reason")} if st else None),
+            "steady": ({"decision": st["decision"], "range": st.get("range"), "gimbal": bool(st.get("gimbal")), "reason": st.get("reason")} if st else None),
         }
         e = enhance.get(p) or {}
         if e.get("recipe"):

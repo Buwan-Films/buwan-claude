@@ -1,5 +1,9 @@
 # Changelog
 
+## buwan 1.5.2 · buwan-premiere 1.2.2 — 2026-11-08  (/plugin marketplace update buwan-films, then update both plugins and restart)
+- **Steady — best cut first, stabilize gimbal shots only.** Every shaky Creative/Glider clip gets its best cut chosen first: a steady stretch (≥2.5 s) is a Steady pick and is not stabilized. Only **gimbal** shots with no steady stretch are stabilized, and only on their **best cut** (the least-shaky ~5 s, `BEST_CUT_S`), never the whole clip — Premiere places that range in `STABILIZE – Warp` with Warp Stabilizer; Final Cut gets keyword `stabilize` + a Favorite `stabilize` on the range. Handheld shaky shots are **not stabilized** (new decision `handheld`) and stay in `00 Flagged/Heavy motion` with their best cut in the reason.
+- Gimbal shots: camera/folder name (`GIMBAL_CAMERAS`: Glider, Gimbal, Ronin, Steadi, Crane, Weebill, Zhiyun, RS 2/3/4), or listed per job in `edit/assemble/gimbal.txt` / `assemble.js steady --gimbal "1-Creative/5/" C0022 …` (`*` = the whole Creative camera). A "Creative" folder alone no longer counts as a gimbal. `steady_report.md` gains a Gimbal column. Skills, house rules, session card, README, MAINTAINING and the pipeline pages updated.
+
 ## buwan 1.5.1 · buwan-premiere 1.2.1 — 2026-11-08  (/plugin marketplace update buwan-films, then update both plugins and restart)
 Fixes found on a real wedding SDE (Marynhor & Jomar, Premiere 26.5):
 - **Clean speech WAVs were −12 LUFS / 0 dBTP, not −17 / −6:** ffmpeg `alimiter` auto-levels its output to 0 dBFS by default; now `level=disabled`. Clean WAVs are named by the clip's relative path (cameras and cards reuse `C0001…`, so bare names overwrote each other). Re-render existing clean WAVs; in Premiere, `changeMediaPath(samePath, true)` after re-rendering (refreshMedia leaves stale or silent conformed audio).

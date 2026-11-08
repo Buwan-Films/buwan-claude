@@ -18,7 +18,7 @@
  *      deadair   subclips of the speech ranges (dead air removed), bin "01 Speech/Speech ranges"
  *      aroll     the A-Roll clean sequence: every speech range back to back
  *      sync      one stacked SYNC sequence per multicam group, clips at their audio-sync offsets
- *      steady    shaky Creative/Glider clips: best-cut subclips in <category>/Steady picks, the rest in a STABILIZE sequence with Warp Stabilizer
+ *      steady    shaky Creative/Glider clips: best cut first (subclips in <category>/Steady picks); only gimbal shots with no steady stretch get Warp Stabilizer, on their best cut, in a STABILIZE sequence
  *      skeleton  (optional) an empty assembly sequence with section markers — only when asked
  *      build     the music-driven timeline from the plan (speech V1/A1, b-roll V2, music A3/A4, markers)
  *      basics    import, organize (bins, labels, rejects, flagged), deadair, aroll, steady — and stops. The same-day scope.
@@ -561,7 +561,9 @@ var BUWAN = (function () {
     return { sync_sequences: out, next: "In the Project panel select each SYNC sequence → right-click → Multi-Camera → Enable, then edit it as a multicam clip (Program Monitor → Multi-Camera view)." };
   }
   function stepSteady(opts) {
-    // Shaky Creative/Glider clips: best-cut -> subclip in <category>/Steady picks; warp -> STABILIZE sequence with Warp Stabilizer applied.
+    // Shaky Creative/Glider clips, best cut first: best-cut -> subclip in <category>/Steady picks (no stabilizing);
+    // warp (gimbal shots only) -> the best cut of the clip placed in the STABILIZE sequence with Warp Stabilizer applied.
+    // handheld / too-shaky -> left in 00 Flagged/Heavy motion, not stabilized.
     reindex();
     var picks = 0, warped = 0, missing = 0, exists = 0, failed = [], seq = null, t = 0;
     var warpList = [];
@@ -589,17 +591,18 @@ var BUWAN = (function () {
       var qs = qe.project.getActiveSequence();
       for (var w = 0; w < warpList.length; w++) {
         var wc = warpList[w];
-        if (place(seq, wc.item, 0, wc.clip.duration, t, 0, 0)) {
+        var wr = wc.clip.steady.range, w0 = wr ? wr[0] : 0, w1 = wr ? wr[1] : wc.clip.duration;
+        if (place(seq, wc.item, w0, w1, t, 0, 0)) {
           var dom = clipAt(seq.videoTracks[0], t);
           try { addVideoEffect(qs, 0, dom, "Warp Stabilizer", seq.videoTracks[0].clips.numItems - 1); warped++; }
           catch (e4) { failed.push(wc.clip.name + ": Warp Stabilizer not applied (" + e4 + ")"); marker(seq, t, "WARP: apply by hand", "Effects > Distort > Warp Stabilizer", 3); }
           marker(seq, t, wc.clip.name, wc.clip.steady.reason || "", 7);
-          t += wc.clip.duration + 0.5;
+          t += (w1 - w0) + 0.5;
         }
       }
     }
     return { steady_picks: picks, already_there: exists, warp_clips: warped, stabilize_sequence: seq ? seq.name : null, not_in_project: missing, failed: failed.length, failed_clips: failed.slice(0, 20),
-             next: "Steady picks sit next to their category bin. Open the STABILIZE sequence once so Warp Stabilizer analyses in the background; copy a stabilized clip from there into your cut." };
+             next: "Steady picks sit next to their category bin. Only gimbal shots are stabilized, on their best cut: open the STABILIZE sequence once so Warp Stabilizer analyses in the background; copy a stabilized clip from there into your cut. Handheld shaky clips stay in 00 Flagged/Heavy motion." };
   }
   function stepSkeleton(opts) {
     // The empty same-day assembly sequence: the editor drops picks on V1 and goes.

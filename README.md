@@ -17,7 +17,7 @@ The editor makes the project and places the music. Claude Code does **the basics
 | **Categorize** | every clip in one of the 12 studio categories |
 | **Dead air** | silences found and removed; speech ranges become subclips / Favorites, the **A-Roll clean** is the whole day's speech back to back; cleaned −17 LUFS WAVs |
 | **Label colors** | the same colors in every app (Premiere labels, Final Cut roles, Resolve clip colors); soft / dark / blown / frozen b-roll parked in `00 Flagged/<reason>` |
-| **Shaky — Creative/Glider only** | the best steady cut as a Steady pick, else Warp Stabilizer (Premiere) / Stabilization (Final Cut), else Flagged |
+| **Shaky — Creative/Glider only** | the best cut first (steady stretch → Steady pick); only **gimbal** shots are stabilized — Warp Stabilizer (Premiere) / Stabilization (Final Cut) on their best cut; handheld or too shaky → Flagged. Gimbal = camera folder named Glider/Gimbal/Ronin…, or listed in `edit/assemble/gimbal.txt` / `steady --gimbal` |
 
 On request only: `/buwan:multicam` (sync by audio: vows, interviews, ceremony), `/buwan:plot` (story), the cut, grade, graphics, export.
 

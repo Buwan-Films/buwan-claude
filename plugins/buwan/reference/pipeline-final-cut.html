@@ -61,7 +61,7 @@
       <li><b>Categorize</b> — every clip into one of the 12 studio categories (Speech, Prep &amp; Details, Portraits, Ceremony, Reactions &amp; BTS, Establishing, Reception &amp; Party, Drone, Music, SFX, Graphics, Grade &amp; Adjust).</li>
       <li><b>Dead air</b> — the speech inside every speech clip found, silences cut; cleaned −17 LUFS WAVs in <span class="spec">AUDIO_CLEAN/</span>; the <b>A-Roll clean</b> is the whole day's speech back to back.</li>
       <li><b>Label colors</b> — a Role per category (Dialogue, Details, Portraits, Ceremony, Reactions, Establishing, Party, Drone, Music) and a Keyword Collection per bin, delivered as one validated FCPXML. Set the role colors once: <b>Modify → Edit Roles</b>. Soft-focus, dark, blown and frozen b-roll parked in the <span class="spec">warn</span> keyword with the reason in the clip note (rejects carry the <span class="spec">Rejected</span> rating), label kept.</li>
-      <li><b>Shaky — Creative/Glider only</b> — the longest steady stretch (≥2.5 s) becomes a <b>Steady pick</b>; no steady stretch → keyword <span class="spec">stabilize</span> + a note; you tick <b>Stabilization</b> in the Inspector; nothing to save → Flagged. Shaky clips on other cameras are left alone.</li></ol>
+      <li><b>Shaky — Creative/Glider only</b> — the longest steady stretch (≥2.5 s) becomes a <b>Steady pick</b> (the best cut is always chosen first); no steady stretch on a <b>gimbal</b> shot → keyword <span class="spec">stabilize</span> + a Favorite on its best cut; you tick <b>Stabilization</b> in the Inspector; handheld or nothing to save → Flagged, not stabilized. Shaky clips on other cameras are left alone.</li></ol>
     <div class="stop">Stops here · no sync · no story · no cut · no music</div>
   </div>
   <div class="col">
@@ -86,7 +86,7 @@
     <tr><td>Favorites <span class="spec">speech</span></td><td>The spoken stretches of every speech clip, dead air unfavorited. Skim Favorites only.</td></tr>
     <tr><td><span class="spec">aroll-clean_v1.fcpxml</span></td><td>The <b>A-Roll clean</b> project: every speech range back to back with the sound enhancement (loudness, noise reduction, voice isolation) written into the XML.</td></tr>
     <tr><td>Favorites <span class="spec">steady</span> · keyword <span class="spec">steady pick</span></td><td>The usable part of each shaky creative shot.</td></tr>
-    <tr><td>Keyword <span class="spec">stabilize</span></td><td>Creative clips with no steady stretch. Select the collection, tick <b>Stabilization</b> in the Inspector once.</td></tr>
+    <tr><td>Keyword <span class="spec">stabilize</span></td><td>Gimbal shots with no steady stretch (Favorite <span class="spec">stabilize</span> = the best cut). Select the collection, tick <b>Stabilization</b> in the Inspector once.</td></tr>
     <tr><td>Rating <span class="spec">Rejected</span> · keyword <span class="spec">warn</span></td><td>The unusable, and the last-resort b-roll (reason in the note). Hide rejected in the browser filter; nothing is deleted.</td></tr>
     <tr><td><span class="spec">EDITOR_START_HERE.md</span></td><td>In the WORK folder: what is where, what is flagged, speech minutes, the three things to do first.</td></tr>
   </table></div>

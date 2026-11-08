@@ -249,13 +249,13 @@ def cmd_handoff(a):
           "- `01 Speech/Speech ranges` — one subclip per spoken stretch. `01 Speech/Clean audio` — levelled −17 LUFS WAVs to lay under the picture.",
           (f"- Multicam: {len(mcs)} SYNC sequences. Right-click each → **Multi-Camera → Enable** before cutting from it." if mcs else "- Multicam not synced (on request: `/buwan:multicam` — vows, interviews, ceremony)."), ""]
     sd = load_json(adir / "steady.json") if (adir / "steady.json").exists() else {}
-    bc = sum(1 for v in sd.values() if v["decision"] == "best-cut"); wp = sum(1 for v in sd.values() if v["decision"] == "warp"); ts = sum(1 for v in sd.values() if v["decision"] == "too-shaky")
+    bc = sum(1 for v in sd.values() if v["decision"] == "best-cut"); wp = sum(1 for v in sd.values() if v["decision"] == "warp"); ts = sum(1 for v in sd.values() if v["decision"] in ("too-shaky", "handheld"))
     L += ["## Shaky Creative/Glider footage", "",
-          f"- {bc} clips have a steady cut (Steady picks), {wp} need Warp Stabilizer / Stabilization (STABILIZE – Warp), {ts} are too shaky (`00 Flagged/Heavy motion`). Details: `edit/steady_report.md`.",
+          f"- {bc} clips have a steady cut (Steady picks), {wp} gimbal shots get Warp Stabilizer / Stabilization on their best cut (STABILIZE – Warp), {ts} are handheld or too shaky and are not stabilized (`00 Flagged/Heavy motion`). Details: `edit/steady_report.md`.",
           "- Shaky clips on the other cameras were left alone on purpose.", ""]
     L += ["## Sequences", "",
           "- **A-Roll clean** — every speech range back to back, a marker per source clip. Listen here, never in the raw bins.",
-          "- **STABILIZE – Warp** — holding pen for the clips Warp Stabilizer should fix. Not a cut.",
+          "- **STABILIZE – Warp** — holding pen: the best cut of each shaky gimbal shot, Warp Stabilizer applied. Not a cut.",
           "- Your cutting sequence is yours to make: 1920×1080 · 23.976 · TC 01:00:00:00; dialogue −17 LUFS, peaks −6 dBFS, music bed −20 dB.", ""]
     if manifest.get("grade"):
         L.append(f"- Look chosen: **{manifest['grade']['look']}** ({manifest['grade'].get('intensity', 80)}%).")

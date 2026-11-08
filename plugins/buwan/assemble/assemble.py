@@ -5,7 +5,7 @@
   assemble.py dedupe    <project> [--footage <dir>]  -> edit/assemble/dedupe.json + dedupe_report.md (reference-in-place jobs)
   assemble.py scan      <project> [--footage <dir>] [--music <dir or files...>] [--dedupe]  -> edit/assemble/clips.json
   assemble.py cull      <project>            -> edit/assemble/cull.json
-  assemble.py steady    <project>            -> edit/assemble/steady.json  (shaky Creative/Glider clips: best cut | warp | too shaky)
+  assemble.py steady    <project>            -> edit/assemble/steady.json  (shaky Creative/Glider clips: best cut first | warp (gimbal only, on the best cut) | handheld | too shaky)
   assemble.py music     <project> --intro <track1> --main <track2>   -> edit/assemble/music.json
   assemble.py sync      <project> [--anchor "2-Main"] [--trusted cam ...]  -> edit/assemble/sync.json + multicams.json
   assemble.py organize  <project> --categories edit/assemble/categories.json  -> edit/organize_vN.fcpxml
@@ -132,12 +132,17 @@ def cmd_steady(a):
     cull_res = load_json(adir(project) / "cull.json") if (adir(project) / "cull.json").exists() else []
     if not cull_res:
         sys.exit("run cull first (steady reads the heavy-motion flags)")
-    res = steady(clips, cull_res, a.workers)
+    gp = project / "edit" / "assemble" / "gimbal.txt"
+    pats = (gp.read_text().splitlines() if gp.exists() else []) + list(a.gimbal or [])
+    res = steady(clips, cull_res, a.workers, pats)
     save_json(adir(project) / "steady.json", res)
-    rep = [f"# Shaky Creative/Glider footage — decisions", "", "| Clip | Decision | Range | Why |", "|---|---|---|---|"]
+    rep = [f"# Shaky Creative/Glider footage — decisions", "",
+           "Best cut first; only gimbal shots are stabilized, and only on their best cut. Gimbal shots: "
+           + (", ".join(f"`{x.strip()}`" for x in pats if x.strip() and not x.strip().startswith("#")) or "by camera name only (none listed in `edit/assemble/gimbal.txt`)"), "",
+           "| Clip | Gimbal | Decision | Range | Why |", "|---|---|---|---|---|"]
     for v in sorted(res.values(), key=lambda x: x["name"]):
         rng = f"{v['range'][0]:.1f}–{v['range'][1]:.1f}s" if v.get("range") else ""
-        rep.append(f"| {v['name']} | {v['decision']} | {rng} | {v.get('reason','')} |")
+        rep.append(f"| {v['name']} | {'yes' if v.get('gimbal') else 'no'} | {v['decision']} | {rng} | {v.get('reason','')} |")
     (project / "edit" / "steady_report.md").write_text("\n".join(rep) + "\n")
     log(f"wrote {adir(project) / 'steady.json'} and edit/steady_report.md")
 
@@ -305,7 +310,10 @@ def cmd_organize(a):
             notes[p] = (notes.get(p, "") + "; " if notes.get(p) else "") + f"steady pick {v['range'][0]:.1f}-{v['range'][1]:.1f}s"
         elif v["decision"] == "warp":
             kw.setdefault(p, []).append("stabilize")
-            notes[p] = (notes.get(p, "") + "; " if notes.get(p) else "") + "stabilize: tick Stabilization in the Inspector"
+            rg = f" on the best cut {v['range'][0]:.1f}-{v['range'][1]:.1f}s" if v.get("range") else ""
+            if v.get("range"):
+                favorites.setdefault(p, []).append([v["range"][0], v["range"][1], "stabilize"])
+            notes[p] = (notes.get(p, "") + "; " if notes.get(p) else "") + f"gimbal: tick Stabilization in the Inspector{rg}"
     plan = {"name": "", "event": a.event or project.name, "library": a.library, "clips": {p: c.to_json() for p, c in clips.items()},
             "keywords": kw, "rejected": rejected, "notes": notes, "roles": roles, "video_roles": vroles, "multicams": mcs if a.multicam else [],
             "favorites": favorites}
@@ -430,7 +438,9 @@ def main():
     s = sub.add_parser("scan"); s.add_argument("project"); s.add_argument("--footage"); s.add_argument("--music", nargs="*")
     s.add_argument("--dedupe", action="store_true", help="leave byte-identical duplicates out of the scan (reference-in-place jobs)"); s.set_defaults(f=cmd_scan)
     s = sub.add_parser("cull"); s.add_argument("project"); s.add_argument("--workers", type=int, default=4); s.set_defaults(f=cmd_cull)
-    s = sub.add_parser("steady"); s.add_argument("project"); s.add_argument("--workers", type=int, default=4); s.set_defaults(f=cmd_steady)
+    s = sub.add_parser("steady"); s.add_argument("project"); s.add_argument("--workers", type=int, default=4)
+    s.add_argument("--gimbal", nargs="*", help="clips shot on a gimbal: card folders, clip names or globs (added to edit/assemble/gimbal.txt patterns); '*' = all Creative clips")
+    s.set_defaults(f=cmd_steady)
     s = sub.add_parser("music"); s.add_argument("project"); s.add_argument("--intro"); s.add_argument("--main", required=True); s.set_defaults(f=cmd_music)
     s = sub.add_parser("sync"); s.add_argument("project"); s.add_argument("--anchor"); s.add_argument("--trusted", nargs="*"); s.set_defaults(f=cmd_sync)
     s = sub.add_parser("enhance"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=4); s.add_argument("--render", action="store_true", help="also write cleaned WAVs to edit/audio/clean"); s.set_defaults(f=cmd_enhance)
