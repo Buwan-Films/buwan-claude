@@ -8,7 +8,7 @@ argument-hint: "<YYYY-MM-DD>_<Couple> --footage <raw folder on the SSD> [--grade
 
 Load `/buwan:house-rules`, then the editor's app playbook (`${user_config.nle}`: `/buwan:premiere` + `/buwan-premiere:premiere-apply`, or `/buwan:final-cut`). The engine does the work (`node "${CLAUDE_PLUGIN_ROOT}/scripts/assemble.js" …`); you make the category calls and report.
 
-**Scope — do these six things and stop:**
+**Scope — do these eight things and stop:**
 
 | # | Step | Engine | What the editor gets |
 |---|---|---|---|
@@ -18,8 +18,10 @@ Load `/buwan:house-rules`, then the editor's app playbook (`${user_config.nle}`:
 | 4 | **Dead air** | `enhance <project> --render` → `deadair <project>` | speech ranges with the silence cut out; cleaned −17 LUFS WAVs in `AUDIO_CLEAN/`; the **A-Roll clean** to listen through |
 | 5 | **Label colors** | Premiere: bridge `organize` · Final Cut: `organize <project>` FCPXML (roles) | the house colors per category; rejects in `00 Rejected (cull)`; soft / dark / blown / frozen b-roll in `00 Flagged/<reason>` |
 | 6 | **Shaky — Creative/Glider only** | `steady <project>` | for every shaky clip on the creative/glider camera, **select the best cut first**: a steady stretch (≥2.5 s) becomes a Steady pick, no stabilizing. Only **gimbal shots** with no steady stretch are stabilized — **Warp Stabilizer on their best cut** (the least-shaky ~5 s), never the whole clip. Handheld shots aren't stabilized; they stay in Flagged with their best cut in the reason, as does anything nothing can save. Gimbal = the camera folder says so (Glider, Gimbal, Ronin, RS 3…) or the editor lists the cards/clips in `edit/assemble/gimbal.txt` (or `steady --gimbal "1-Creative/5/"`; `*` = the whole Creative camera ran on the gimbal) — ask the editor which cards were on the gimbal if the folders don't say. Shaky clips on other cameras are left alone — a shaky reaction is still a reaction |
+| 7 | **Copy by category** | `bycategory <project>` | `<WORK>/BY_CATEGORY/<category>[/Bride prep · Groom prep]/<camera>_<card>_<clip>` — the working copy organized like the bins: APFS clones of `RAW_COPY` (instant, no extra space), cull rejects left out, flagged clips in `00 Flagged/<reason>`, and each shaky Creative clip trimmed to its best cut (`…_best_<in>-<out>`, no re-encode; the full clip stays in `RAW_COPY`). Read-only like `RAW_COPY`. Premiere relinks to it (bridge `relink`) |
+| 8 | **Grade + exposure** | `exposure <project>` → `premiere --grade <look>` | every camera clip measured; clips outside the look's brightness band (`kit/grade/targets.json`, e.g. 55–150 for Warm) get a gentle Lumetri **Exposure** fix (±1.5 EV max, nudged just inside the band, low-key shots like rings on black left alone), then the **Buwan look LUT**. Premiere: on the **A-Roll clean** and **STABILIZE – Warp** sequences now, the editor's own sequences only when asked (Premiere can't script effects on bin clips). Report: `edit/exposure_report.md` |
 
-**Not in scope — only when the editor asks:** multicam sync (`/buwan:multicam`), the story (`/buwan:plot`), the cut (`/buwan:rough-cut` / `assemble.js build`), music, graphics, grade, export. Never start any of them on your own, and never create a cutting sequence.
+**Not in scope — only when the editor asks:** multicam sync (`/buwan:multicam`), the story (`/buwan:plot`), the cut (`/buwan:rough-cut` / `assemble.js build`), music, graphics, grading the editor's own sequences, export. Never start any of them on your own, and never create a cutting sequence.
 
 ## What the editor did first (check, don't do)
 - Made the project by hand: Premiere `<WORK>/PROJECT/<Couple>_SDE.prproj` with **File → Project Settings → Scratch Disks** on `PROJECT/` (and Window → Extensions → MCP Bridge running); Final Cut: a library on the SSD next to `<WORK>/`.
@@ -32,16 +34,17 @@ Load `/buwan:house-rules`, then the editor's app playbook (`${user_config.nle}`:
 3. Categories → `categories.json`. On an SDE: folder name first, then audio (speech-level loudness over long stretches = `01 Speech`). Then one frame per prep clip on numbered contact sheets → `subbins.json` (Bride prep / Groom prep), and on the same sheets catch venue shots (→ `06 Establishing`) and letters, vows or interviews read on camera (→ `01 Speech`).
 4. `enhance --render` → `deadair`. Report minutes of speech kept and dead air removed; name the clips under 15 dB SNR (use the recorder file).
 5. `steady [--gimbal <cards/clips>]`. Report: best cuts · gimbal shots to Warp (on their best cut) · handheld, not stabilized · too shaky.
-6. Apply in the app:
-   - **Premiere:** `premiere <project> --grade <look>` → bridge `basics` (= `import` → `organize` → `deadair` → `aroll` → `steady`). Result: category bins with labels, `00 Rejected (cull)`, `00 Flagged/<reason>`, `01 Speech/Speech ranges` subclips, `01 Speech/Clean audio`, the **A-Roll clean** sequence, `<category>/Steady picks` subclips, and a **STABILIZE – Warp** sequence holding the clips that need Warp Stabilizer (effect applied; open it once so Premiere analyses).
+6. `bycategory` (step 7) → `exposure` (step 8). Report the folder counts, the trimmed shaky clips and the exposure fixes (how many brighter / darker, the low-key ones left alone).
+7. Apply in the app:
+   - **Premiere:** `premiere <project> --grade <look>` → bridge `basics` (= `import` → `organize` → `deadair` → `aroll` → `steady` → `relink` → `grade` on A-Roll clean and STABILIZE). If the bridge times out, run the steps one by one (`relink` in batches of 150). Result: category bins with labels, `00 Rejected (cull)`, `00 Flagged/<reason>`, `01 Speech/Speech ranges` subclips, `01 Speech/Clean audio`, the **A-Roll clean** sequence, `<category>/Steady picks` subclips, and a **STABILIZE – Warp** sequence holding the clips that need Warp Stabilizer (effect applied; open it once so Premiere analyses).
    - **Final Cut:** `organize <project> --event "<Couple>"` → `edit/organize_vN.fcpxml` (keywords = bins, roles = colors, rejects as Rejected, warnings as notes, speech ranges as Favorites named `speech`, steady picks as Favorites named `steady` + keyword `steady pick`, gimbal clips for stabilizing with keyword `stabilize`, a Favorite named `stabilize` on the best cut and a note). Then `aroll <project> --event "<Couple>"` → `edit/aroll-clean_vN.fcpxml`. Editor imports both (**File → Import → XML**), sets the role colors once (**Modify → Edit Roles**), ticks **Stabilization** in the Inspector on the `stabilize` clips (cut from their `stabilize` Favorite).
-7. `handoff <project> --title "<Couple>"` → `<WORK>/EDITOR_START_HERE.md`.
-8. Report a table: step · result · check by hand. **Stop.**
+8. `handoff <project> --title "<Couple>"` → `<WORK>/EDITOR_START_HERE.md`.
+9. Report a table: step · result · check by hand. **Stop.**
 
 ## New clips from the shooters (`--new-clips`)
-Same folders, more files: `workcopy` again (copies only the new, skips duplicates of anything already copied) → `scan` → `cull` → categories for the new paths → `enhance --render` → `deadair` → `steady` → apply (Premiere `status` → `import` → `organize` → `deadair` → `steady`; Final Cut: a new `organize_vN.fcpxml`, import adds only what is new) → `handoff`. Nothing already in the project is touched.
+Same folders, more files: `workcopy` again (copies only the new, skips duplicates of anything already copied) → `scan` → `cull` → categories for the new paths → `enhance --render` → `deadair` → `steady` → `bycategory` → `exposure` → apply (Premiere `status` → `import` → `organize` → `deadair` → `steady` → `relink`; Final Cut: a new `organize_vN.fcpxml`, import adds only what is new) → `handoff`. Nothing already in the project is touched.
 
 ## Rules
-- Never write into the raw folder or `RAW_COPY/` (the hook blocks it). Outputs go to `<project>/edit/`, `AUDIO_CLEAN/`, `PROJECT/`.
+- Never write into the raw folder, `RAW_COPY/` or `BY_CATEGORY/` by hand (the hook blocks it; only `assemble.js bycategory` adds clips there). Outputs go to `<project>/edit/`, `AUDIO_CLEAN/`, `PROJECT/`.
 - Rejects and flags are never deletions; the editor can un-reject by name (`cull.json`, `reject: []`).
 - One line the editor can act on at the end of every step; no theory.

@@ -14,7 +14,7 @@ Load `/buwan:house-rules`, `/buwan:basics` and `/buwan-premiere:premiere-apply` 
 - Footage folder on the SSD: one subfolder per shooter (`1-Main`, `2-Creative` / `Glider`, `3-Reactions`, `4-Drone`, `Audio`). Shooters drop clips into their own folder as the day goes.
 - A new Premiere project saved as `<raw folder>_WORK/PROJECT/<Couple>_SDE.prproj` (the engine makes `<raw>_WORK/` in Phase 1 step 1 — if it isn't there yet, tell the editor where to save once it is), **File → Project Settings → Scratch Disks** all on `PROJECT/`, **Window → Extensions → MCP Bridge** running. "Verify Premiere connection"; if it fails twice, stop and say so.
 - The music, wherever they want it. Not touched in this run.
-- Grade look, if they want the LUT tagged in the manifest for later (Warm default). Nothing is graded in this run.
+- Grade look (Warm default; Cool for hotel/ballroom/overcast). The run grades only the sequences it makes (A-Roll clean, STABILIZE – Warp): per-clip exposure fix + the look. The editor's own sequences are graded only when they ask (bridge `grade {sequence:"…"}`).
 
 ## Phase 1 — the basics (first batch of clips; ~15–25 min per 300 clips, unattended)
 Engine, in order (`node <buwan>/scripts/assemble.js …`):
@@ -23,14 +23,17 @@ Engine, in order (`node <buwan>/scripts/assemble.js …`):
 3. Categories: `/buwan:organize` steps 1–2 → `edit/assemble/categories.json`. Same-day: folder names + audio, then one frame per prep clip → `subbins.json` (`02 Prep & Details/Bride prep` · `Groom prep`), catching venue shots (→ 06 Establishing) and on-camera letters/interviews (→ 01 Speech) on the same sheets.
 4. `enhance <project> --render` → `deadair <project>`. Report minutes of speech, minutes of dead air removed, clips under 15 dB SNR.
 5. `steady <project>` — shaky clips on the Creative/Glider camera only, **best cut first**: steady stretch (≥2.5 s) → Steady pick · **gimbal shots only** → Warp Stabilizer on their best cut · handheld or too shaky → Flagged, not stabilized. Ask which cards were on the gimbal if the folder names don't say (`--gimbal "1-Creative/5/"`, or `edit/assemble/gimbal.txt`). Other cameras untouched.
-6. `premiere <project> [--grade <look>]` → `edit/premiere/manifest.json`.
+6. `bycategory <project>` → `<WORK>/BY_CATEGORY/<category>[/<sub-bin>]/` — APFS clones (no extra space), rejects left out, shaky Creative clips trimmed to their best cut.
+7. `exposure <project>` → `edit/assemble/exposure.json` + `edit/exposure_report.md` (gentle per-clip fixes toward the look's band; low-key shots left alone).
+8. `premiere <project> --grade <look>` → `edit/premiere/manifest.json`.
 
-Bridge (`premiere-snippet.js basics <manifest>` → `execute_extendscript`, or step by step: `import` until `remaining` is 0 → `organize` → `deadair` → `aroll` → `steady`).
+Bridge (`premiere-snippet.js basics <manifest>` → `execute_extendscript`, or step by step: `import` until `remaining` is 0 → `organize` → `deadair` → `aroll` → `steady` → `relink` until `remaining` is 0 → `grade {sequence:"A-Roll clean"}` → `grade {sequence:"STABILIZE - Warp"}`). Big projects: go step by step; one long call can time out the bridge.
 
 Result the editor opens:
 - category bins with the **house label colors**, `02 Prep & Details` split into **Bride prep** and **Groom prep** (objects on their own stay in `02`); `00 Rejected (cull)` for the unusable; `00 Flagged/Soft focus · Dark · Blown exposure · Frozen` for b-roll that shouldn't be a first pick (label kept, reason in Description);
 - `01 Speech/Speech ranges` subclips with the dead air gone; `01 Speech/Clean audio` WAVs; the **A-Roll clean** sequence — the whole day's speech back to back, no duplicates;
-- `<category>/Steady picks` — the best steady cut of each shaky Creative/Glider clip as a subclip; **STABILIZE – Warp** — the best cut of each gimbal shot with no steady stretch, placed with Warp Stabilizer applied (open it once so Premiere analyses in the background; copy a stabilized clip from there into the cut); handheld and too-shaky clips in `00 Flagged/Heavy motion`, not stabilized.
+- `<category>/Steady picks` — the best steady cut of each shaky Creative/Glider clip as a subclip; **STABILIZE – Warp** — the best cut of each gimbal shot with no steady stretch, placed with Warp Stabilizer applied (open it once so Premiere analyses in the background; copy a stabilized clip from there into the cut); handheld and too-shaky clips in `00 Flagged/Heavy motion`, not stabilized;
+- every clip linked to `BY_CATEGORY/` (the trimmed shaky clips stay on `RAW_COPY/` so their ranges hold); A-Roll clean and STABILIZE graded: exposure fix + the Buwan look.
 
 Then `assemble.js handoff <project> --title "<Couple>"` → `<WORK>/EDITOR_START_HERE.md`. Report a table (step · result · check by hand) and **stop**.
 

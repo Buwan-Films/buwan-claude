@@ -8,6 +8,8 @@
   assemble.py steady    <project>            -> edit/assemble/steady.json  (shaky Creative/Glider clips: best cut first | warp (gimbal only, on the best cut) | handheld | too shaky)
   assemble.py music     <project> --intro <track1> --main <track2>   -> edit/assemble/music.json
   assemble.py sync      <project> [--anchor "2-Main"] [--trusted cam ...]  -> edit/assemble/sync.json + multicams.json
+  assemble.py bycategory <project>           -> <WORK>/BY_CATEGORY/<category>[/<sub-bin>]/ (APFS clones of RAW_COPY; rejects left out; shaky Creative clips trimmed to their best cut)
+  assemble.py exposure  <project>            -> edit/assemble/exposure.json (per-clip exposure fix applied before the look)
   assemble.py organize  <project> --categories edit/assemble/categories.json  -> edit/organize_vN.fcpxml
   assemble.py selects   <project> --selects edit/assemble/selects.json      -> edit/selects_vN.fcpxml
   assemble.py build     <project> --selects edit/assemble/selects.json [--name "SDE Cut v1"]  -> edit/sde-cut_vN.fcpxml + .edl
@@ -145,6 +147,34 @@ def cmd_steady(a):
         rep.append(f"| {v['name']} | {'yes' if v.get('gimbal') else 'no'} | {v['decision']} | {rng} | {v.get('reason','')} |")
     (project / "edit" / "steady_report.md").write_text("\n".join(rep) + "\n")
     log(f"wrote {adir(project) / 'steady.json'} and edit/steady_report.md")
+
+
+def cmd_bycategory(a):
+    from bycategory import build
+    from workcopy import _footage_root, _protect
+    project = Path(a.project)
+    raw = Path(a.raw).resolve() if a.raw else _footage_root(project).resolve()
+    if raw.name != "RAW_COPY":
+        sys.exit(f"bycategory works from the working copy (RAW_COPY); the footage root is {raw}. Run workcopy first.")
+    res = build(project, load_clips(project), load_categories(project, a.categories), raw)
+    _protect(Path(res["out"]))
+
+
+def cmd_exposure(a):
+    from exposure import exposure
+    project = Path(a.project)
+    clips = [c for c in load_clips(project).values() if c.camera != "music"]
+    cull_res = load_json(adir(project) / "cull.json") if (adir(project) / "cull.json").exists() else []
+    ep = adir(project) / "exposure.json"
+    res = exposure(clips, load_categories(project, a.categories), {m["path"] for m in cull_res if m["reject"]}, a.workers,
+                   a.look, None if a.remeasure or not ep.exists() else load_json(ep))
+    save_json(adir(project) / "exposure.json", res)
+    rep = ["# Exposure before the look", "", "| Clip | Camera | Avg luma | Fix (EV) | Why |", "|---|---|---|---|---|"]
+    for v in sorted(res.values(), key=lambda x: (-abs(x["ev"]), x["name"])):
+        if v["ev"] or v.get("low_key"):
+            rep.append(f"| {v['name']} | {v['camera']} | {v.get('yavg', '')} | {v['ev']:+.2f} | {v['reason']} |")
+    (project / "edit" / "exposure_report.md").write_text("\n".join(rep) + "\n")
+    log(f"wrote {adir(project) / 'exposure.json'} and edit/exposure_report.md")
 
 
 def cmd_music(a):
@@ -447,6 +477,9 @@ def main():
     s = sub.add_parser("steady"); s.add_argument("project"); s.add_argument("--workers", type=int, default=4)
     s.add_argument("--gimbal", nargs="*", help="clips shot on a gimbal: card folders, clip names or globs (added to edit/assemble/gimbal.txt patterns); '*' = all Creative clips")
     s.set_defaults(f=cmd_steady)
+    s = sub.add_parser("bycategory"); s.add_argument("project"); s.add_argument("--raw", help="the RAW_COPY folder (default: from edit/SOURCES.md)"); s.add_argument("--categories"); s.set_defaults(f=cmd_bycategory)
+    s = sub.add_parser("exposure"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=6)
+    s.add_argument("--look", default="warm", choices=["warm", "cool", "bw"]); s.add_argument("--remeasure", action="store_true", help="read the footage again instead of reusing exposure.json"); s.set_defaults(f=cmd_exposure)
     s = sub.add_parser("music"); s.add_argument("project"); s.add_argument("--intro"); s.add_argument("--main", required=True); s.set_defaults(f=cmd_music)
     s = sub.add_parser("sync"); s.add_argument("project"); s.add_argument("--anchor"); s.add_argument("--trusted", nargs="*"); s.set_defaults(f=cmd_sync)
     s = sub.add_parser("enhance"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=4); s.add_argument("--render", action="store_true", help="also write cleaned WAVs to edit/audio/clean"); s.set_defaults(f=cmd_enhance)

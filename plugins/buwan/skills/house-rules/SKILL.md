@@ -14,7 +14,7 @@ Source of truth: the Edit Pipeline (`${CLAUDE_PLUGIN_ROOT}/reference/edit-pipeli
 - Editors work on deadline (SDEs especially): lead with the deliverable, concrete steps, no theory.
 - Source footage and audio are **read-only**. Never write, move, rename, overwrite, relink-away or delete anything in a `sources/` folder, a `RAW_COPY/` folder or an original card folder. Outputs go to `edit/`, `PROJECT/`, `AUDIO_CLEAN/`, `captions/` or `exports/`.
 - Same-day edits run on a **working copy on the drive**: `/buwan:intake --work-copy` mirrors the raw folder into `<raw>_WORK/RAW_COPY/` on the same SSD, verified by hash, with byte-identical duplicates skipped (a card copied twice never imports twice). The project reads only from the copy.
-- **The basics are the only automatic goal for a new wedding project** (`/buwan:basics`): dedupe (working copy), cull, categorize, dead air + A-Roll clean, label colors, and shaky footage on the Creative/Glider camera only (best cut first; only gimbal shots are stabilized — Warp Stabilizer / Final Cut Stabilization on their best cut, never handheld). The editor makes the project and places the music by hand. Multicam sync (`/buwan:multicam`), the story (`/buwan:plot`) and the cut run only when the editor asks — never create a sequence for them to cut in.
+- **The basics are the only automatic goal for a new wedding project** (`/buwan:basics`): dedupe (working copy), cull, categorize, dead air + A-Roll clean, label colors, shaky footage on the Creative/Glider camera only (best cut first; only gimbal shots are stabilized — Warp Stabilizer / Final Cut Stabilization on their best cut, never handheld), the working copy organized by category (`BY_CATEGORY/`, clones, rejects out, shaky Creative clips trimmed to their best cut), and the grade (per-clip exposure fix + the look) on the sequences the run makes. The editor makes the project and places the music by hand. Multicam sync (`/buwan:multicam`), the story (`/buwan:plot`) and the cut run only when the editor asks — never create a sequence for them to cut in.
 - App-specific steps come from the editor's app playbook (`/buwan:premiere`, `/buwan:final-cut`, `/buwan:resolve`). Don't give generic advice.
 - Stage 02 (Story-Lock) is app-neutral: its outputs are files every app can import, so the story is the same no matter who cuts it.
 
@@ -138,6 +138,7 @@ Story-Lock selects are marked with **markers**, not colors: marker name = beat (
 
 ## Grade looks
 - Studio looks live in `kit/luts/`: `Buwan_Warm.cube`, `Buwan_Cool.cube`, `Buwan_BW.cube` (33-point, Rec.709 in/out). Apply AFTER the camera's own Log→Rec.709 conversion, at 60–100%.
+- **Exposure before the look:** every camera clip is measured (`assemble.js exposure`, 8-bit, keyframes). A clip whose average brightness is outside the look's band in `kit/grade/targets.json` (Warm 55–150) gets Lumetri Basic Correction > Exposure nudging it just inside the band, at most ±1.5 EV, never clipping its highlights. Low-key shots (dark average and nothing bright, e.g. rings on black) are left alone and listed. No fix ever re-encodes footage.
 - Pick one look per film (warm or cool, from the day's palette); B&W only for the most intimate beats.
 - Every graded export is measured with `/buwan:grade` (grade check against `kit/grade/targets.json`). Targets are calibrated from the studio's reference stills.
 

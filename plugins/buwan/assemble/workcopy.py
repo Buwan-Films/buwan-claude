@@ -237,9 +237,26 @@ def cmd_handoff(a):
               f"- Working copy: `{wc['raw_copy']}` — the project reads only from here.",
               f"- Originals: `{wc['source']}` — untouched, read-only, do not relink to them.",
               f"- Duplicates skipped: {wc.get('duplicates_skipped', 0)} byte-identical files (`logs/dedupe_report.md`). Copy verified by SHA-256 (`logs/copy_manifest.csv`).", ""]
+    bcm = load_json(adir / "bycategory.json") if (adir / "bycategory.json").exists() else {}
+    if bcm:
+        tr = sum(1 for v in bcm.values() if v.get("trimmed"))
+        root = Path(next(iter(bcm.values()))["path"]).parents[0]
+        while root.name and root.name != "BY_CATEGORY":
+            root = root.parent
+        L += ["## The copy, by category", "",
+              f"- `{root}` — {len(bcm)} clips in category folders, the same as the bins (`02 Prep & Details/Bride prep`, `Groom prep`, …). Clones of the working copy: no extra space. Cull rejects are left out.",
+              f"- {tr} shaky Creative clips are there as their best cut only (`…_best_<in>-<out>`); the full clips stay in `RAW_COPY`.",
+              "- The Premiere project points here (relinked). Read-only, like `RAW_COPY`.", ""]
     L += ["## What is in the bins", ""]
+    subs = load_json(adir / "subbins.json") if (adir / "subbins.json").exists() else {}
     for k in sorted(by_cat):
         L.append(f"- `{k}` — {by_cat[k]} clips")
+        sc = {}
+        for p, sb in subs.items():
+            if cats.get(p) == k:
+                sc[sb] = sc.get(sb, 0) + 1
+        for sb in sorted(sc):
+            L.append(f"  - `{k}/{sb}` — {sc[sb]} clips")
     L += ["", "## Flagged, not rejected", "",
           f"- Rejected (unusable, in `00 Rejected (cull)`): {len(rejected)}"]
     for w, n in sorted(flagged.items()):
@@ -259,6 +276,12 @@ def cmd_handoff(a):
           "- Your cutting sequence is yours to make: 1920×1080 · 23.976 · TC 01:00:00:00; dialogue −17 LUFS, peaks −6 dBFS, music bed −20 dB.", ""]
     if manifest.get("grade"):
         L.append(f"- Look chosen: **{manifest['grade']['look']}** ({manifest['grade'].get('intensity', 80)}%).")
+    ex = load_json(adir / "exposure.json") if (adir / "exposure.json").exists() else {}
+    if ex:
+        fx = [v for v in ex.values() if v.get("ev")]
+        lk = [v["name"] for v in ex.values() if v.get("low_key")]
+        L.append(f"- Exposure: {len(fx)} of {len(ex)} clips get a fix before the look ({sum(1 for v in fx if v['ev'] > 0)} brighter, {sum(1 for v in fx if v['ev'] < 0)} darker), "
+                 f"applied with the look on A-Roll clean and STABILIZE; your own sequences on request (`grade {{sequence: \"…\"}}`). Low-key, left alone: {', '.join(lk) or 'none'}. Details: `edit/exposure_report.md`.")
     L += ["", "## Not done yet (on purpose)", "",
           "- No multicam sync, no story, no cut, no music placed. `/buwan:multicam` syncs by audio when you want it; `/buwan:plot` does the Story-Lock; `/buwan:sde` builds the music-driven cut after that.",
           "- No captions, no graphics, no export settings. Those are `/buwan:graphics`, `/buwan:sfx`, `/buwan:export`."]

@@ -91,6 +91,8 @@ def build_manifest(project: Path, clips: dict[str, Clip], categories: dict, grad
     music = _load_optional(adir / "music.json", {})
     steady = _load_optional(adir / "steady.json", {})
     subbins = _load_optional(adir / "subbins.json", {})
+    expo = _load_optional(adir / "exposure.json", {})
+    bycat = _load_optional(adir / "bycategory.json", {})
 
     out_clips = []
     for p, c in clips.items():
@@ -107,6 +109,9 @@ def build_manifest(project: Path, clips: dict[str, Clip], categories: dict, grad
             "fps": round(c.fps_num / c.fps_den, 3) if c.fps_num else 0, "has_audio": bool(c.has_audio),
             "category": cat,
             "sub_bin": sub_bin(cat, subbins.get(p)),
+            "exposure_ev": (expo.get(p) or {}).get("ev") or 0.0,
+            "category_file": (bycat.get(p) or {}).get("path"),
+            "category_file_trimmed": bool((bycat.get(p) or {}).get("trimmed")),
             "bin": REJECT_BIN if rej else ((cat + "/" + sub_bin(cat, subbins.get(p))) if sub_bin(cat, subbins.get(p))
                                            else (cat or ("Footage/" + c.camera if c.camera else "Footage"))),
             "label": REJECT_LABEL if rej else LABELS.get(cat, -1),

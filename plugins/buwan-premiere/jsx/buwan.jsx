@@ -18,10 +18,12 @@
  *      deadair   subclips of the speech ranges (dead air removed), bin "01 Speech/Speech ranges"
  *      aroll     the A-Roll clean sequence: every speech range back to back
  *      sync      one stacked SYNC sequence per multicam group, clips at their audio-sync offsets
+ *      relink    point project items at the BY_CATEGORY clones (batches: {start, limit}); trimmed best cuts stay on RAW_COPY
  *      steady    shaky Creative/Glider clips: best cut first (subclips in <category>/Steady picks); only gimbal shots with no steady stretch get Warp Stabilizer, on their best cut, in a STABILIZE sequence
  *      skeleton  (optional) an empty assembly sequence with section markers — only when asked
  *      build     the music-driven timeline from the plan (speech V1/A1, b-roll V2, music A3/A4, markers)
- *      basics    import, organize (bins, labels, rejects, flagged), deadair, aroll, steady — and stops. The same-day scope.
+ *      basics    import, organize (bins, labels, rejects, flagged), deadair, aroll, steady, relink (BY_CATEGORY), grade (look + exposure on
+ *                A-Roll clean and STABILIZE) — and stops. The same-day scope.
  *      all       import, organize, deadair, aroll, sync, build (if plan), grade, enhance
  *
  *  Nothing here deletes, renames or re-encodes footage. Everything is additive and undoable.
@@ -68,6 +70,7 @@ var BUWAN = (function () {
     M = eval("(" + txt + ")");
     if (!M || !M.clips) throw new Error("not a Buwan manifest: " + path);
     M._path = path;
+    alias = null;
     return M;
   }
   function parseOpts(o) {
@@ -84,6 +87,13 @@ var BUWAN = (function () {
       if (it.type === 2) walk(it, bin, fn);
     }
   }
+  var alias = null;
+  function aliasOf() {                 // norm(BY_CATEGORY file) -> norm(RAW_COPY path), from the manifest
+    if (alias) return alias;
+    alias = {};
+    if (M && M.clips) for (var i = 0; i < M.clips.length; i++) if (M.clips[i].category_file) alias[norm(M.clips[i].category_file)] = norm(M.clips[i].path);
+    return alias;
+  }
   function reindex() {
     index = {}; binCache = {};
     var root = app.project.rootItem;
@@ -92,9 +102,10 @@ var BUWAN = (function () {
       var mp = "";
       try { if (!it.isSequence()) mp = it.getMediaPath(); } catch (e) {}
       if (mp) {
-        var k = norm(mp);
-        // the imported master (named like the file) wins over subclips that share the path
-        var isMaster = String(it.name).toLowerCase() === basename(mp).toLowerCase();
+        var k = norm(mp), viaAlias = !!aliasOf()[k];
+        if (viaAlias) k = aliasOf()[k];   // relinked to BY_CATEGORY: still found by its RAW_COPY path
+        // the imported master (named like the file it was imported from) wins over subclips that share the path
+        var isMaster = String(it.name).toLowerCase() === basename(viaAlias ? k : mp).toLowerCase();
         if (!index[k] || (isMaster && !index[k].master)) index[k] = { item: it, parent: parent, master: isMaster };
       }
     });
@@ -144,7 +155,10 @@ var BUWAN = (function () {
   }
   function clipMap() {
     var m = {};
-    for (var i = 0; i < M.clips.length; i++) m[norm(M.clips[i].path)] = M.clips[i];
+    for (var i = 0; i < M.clips.length; i++) {
+      m[norm(M.clips[i].path)] = M.clips[i];
+      if (M.clips[i].category_file) m[norm(M.clips[i].category_file)] = M.clips[i];
+    }
     return m;
   }
 
@@ -316,6 +330,7 @@ var BUWAN = (function () {
   function targetSequence(opts) {
     var seq = opts && opts.sequence ? findSequence(opts.sequence) : app.project.activeSequence;
     if (!seq) throw new Error(opts && opts.sequence ? "sequence not found: " + opts.sequence : "no active sequence (open one, or pass {sequence:'name'})");
+    try { app.project.openSequence(seq.sequenceID); } catch (e0) {}   // QE reads the open, active sequence
     try { app.project.activeSequence = seq; } catch (e) {}
     return seq;
   }
@@ -398,6 +413,30 @@ var BUWAN = (function () {
              flagged: flagged, flag_bin: flagWarnings ? (M.flag_bin || "00 Flagged") : null,
              bins: M.bins, labels: M.labels, hint: missing ? "run the import step first for the " + missing + " clips not in the project" : "" };
   }
+  function stepRelink(opts) {
+    // Point project items at the BY_CATEGORY clones (assemble.js bycategory). Same bytes, so subclips, speech ranges
+    // and sequence clips are unaffected. Clips trimmed to their best cut keep their RAW_COPY link (their subclips and
+    // the STABILIZE ranges are timed on the full clip). Batches: repeat while remaining > 0.
+    var start = opts.start || 0, limit = opts.limit || 150, done = 0, already = 0, missing = 0, kept = 0, failed = [], i;
+    var todo = [];
+    for (i = 0; i < M.clips.length; i++) if (M.clips[i].category_file) todo.push(M.clips[i]);
+    reindex();
+    var end = Math.min(todo.length, start + limit);
+    for (i = start; i < end; i++) {
+      var c = todo[i];
+      if (c.category_file_trimmed) { kept++; continue; }
+      var it = itemFor(c.path);
+      if (!it) { missing++; continue; }
+      var cur = ""; try { cur = it.getMediaPath(); } catch (e0) {}
+      if (norm(cur) === norm(c.category_file)) { already++; continue; }
+      if (!new File(c.category_file).exists) { failed.push(c.name + ": category file missing"); continue; }
+      try { if (it.canChangeMediaPath && !it.canChangeMediaPath()) throw new Error("Premiere refuses"); it.changeMediaPath(c.category_file, true); done++; }
+      catch (e1) { failed.push(c.name + ": " + e1); }
+    }
+    return { relinked: done, already: already, kept_on_raw_copy_trimmed: kept, not_in_project: missing, failed: failed.length, failed_clips: failed.slice(0, 20),
+             next_start: end, total: todo.length, remaining: todo.length - end,
+             hint: todo.length - end > 0 ? "run relink again with {start:" + end + "}" : "all clips point at BY_CATEGORY" };
+  }
   function stepGrade(opts) {
     if (!M.grade || !M.grade.lut) throw new Error("no grade in the manifest: assemble.js premiere <project> --grade warm|cool|bw (and run /buwan:setup-kit for the LUTs)");
     var lutFile = new File(M.grade.lut);
@@ -406,7 +445,7 @@ var BUWAN = (function () {
     app.enableQE();
     var qeSeq = qe.project.getActiveSequence();
     reindex();
-    var cm = clipMap(), applied = 0, skipped = 0, failed = [], already = 0, used = "";
+    var cm = clipMap(), applied = 0, skipped = 0, failed = [], already = 0, used = "", exposed = 0;
     for (var t = 0; t < seq.videoTracks.numTracks; t++) {
       var track = seq.videoTracks[t];
       for (var i = 0; i < track.clips.numItems; i++) {
@@ -419,6 +458,10 @@ var BUWAN = (function () {
           if (!comp) { addVideoEffect(qeSeq, t, clip, "Lumetri Color", i); comp = component(clip, "Lumetri Color"); }
           if (!comp) throw new Error("Lumetri not added");
           var look = property(comp, "Look"), inLut = property(comp, "Input LUT");
+          var ev = mc.exposure_ev || 0, expo = property(comp, "Exposure");
+          if (ev && expo) {   // the per-clip exposure fix (assemble.js exposure) goes in Basic Correction, before the look
+            try { if (Math.abs((expo.getValue() || 0) - ev) > 0.005) { expo.setValue(ev, true); exposed++; } } catch (eX) { failed.push(clip.name + ": exposure not set (" + eX + ")"); }
+          } else if (ev && !expo) failed.push(clip.name + ": no Exposure control on Lumetri");
           var cur = null; try { cur = (look || inLut).getValue(); } catch (e1) {}
           if (cur && norm(cur) === norm(lut)) { already++; continue; }
           if (look && opts.slot !== "input") {
@@ -432,7 +475,7 @@ var BUWAN = (function () {
         } catch (e4) { failed.push(clip.name + ": " + e4); }
       }
     }
-    return { sequence: seq.name, look: M.grade.look, lut: lut, slot: used, intensity: M.grade.intensity, applied: applied, already: already, skipped_non_camera: skipped,
+    return { sequence: seq.name, look: M.grade.look, lut: lut, slot: used, intensity: M.grade.intensity, applied: applied, already: already, exposure_fixed: exposed, skipped_non_camera: skipped,
              failed: failed.length, failed_clips: failed.slice(0, 20),
              hint: failed.length ? "Lumetri property writes are known to no-op on some Premiere 26.3 builds — if every clip failed, select all camera clips, apply Lumetri once and pick the LUT from Creative > Look (the studio LUTs are in kit/luts), then copy/paste attributes." : "" };
   }
@@ -715,6 +758,7 @@ var BUWAN = (function () {
         case "organize": r = stepOrganize(o, false); break;
         case "cull": r = stepOrganize(o, true); break;
         case "grade": r = stepGrade(o); break;
+        case "relink": r = stepRelink(o); break;
         case "enhance": r = stepEnhance(o); break;
         case "deadair": r = stepDeadair(o); break;
         case "aroll": r = stepAroll(o); break;
@@ -727,6 +771,14 @@ var BUWAN = (function () {
           r = { "import": stepImport({ limit: 100000 }), organize: stepOrganize(o, false), deadair: stepDeadair({ limit: 100000 }) };
           try { r.aroll = stepAroll(o); } catch (eB1) { r.aroll = { error: String(eB1) }; }
           try { r.steady = stepSteady(o); } catch (eB2) { r.steady = { error: String(eB2) }; }
+          if (M.clips.length && M.clips[0].category_file !== undefined) {
+            try { r.relink = stepRelink({ start: 0, limit: 100000 }); } catch (eB3) { r.relink = { error: String(eB3) }; }
+          }
+          if (M.grade && M.grade.lut) {   // the Buwan look + per-clip exposure on the sequences the basics made (no editor sequences)
+            r.grade = {};
+            var gs = ["A-Roll clean", "STABILIZE - Warp"];
+            for (var g = 0; g < gs.length; g++) { if (findSequence(gs[g])) { try { r.grade[gs[g]] = stepGrade({ sequence: gs[g] }); } catch (eB4) { r.grade[gs[g]] = { error: String(eB4) }; } } }
+          }
           r.next = "Basics done. Multicam sync (/buwan:multicam), the story (/buwan:plot) and the cut are the editor's call.";
           break;
         case "all":
@@ -740,7 +792,7 @@ var BUWAN = (function () {
             try { r.enhance = stepEnhance(so); } catch (e3) { r.enhance = { error: String(e3) }; }
           }
           break;
-        default: throw new Error("unknown step: " + step + " (status, import, organize, cull, grade, enhance, deadair, aroll, steady, sync, skeleton, build, basics, all)");
+        default: throw new Error("unknown step: " + step + " (status, import, organize, cull, relink, grade, enhance, deadair, aroll, steady, sync, skeleton, build, basics, all)");
       }
       r.ok = true; r.step = step; r.seconds = Math.round((new Date().getTime() - t0) / 100) / 10; r.log = logs;
       try { app.project.save(); r.saved = true; } catch (e4) { r.saved = false; }
@@ -750,5 +802,5 @@ var BUWAN = (function () {
     }
   }
 
-  return { run: run, version: "1.1.0", steps: ["status", "import", "organize", "cull", "grade", "enhance", "deadair", "aroll", "steady", "sync", "skeleton", "build", "basics", "all"] };
+  return { run: run, version: "1.5.0", steps: ["status", "import", "organize", "cull", "relink", "grade", "enhance", "deadair", "aroll", "steady", "sync", "skeleton", "build", "basics", "all"] };
 })();

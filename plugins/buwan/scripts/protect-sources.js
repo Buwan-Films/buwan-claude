@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // PreToolUse: keep every sources/ folder read-only.
-// - File tools (Write/Edit/MultiEdit/NotebookEdit) may not target anything inside a sources/, RAW_COPY/ or listed original folder.
+// - File tools (Write/Edit/MultiEdit/NotebookEdit) may not target anything inside a sources/, RAW_COPY/, BY_CATEGORY/ or listed original folder.
 // - Shell commands may READ from sources/ and COPY into it (intake), but may not delete, move,
 //   rename, overwrite, redirect into, mirror-sync, or unlock it.
 // Exit 2 blocks the tool call; stderr is shown to Claude as the reason.
@@ -17,14 +17,15 @@ try {
 const tool = input.tool_name || "";
 const ti = input.tool_input || {};
 
-// Protected: any sources/ folder, any RAW_COPY/ folder (the working copy on the drive), and every
+// Protected: any sources/ folder, any RAW_COPY/ folder (the working copy on the drive), any BY_CATEGORY/ folder
+// (the same copy organized by category, cloned by `assemble.js bycategory`), and every
 // path listed in ~/.buwan/protected-paths.txt (the original card folders, written by `assemble.js workcopy`).
 let protectedRoots = [];
 try {
   protectedRoots = fs.readFileSync(path.join(os.homedir(), ".buwan", "protected-paths.txt"), "utf8")
     .split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => l.replace(/[\\/]+$/, "").toLowerCase());
 } catch {}
-const SRC_RE = /(^|[\\/])(sources|RAW_COPY)([\\/]|$)/i;
+const SRC_RE = /(^|[\\/])(sources|RAW_COPY|BY_CATEGORY)([\\/]|$)/i;
 const escapeRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const SRC = {
   test(str) {
@@ -37,7 +38,7 @@ const SRC = {
 const block = (why) => {
   process.stderr.write(
     `Blocked by Buwan Films source protection: ${why}\n` +
-      `sources/, RAW_COPY/ and the original card folders hold footage and are read-only. Write outputs to edit/, PROJECT/, AUDIO_CLEAN/, captions/ or exports/ instead. ` +
+      `sources/, RAW_COPY/, BY_CATEGORY/ and the original card folders hold footage and are read-only. Write outputs to edit/, PROJECT/, AUDIO_CLEAN/, captions/ or exports/ instead. ` +
       `If the editor truly needs to change originals, they must do it themselves outside Claude.`
   );
   process.exit(2);

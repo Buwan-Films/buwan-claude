@@ -54,14 +54,16 @@
   </div>
   <div class="col focus">
     <span class="tag"><b class="auto">The basics</b> · Claude Code · one run, unattended</span>
-    <h2>Six things, then stop</h2>
+    <h2>Eight things, then stop</h2>
     <ol>
       <li><b>Dedupe + working copy</b> — the raw clips mirrored into <span class="spec">&lt;raw&gt;_WORK/RAW_COPY/</span> on the same SSD, every file verified by SHA-256, byte-identical duplicates skipped and logged (<span class="spec">logs/dedupe_report.md</span>). Only the copy is read from here on.</li>
       <li><b>Cull</b> — false starts, black, blown and dead clips rejected. Flags, never deletions.</li>
       <li><b>Categorize</b> — every clip into one of the 12 studio categories (Speech, Prep &amp; Details, Portraits, Ceremony, Reactions &amp; BTS, Establishing, Reception &amp; Party, Drone, Music, SFX, Graphics, Grade &amp; Adjust). Prep is split into <span class="spec">Bride prep</span> and <span class="spec">Groom prep</span> sub-bins from one frame per clip; objects on their own stay in Prep &amp; Details.</li>
       <li><b>Dead air</b> — the speech inside every speech clip found, silences cut; cleaned −17 LUFS WAVs in <span class="spec">AUDIO_CLEAN/</span>; the <b>A-Roll clean</b> is the whole day's speech back to back.</li>
       <li><b>Label colors</b> — Premiere label per category (Speech Mango · Prep Tan · Portraits Yellow · Ceremony Violet · Reactions Rose · Establishing Cerulean · Reception Magenta · Drone Teal · Music Forest). Every clip into its bin. Soft-focus, dark, blown and frozen b-roll parked in <span class="spec">00 Flagged/&lt;reason&gt;</span>, label kept.</li>
-      <li><b>Shaky — Creative/Glider only</b> — the longest steady stretch (≥2.5 s) becomes a <b>Steady pick</b> (the best cut is always chosen first); no steady stretch on a <b>gimbal</b> shot → its best cut placed in the <b>STABILIZE – Warp</b> sequence with Warp Stabilizer applied; handheld or nothing to save → Flagged, not stabilized. Shaky clips on other cameras are left alone.</li></ol>
+      <li><b>Shaky — Creative/Glider only</b> — the longest steady stretch (≥2.5 s) becomes a <b>Steady pick</b> (the best cut is always chosen first); no steady stretch on a <b>gimbal</b> shot → its best cut placed in the <b>STABILIZE – Warp</b> sequence with Warp Stabilizer applied; handheld or nothing to save → Flagged, not stabilized. Shaky clips on other cameras are left alone.</li>
+      <li><b>Copy by category</b> — the working copy arranged like the bins in <span class="spec">&lt;raw&gt;_WORK/BY_CATEGORY/</span> (<span class="spec">02 Prep &amp; Details/Bride prep</span>, <span class="spec">Groom prep</span>, …): clones, so no extra space; cull rejects left out; each shaky Creative clip trimmed to its best cut. Originals and <span class="spec">RAW_COPY</span> untouched.</li>
+      <li><b>Grade + exposure</b> — every camera clip measured; clips outside the Warm look's brightness band get a gentle Lumetri <b>Exposure</b> fix (at most ±1.5 EV; low-key shots like rings on black left alone), then the <b>Buwan look</b>. Applied on the A-Roll clean and STABILIZE sequences; your own sequences when you ask.</li></ol>
     <div class="stop">Stops here · no sync · no story · no cut · no music</div>
   </div>
   <div class="col">
@@ -87,6 +89,7 @@
     <tr><td><span class="spec">01 Speech/Speech ranges</span></td><td>One subclip per spoken stretch, dead air gone. <span class="spec">01 Speech/Clean audio</span>: the levelled WAVs to lay under the picture.</td></tr>
     <tr><td><b>A-Roll clean</b></td><td>Sequence: every speech range back to back, a marker per source clip. Listen here, never in the raw bins.</td></tr>
     <tr><td><span class="spec">&lt;category&gt;/Steady picks</span></td><td>The usable part of each shaky creative shot, as a subclip.</td></tr>
+    <tr><td><span class="spec">&lt;raw&gt;_WORK/BY_CATEGORY/</span></td><td>The footage on disk, in the same folders as the bins. The project points here; shaky Creative clips trimmed to their best cut stay linked to <span class="spec">RAW_COPY</span>.</td></tr>
     <tr><td><b>STABILIZE – Warp</b></td><td>Holding pen, not a cut: the best cut of each shaky gimbal shot with no steady stretch, Warp Stabilizer applied. Open it once so Premiere analyses; copy a stabilized clip into your cut.</td></tr>
     <tr><td><span class="spec">00 Rejected (cull)</span> · <span class="spec">00 Flagged/…</span></td><td>The unusable, and the last-resort b-roll (reason in the Description column). Still there if a key moment only exists in a bad take.</td></tr>
     <tr><td><span class="spec">EDITOR_START_HERE.md</span></td><td>In the WORK folder: what is where, what is flagged, speech minutes, the three things to do first.</td></tr>
