@@ -7,17 +7,30 @@ One studio standard for every Buwan editor, in every editing app. Claude Code lo
 | `buwan` | Every editor | House rules, a skill per pipeline stage, shared clip colors and bins, studio LUTs + grade check, brand fonts and logo, kit graphics renderer, proof gate, source protection, app playbooks |
 | `buwan-premiere` | Premiere editors only | The Premiere Pro bridge (premiere-pro-mcp 1.11.5) + the apply layer: everything the engine decided, done inside the open Premiere project (`/buwan-premiere:premiere-apply`, `/buwan-premiere:wedding-day`) |
 
+## What happens on a new wedding project
+The editor makes the project and places the music. Claude Code does **the basics** and stops:
+
+| | How |
+|---|---|
+| **Dedupe + working copy** | `assemble.js workcopy`: the raw clips mirrored into `<raw>_WORK/RAW_COPY/` on the same SSD, every file verified by hash, byte-identical duplicates skipped and logged; the project reads only from the copy, originals and copy read-only to Claude |
+| **Cull** | unusable clips rejected (false start, black, blown, dead) — flags, never deletions |
+| **Categorize** | every clip in one of the 12 studio categories |
+| **Dead air** | silences found and removed; speech ranges become subclips / Favorites, the **A-Roll clean** is the whole day's speech back to back; cleaned −17 LUFS WAVs |
+| **Label colors** | the same colors in every app (Premiere labels, Final Cut roles, Resolve clip colors); soft / dark / blown / frozen b-roll parked in `00 Flagged/<reason>` |
+| **Shaky — Creative/Glider only** | the best steady cut as a Steady pick, else Warp Stabilizer (Premiere) / Stabilization (Final Cut), else Flagged |
+
+On request only: `/buwan:multicam` (sync by audio: vows, interviews, ceremony), `/buwan:plot` (story), the cut, grade, graphics, export.
+
+Pipeline pages, one per app — the editor opens theirs before starting: [**Premiere Pro**](https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A) · [**Final Cut Pro**](https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF) (copies in `plugins/buwan/reference/pipeline-*.html`).
+
 ## What every editor gets the same
 | | How it's shared |
 |---|---|
-| **Organize** | `/buwan:intake` folders + `/buwan:organize`: same clip categories, bins and colors (Premiere labels, Resolve clip colors, Final Cut roles) |
-| **Footage prep** | `/buwan:assemble`: culls unusable clips, syncs every camera by sound (multicam, even with a wrong clock), analyses the two music tracks — all on the editor's machine, nothing uploaded |
-| **Cuts** | `/buwan:plot` Story-Lock, then the engine builds the timeline to the music (cuts on beats, burst on the peak, kiss on the peak, holds clean) — measured by the proof gate |
+| **Originals** | `sources/`, `RAW_COPY/` and the original card folders are read-only — Claude can't delete, move or overwrite footage |
 | **Grade** | Studio LUTs `Buwan_Warm / Cool / BW.cube` (same file in all three apps) + `/buwan:grade` measures every export against the studio targets |
 | **Branding** | Brand fonts and logo installed by `/buwan:setup-kit`; every title, lower third and end card rendered from the kit as ProRes 4444 + alpha by the same renderer |
 | **Sound** | Every speech clip measured; levelled, denoised and voice-isolated in the Final Cut XML itself, cleaned WAVs for Premiere/Resolve |
-| **Dead air** | Silences found and removed: speech ranges become Favorites, and the A-Roll clean project is the whole day's speech back to back |
-| **Originals** | `sources/` is read-only — Claude can't delete, move or overwrite footage |
+| **Cuts (on request)** | `/buwan:plot` Story-Lock, then the engine builds the timeline to the music — measured by the proof gate |
 
 ## Editor setup (once per computer)
 Requirements: Claude Code, Node.js 20.19+, Python 3.9+, ffmpeg (Windows `winget install Gyan.FFmpeg`, macOS `brew install ffmpeg`), and read access to this repository. For transcription: whisper.cpp (`brew install whisper-cpp`; Claude installs the model on first use).
@@ -42,10 +55,11 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 ## The pipeline, one skill per stage
 | Stage | Skill |
 |---|---|
-| 01 Intake | `/buwan:intake`, then `/buwan:organize` |
-| 02 Story-Lock | `/buwan:plot` |
-| Prep | `/buwan:assemble` (scan · cull · music · sync · organize · enhance · dead air · A-Roll clean) |
-| 02 Rough cut | `/buwan:rough-cut` → `assemble build` (music-driven timeline + edit map) |
+| New wedding project — **the basics** | `/buwan:basics` (Premiere: `/buwan-premiere:wedding-day`) |
+| 01 Intake (part of the basics) | `/buwan:intake --work-copy` |
+| Multicam · on request | `/buwan:multicam` |
+| 02 Story-Lock · on request | `/buwan:plot` |
+| 02 Rough cut · on request | `/buwan:rough-cut` → `assemble build` (music-driven timeline + edit map) |
 | Proof gate | `/buwan:proof-gate` (also automatic on every EDL) |
 | 03 Audio | `/buwan:audio` |
 | 04 Grade | `/buwan:grade` |
@@ -53,14 +67,13 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 | 06 SFX | `/buwan:sfx` |
 | 07 Review | `/buwan:review` |
 | 08 Export | `/buwan:export`, then `/buwan:clipper` for reels |
-| Same-day edit | `/buwan:sde` |
+| Same-day edit, the full flow | `/buwan:sde` |
+| Engine reference | `/buwan:assemble` |
 
 Example: `/buwan:intake 2026-11-15_Santos-Reyes wedding E:\Cards\Santos-Reyes`
 
 ### Premiere Pro, wedding day
-The editor's guide (prompts, phases, what stays creative): [Wedding Day in Premiere](https://claude.ai/artifact/QFZtScv62QduRx7CXumHXx).
-
-`/buwan-premiere:wedding-day <project> --footage <dir> --music <dir> --grade warm` — the engine culls, syncs and measures; the bridge then builds the bins with label colors, the dead-air subclips, the A-Roll clean and SYNC sequences in the open project. After the Story-Lock: the SDE Cut as a sequence, graded and leveled. `--new-clips` when the shooters hand over more cards.
+`/buwan-premiere:wedding-day 2026-11-15_Santos-Reyes --footage /Volumes/<SSD>/<raw folder>` — with the project already made and the music placed, the engine makes the working copy, culls, categorizes, cuts the dead air and judges the shaky creative shots; the bridge then builds the bins with label colors, the speech subclips, the A-Roll clean, the Steady picks and the STABILIZE sequence in the open project, and writes `EDITOR_START_HERE.md`. Then it stops. `--new-clips` when the shooters hand over more cards. `/buwan:multicam` when you want the vows or an interview synced.
 
 ### The music-driven SDE in one line
 Put the footage and a `music/` folder (`01_intro.wav`, `02_story.wav`) next to each other, then: `/buwan:sde <project>`. The engine culls, syncs the cameras, organizes, and — after you approve the Story-Lock — builds the timeline cut to your music, with the kiss on the music's peak. Import the FCPXML and refine.

@@ -1,0 +1,110 @@
+<title>Buwan Final Cut Pro Pipeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Cinzel:wght@400;500;600&family=Italiana&display=swap">
+
+<style>
+.cols{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:14px;margin-top:26px}
+@media (max-width:720px){.cols{grid-template-columns:1fr}}
+.col{border:1px solid var(--line);background:var(--panel);padding:18px 20px;min-width:0}
+.col.focus{border-color:var(--gold)}
+.col h2{font-family:var(--display);font-weight:600;font-size:22px;margin:4px 0 12px;line-height:1.15}
+.col ol,.col ul{margin:0;padding-left:18px;font-size:15px;color:var(--muted);line-height:1.5}
+.col li{margin-bottom:10px}
+.col li b{color:var(--fg);font-weight:600}
+.stop{font-family:var(--caps);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);border-top:1px solid var(--line);padding-top:12px;margin-top:14px}
+.opens{margin-top:26px;border:1px solid var(--line);background:var(--panel);padding:18px 20px}
+.opens h2{font-family:var(--display);font-weight:600;font-size:22px;margin:4px 0 12px}
+.opens table{width:100%;border-collapse:collapse;font-size:14.5px}
+.opens th{text-align:left;font-family:var(--caps);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;padding:6px 10px 6px 0;border-bottom:1px solid var(--line)}
+.opens td{padding:8px 10px 8px 0;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top}
+.opens td:first-child{color:var(--fg);white-space:nowrap}
+.tscroll{overflow-x:auto}
+.prompt{margin-top:22px;background:var(--panel-2);border-left:2px solid var(--gold);padding:14px 16px}
+.prompt .tag{color:var(--gold)}
+.prompt code{display:block;font-family:var(--mono);font-size:13px;color:var(--fg);margin-top:8px;white-space:pre-wrap;word-break:break-word}
+.swatches{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.swatches span{font-family:var(--caps);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);padding:4px 9px;color:var(--fg);background:var(--panel)}
+.swatches i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+</style>
+<div class="wrap">
+<header>
+  <div class="brand">
+    <svg width="40" height="40" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="#C9A24B" stroke-width="1.6"/><path fill="#C9A24B" d="M63 9A42 42 0 1 0 63 91A39.5 39.5 0 0 1 63 9Z"/><g fill="#0D0C0A"><circle cx="37" cy="30" r="2.5"/><circle cx="31" cy="45" r="2.5"/><circle cx="38" cy="60" r="2.5"/><circle cx="49" cy="71" r="2.5"/></g></svg>
+    <div class="words">BUWAN<small>FILMS</small></div>
+  </div>
+  <h1>The <i>Final Cut</i> Pipeline</h1>
+  <p class="sub">What Claude Code does when a Final Cut Pro editor starts a wedding project, and where it stops. Cutting in Premiere Pro instead? <a href="https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A" style="color:var(--gold)">Open that pipeline</a>. The full map of every stage is the <a href="https://claude.ai/artifact/2dNyL6Us3Ga6KiAvBhtGtq" style="color:var(--gold)">Edit Pipeline</a>.</p>
+</header>
+
+<div class="legend">
+  <span><i class="dot you"></i>You do it</span>
+  <span><i class="dot auto"></i>Claude Code does it</span>
+  <span><i class="dot read"></i>Only when you ask</span>
+</div>
+
+<div class="cols">
+  <div class="col">
+    <span class="tag"><b class="you">Before</b> · you, by hand</span>
+    <h2>Make the project</h2>
+    <ol>
+      <li>Hand the raw clips over on the SSD, one subfolder per shooter: <span class="spec">1-Main</span>, <span class="spec">2-Creative</span> (or <span class="spec">Glider</span>), <span class="spec">3-Reactions</span>, <span class="spec">4-Drone</span>, <span class="spec">Audio</span>.</li>
+      <li>New library on the SSD next to <span class="spec">&lt;raw&gt;_WORK/</span>, media left in place (<b>Leave files in place</b>), cache on the SSD.</li>
+      <li>Drop your music in where you want it. Claude Code doesn't touch it.</li>
+      <li>Start Claude Code in your Buwan workspace.</li></ol>
+  </div>
+  <div class="col focus">
+    <span class="tag"><b class="auto">The basics</b> · Claude Code · one run, unattended</span>
+    <h2>Six things, then stop</h2>
+    <ol>
+      <li><b>Dedupe + working copy</b> — the raw clips mirrored into <span class="spec">&lt;raw&gt;_WORK/RAW_COPY/</span> on the same SSD, every file verified by SHA-256, byte-identical duplicates skipped and logged (<span class="spec">logs/dedupe_report.md</span>). Only the copy is read from here on.</li>
+      <li><b>Cull</b> — false starts, black, blown and dead clips rejected. Flags, never deletions.</li>
+      <li><b>Categorize</b> — every clip into one of the 12 studio categories (Speech, Prep &amp; Details, Portraits, Ceremony, Reactions &amp; BTS, Establishing, Reception &amp; Party, Drone, Music, SFX, Graphics, Grade &amp; Adjust).</li>
+      <li><b>Dead air</b> — the speech inside every speech clip found, silences cut; cleaned −17 LUFS WAVs in <span class="spec">AUDIO_CLEAN/</span>; the <b>A-Roll clean</b> is the whole day's speech back to back.</li>
+      <li><b>Label colors</b> — a Role per category (Dialogue, Details, Portraits, Ceremony, Reactions, Establishing, Party, Drone, Music) and a Keyword Collection per bin, delivered as one validated FCPXML. Set the role colors once: <b>Modify → Edit Roles</b>. Soft-focus, dark, blown and frozen b-roll parked in the <span class="spec">warn</span> keyword with the reason in the clip note (rejects carry the <span class="spec">Rejected</span> rating), label kept.</li>
+      <li><b>Shaky — Creative/Glider only</b> — the longest steady stretch (≥2.5 s) becomes a <b>Steady pick</b>; no steady stretch → keyword <span class="spec">stabilize</span> + a note; you tick <b>Stabilization</b> in the Inspector; nothing to save → Flagged. Shaky clips on other cameras are left alone.</li></ol>
+    <div class="stop">Stops here · no sync · no story · no cut · no music</div>
+  </div>
+  <div class="col">
+    <span class="tag">Only when you ask</span>
+    <h2>Separate skills</h2>
+    <ul>
+      <li><b>Multicam</b> — <span class="spec">/buwan:multicam</span>: vows, interviews, ceremony synced by audio; wrong camera clocks don't matter.</li>
+      <li><b>Story</b> — <span class="spec">/buwan:plot</span>: transcribe the A-Roll clean (Taglish verbatim), tag beats, pick lines.</li>
+      <li><b>Cut</b> — the music-driven timeline, proof gate, grade, levels: <span class="spec">/buwan:sde</span>.</li>
+      <li><b>Finish</b> — <span class="spec">/buwan:graphics</span> · <span class="spec">/buwan:sfx</span> · <span class="spec">/buwan:export</span>.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="opens">
+  <span class="tag">What you open after the run · Final Cut Pro</span>
+  <h2>The project, ready to cut from</h2>
+  <div class="tscroll"><table>
+    <tr><th>Where</th><th>What</th></tr>
+    
+    <tr><td><span class="spec">organize_v1.fcpxml</span></td><td><b>File → Import → XML</b>. Every clip keyworded into its bin, roles set, rejects rated Rejected, warnings as notes. The library's Keyword Collections are the bins.</td></tr>
+    <tr><td>Favorites <span class="spec">speech</span></td><td>The spoken stretches of every speech clip, dead air unfavorited. Skim Favorites only.</td></tr>
+    <tr><td><span class="spec">aroll-clean_v1.fcpxml</span></td><td>The <b>A-Roll clean</b> project: every speech range back to back with the sound enhancement (loudness, noise reduction, voice isolation) written into the XML.</td></tr>
+    <tr><td>Favorites <span class="spec">steady</span> · keyword <span class="spec">steady pick</span></td><td>The usable part of each shaky creative shot.</td></tr>
+    <tr><td>Keyword <span class="spec">stabilize</span></td><td>Creative clips with no steady stretch. Select the collection, tick <b>Stabilization</b> in the Inspector once.</td></tr>
+    <tr><td>Rating <span class="spec">Rejected</span> · keyword <span class="spec">warn</span></td><td>The unusable, and the last-resort b-roll (reason in the note). Hide rejected in the browser filter; nothing is deleted.</td></tr>
+    <tr><td><span class="spec">EDITOR_START_HERE.md</span></td><td>In the WORK folder: what is where, what is flagged, speech minutes, the three things to do first.</td></tr>
+  </table></div>
+  <div class="swatches"><span><i style="background:#f0a53a"></i>Dialogue · orange</span><span><i style="background:#c9a27a"></i>Details · tan</span><span><i style="background:#e8d44d"></i>Portraits · yellow</span><span><i style="background:#8f6bd6"></i>Ceremony · purple</span><span><i style="background:#e07a9a"></i>Reactions · pink</span><span><i style="background:#3b98d8"></i>Establishing · blue</span><span><i style="background:#d44fb0"></i>Party · magenta</span><span><i style="background:#2fb3a8"></i>Drone · teal</span><span><i style="background:#3f8f4a"></i>Music · green</span></div>
+</div>
+
+<div class="prompt">
+  <span class="tag">The prompt</span>
+  <code>/buwan:basics 2026-11-15_Santos-Reyes --footage /Volumes/T7/Santos-Reyes</code>
+  <p style="margin:10px 0 0;font-size:14px;color:var(--muted)">New cards from the shooters later: the same prompt with <span class="spec">--new-clips</span>. Only the new files are copied, culled and added; nothing already in the project is touched.</p>
+</div>
+
+<div class="divider">
+  <div class="rule"></div>
+  <svg width="22" height="22" viewBox="0 0 100 100"><path fill="#C9A24B" d="M63 9A42 42 0 1 0 63 91A39.5 39.5 0 0 1 63 9Z"/></svg>
+  <div class="rule"></div>
+</div>
+<footer>
+  Shared by every editor through the <span class="spec">buwan</span> Claude Code plugin (github.com/Buwan-Films/buwan-claude). Rejects and flags are never deletions; the originals and the working copy are read-only to Claude. The story and the cut are yours.
+</footer>
+</div>

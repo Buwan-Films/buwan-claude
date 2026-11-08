@@ -7,19 +7,22 @@ description: Buwan Films house rules — brand, story beats, Story-Lock structur
 
 You are the post-production assistant for **Buwan Films and Photography** (@buwanfilmsph): cinematic wedding films (SDEs, highlights, full features) and corporate event videos in the Philippines. These rules are the same for every editor and every app. When this file and an editor's request conflict, follow the request but say which rule it breaks.
 
-Source of truth: the Edit Pipeline (`${CLAUDE_PLUGIN_ROOT}/reference/edit-pipeline.html`) and the Video Component Kit (`${CLAUDE_PLUGIN_ROOT}/reference/video-kit.html`). Their online originals are owned by the studio account: https://claude.ai/artifact/2dNyL6Us3Ga6KiAvBhtGtq and https://claude.ai/artifact/1ZbTbjgoM68B4MZobbsPic.
+Source of truth: the Edit Pipeline (`${CLAUDE_PLUGIN_ROOT}/reference/edit-pipeline.html`) and the Video Component Kit (`${CLAUDE_PLUGIN_ROOT}/reference/video-kit.html`). Their online originals are owned by the studio account: https://claude.ai/artifact/2dNyL6Us3Ga6KiAvBhtGtq and https://claude.ai/artifact/1ZbTbjgoM68B4MZobbsPic. Per-app pipelines for a new wedding project (what the editor does, what Claude Code does, where it stops): Premiere Pro https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A · Final Cut Pro https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF (`reference/pipeline-premiere.html`, `reference/pipeline-final-cut.html`).
 
 ## Working rules
 - First determine shoot type: **wedding** or **corporate**. It decides beats, pacing, grade, graphics and exports. Ask only if the material doesn't make it obvious.
 - Editors work on deadline (SDEs especially): lead with the deliverable, concrete steps, no theory.
-- Source footage and audio are **read-only**. Never write, move, rename, overwrite, relink-away or delete anything in a `sources/` folder. Outputs go to `edit/`, `captions/` or `exports/`.
+- Source footage and audio are **read-only**. Never write, move, rename, overwrite, relink-away or delete anything in a `sources/` folder, a `RAW_COPY/` folder or an original card folder. Outputs go to `edit/`, `PROJECT/`, `AUDIO_CLEAN/`, `captions/` or `exports/`.
+- Same-day edits run on a **working copy on the drive**: `/buwan:intake --work-copy` mirrors the raw folder into `<raw>_WORK/RAW_COPY/` on the same SSD, verified by hash, with byte-identical duplicates skipped (a card copied twice never imports twice). The project reads only from the copy.
+- **The basics are the only automatic goal for a new wedding project** (`/buwan:basics`): dedupe (working copy), cull, categorize, dead air + A-Roll clean, label colors, and shaky footage on the Creative/Glider camera only (best steady cut, else Warp Stabilizer / Final Cut Stabilization). The editor makes the project and places the music by hand. Multicam sync (`/buwan:multicam`), the story (`/buwan:plot`) and the cut run only when the editor asks — never create a sequence for them to cut in.
 - App-specific steps come from the editor's app playbook (`/buwan:premiere`, `/buwan:final-cut`, `/buwan:resolve`). Don't give generic advice.
 - Stage 02 (Story-Lock) is app-neutral: its outputs are files every app can import, so the story is the same no matter who cuts it.
 
 ## Folder layout (per workspace, e.g. `D:\Buwan` or `~/Buwan`)
 ```
 projects/<YYYY-MM-DD>_<client>_<wedding|corporate>/
-  sources/      read-only: footage/, audio/  (organized by segment: prep, ceremony, reception)
+  sources/      read-only: footage/, audio/  (organized by segment: prep, ceremony, reception) — copy mode;
+                SDE working-copy mode keeps the footage on the SSD instead: <raw>_WORK/{RAW_COPY,PROJECT,AUDIO_CLEAN,EXPORTS,logs}
   edit/         project files, transcripts/, paper edits, EDL, FCPXML, beat sheets
   captions/     SRT
   exports/      masters and reels
@@ -46,13 +49,13 @@ templates/
 - **Corporate:** welcome → keynote soundbites → exec pull-quotes → panel highlights → crowd energy → awards → partner mentions → closing CTA.
 
 ## Pipeline
-00 Shoot-day coverage → Source (originals never touched) → **01 Intake** (copy, verify, organize by segment; sources read-only) → **02 Rough cut — Story-Lock** → **Proof gate** → 03 Audio polish → 04 Grade (camera only) → 05 Graphics + captions → 06 SFX → 07 Review (taste only, the editor) → 08 Export.
+00 Shoot-day coverage → Source (originals never touched) → **01 Intake** (working copy on the drive or copy into the workspace, verified, duplicates skipped; sources read-only) → **02 Rough cut — Story-Lock** → **Proof gate** → 03 Audio polish → 04 Grade (camera only) → 05 Graphics + captions → 06 SFX → 07 Review (taste only, the editor) → 08 Export.
 
 Each stage has a skill. Run them in order; each one checks the previous stage is done:
 
 | Stage | Skill |
 |---|---|
-| 01 Intake | `/buwan:intake`, then `/buwan:assemble` (scan · cull · music · multicam sync) and `/buwan:organize` (categories → bins, colors) |
+| 01 Intake + the basics | `/buwan:intake`, then `/buwan:basics` (dedupe · cull · categorize · dead air · label colors · steady) — `/buwan:assemble` is the full engine behind it; `/buwan:multicam` for sync on request |
 | 02 Story-Lock (2a–2c) | `/buwan:plot` |
 | 02 Rough cut (2d b-roll, picture cut) | `/buwan:rough-cut` → `/buwan:assemble` build (music-driven) |
 | Proof gate | `/buwan:proof-gate` |

@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """Buwan assemble — footage prep + music-driven first cut, as files every editing app can import.
 
-  assemble.py scan      <footage dir> --out edit/assemble/clips.json [--music <dir or files...>]
+  assemble.py workcopy  <project> --source <raw clips folder> [--to <WORK folder>]   -> RAW_COPY next to the raw folder, verified, duplicates skipped
+  assemble.py dedupe    <project> [--footage <dir>]  -> edit/assemble/dedupe.json + dedupe_report.md (reference-in-place jobs)
+  assemble.py scan      <project> [--footage <dir>] [--music <dir or files...>] [--dedupe]  -> edit/assemble/clips.json
   assemble.py cull      <project>            -> edit/assemble/cull.json
+  assemble.py steady    <project>            -> edit/assemble/steady.json  (shaky Creative/Glider clips: best cut | warp | too shaky)
   assemble.py music     <project> --intro <track1> --main <track2>   -> edit/assemble/music.json
   assemble.py sync      <project> [--anchor "2-Main"] [--trusted cam ...]  -> edit/assemble/sync.json + multicams.json
   assemble.py organize  <project> --categories edit/assemble/categories.json  -> edit/organize_vN.fcpxml
   assemble.py selects   <project> --selects edit/assemble/selects.json      -> edit/selects_vN.fcpxml
   assemble.py build     <project> --selects edit/assemble/selects.json [--name "SDE Cut v1"]  -> edit/sde-cut_vN.fcpxml + .edl
+  assemble.py handoff   <project> [--title "Marynhor & Jomar"]  -> EDITOR_START_HERE.md in the WORK folder (or the project)
   assemble.py selftest  <out dir>   synthetic 3-camera wedding + 2 tracks -> runs everything; import the FCPXML to verify
 
 <project> is a Buwan project folder (…/projects/<date>_<client>_<type>). Footage root comes from edit/SOURCES.md
@@ -85,6 +89,15 @@ def cmd_scan(a):
     root = footage_root(project, a.footage)
     log(f"scanning {root}")
     clips = scan_media(root)
+    if a.dedupe:
+        from workcopy import find_duplicates, write_dedupe_report
+        _, dups = find_duplicates(root)
+        skip = {str(d) for d in dups}
+        before = len(clips)
+        clips = [c for c in clips if c.path not in skip]
+        save_json(adir(project) / "dedupe.json", {str(d): str(o) for d, o in dups.items()})
+        write_dedupe_report(adir(project) / "dedupe_report.md", root, dups, "Duplicate footage (left out of the scan)")
+        log(f"dedupe: {before - len(clips)} byte-identical duplicates left out -> {adir(project) / 'dedupe_report.md'}")
     music = []
     for m in a.music or []:
         mp = Path(m)
@@ -110,6 +123,23 @@ def cmd_cull(a):
     save_json(adir(project) / "cull.json", res)
     rej = [r for r in res if r["reject"]]
     log(f"rejected {len(rej)}/{len(res)}: " + ", ".join(f"{r['name']}({'/'.join(r['reject'])})" for r in rej[:20]))
+
+
+def cmd_steady(a):
+    from steady import steady
+    project = Path(a.project)
+    clips = [c for c in load_clips(project).values() if c.camera != "music"]
+    cull_res = load_json(adir(project) / "cull.json") if (adir(project) / "cull.json").exists() else []
+    if not cull_res:
+        sys.exit("run cull first (steady reads the heavy-motion flags)")
+    res = steady(clips, cull_res, a.workers)
+    save_json(adir(project) / "steady.json", res)
+    rep = [f"# Shaky Creative/Glider footage — decisions", "", "| Clip | Decision | Range | Why |", "|---|---|---|---|"]
+    for v in sorted(res.values(), key=lambda x: x["name"]):
+        rng = f"{v['range'][0]:.1f}–{v['range'][1]:.1f}s" if v.get("range") else ""
+        rep.append(f"| {v['name']} | {v['decision']} | {rng} | {v.get('reason','')} |")
+    (project / "edit" / "steady_report.md").write_text("\n".join(rep) + "\n")
+    log(f"wrote {adir(project) / 'steady.json'} and edit/steady_report.md")
 
 
 def cmd_music(a):
@@ -266,7 +296,16 @@ def cmd_organize(a):
     roles, vroles = _roles_for(cats, clips)
     mcs = load_json(adir(project) / "multicams.json") if (adir(project) / "multicams.json").exists() else []
     rp = adir(project) / "speech_ranges.json"
-    favorites = {p: v["ranges"] for p, v in load_json(rp).items()} if rp.exists() else {}
+    favorites = {p: [[a, b, "speech"] for a, b in v["ranges"]] for p, v in load_json(rp).items()} if rp.exists() else {}
+    sp = adir(project) / "steady.json"
+    for p, v in (load_json(sp).items() if sp.exists() else []):
+        if v["decision"] == "best-cut":
+            favorites.setdefault(p, []).append([v["range"][0], v["range"][1], "steady"])
+            kw.setdefault(p, []).append("steady pick")
+            notes[p] = (notes.get(p, "") + "; " if notes.get(p) else "") + f"steady pick {v['range'][0]:.1f}-{v['range'][1]:.1f}s"
+        elif v["decision"] == "warp":
+            kw.setdefault(p, []).append("stabilize")
+            notes[p] = (notes.get(p, "") + "; " if notes.get(p) else "") + "stabilize: tick Stabilization in the Inspector"
     plan = {"name": "", "event": a.event or project.name, "library": a.library, "clips": {p: c.to_json() for p, c in clips.items()},
             "keywords": kw, "rejected": rejected, "notes": notes, "roles": roles, "video_roles": vroles, "multicams": mcs if a.multicam else [],
             "favorites": favorites}
@@ -380,8 +419,18 @@ def cmd_selftest(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("scan"); s.add_argument("project"); s.add_argument("--footage"); s.add_argument("--music", nargs="*"); s.set_defaults(f=cmd_scan)
+    s = sub.add_parser("workcopy", help="copy the raw clips into <raw>_WORK/RAW_COPY on the same drive, verified, duplicates skipped; the project then reads from the copy")
+    s.add_argument("project"); s.add_argument("--source", required=True, help="the raw clips folder on the SSD (read-only)")
+    s.add_argument("--to", help="WORK folder (default: <source>_WORK next to the source)")
+    s.add_argument("--all-files", action="store_true", help="copy every file, not only media")
+    s.add_argument("--force", action="store_true", help="skip the free-space check")
+    s.set_defaults(f=lambda a: __import__("workcopy").cmd_workcopy(a))
+    s = sub.add_parser("dedupe"); s.add_argument("project"); s.add_argument("--footage"); s.set_defaults(f=lambda a: __import__("workcopy").cmd_dedupe(a))
+    s = sub.add_parser("handoff"); s.add_argument("project"); s.add_argument("--title"); s.add_argument("--out"); s.set_defaults(f=lambda a: __import__("workcopy").cmd_handoff(a))
+    s = sub.add_parser("scan"); s.add_argument("project"); s.add_argument("--footage"); s.add_argument("--music", nargs="*")
+    s.add_argument("--dedupe", action="store_true", help="leave byte-identical duplicates out of the scan (reference-in-place jobs)"); s.set_defaults(f=cmd_scan)
     s = sub.add_parser("cull"); s.add_argument("project"); s.add_argument("--workers", type=int, default=4); s.set_defaults(f=cmd_cull)
+    s = sub.add_parser("steady"); s.add_argument("project"); s.add_argument("--workers", type=int, default=4); s.set_defaults(f=cmd_steady)
     s = sub.add_parser("music"); s.add_argument("project"); s.add_argument("--intro"); s.add_argument("--main", required=True); s.set_defaults(f=cmd_music)
     s = sub.add_parser("sync"); s.add_argument("project"); s.add_argument("--anchor"); s.add_argument("--trusted", nargs="*"); s.set_defaults(f=cmd_sync)
     s = sub.add_parser("enhance"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=4); s.add_argument("--render", action="store_true", help="also write cleaned WAVs to edit/audio/clean"); s.set_defaults(f=cmd_enhance)
@@ -403,6 +452,8 @@ def main():
     s.add_argument("project"); s.add_argument("--plan", help="a *.plan.json written by `build` — adds the timeline to the manifest")
     s.add_argument("--categories"); s.add_argument("--grade", help="warm | cool | bw"); s.add_argument("--lut-mix", type=float, default=0.8)
     s.add_argument("--use-clean", action="store_true", help="build lays the cleaned WAVs (enhance --render) under each speech clip")
+    s.add_argument("--no-flags", action="store_true", help="keep shaky/soft/dark clips in their category bins instead of 00 Flagged/<reason>")
+    s.add_argument("--skeleton", help="name of the empty SDE assembly sequence the skeleton step creates (default SDE_ASSEMBLY_v1)")
     s.add_argument("--out"); s.set_defaults(f=cmd_premiere)
     s = sub.add_parser("selftest"); s.add_argument("out"); s.set_defaults(f=cmd_selftest)
     a = ap.parse_args()

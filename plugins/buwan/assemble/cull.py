@@ -33,7 +33,7 @@ def _ff(path, vf, extra=None, audio=False):
     else:
         cmd += ["-an", "-vf", vf, "-f", "null", "-"]
     r = run(cmd, check=False)
-    return r.stderr
+    return (r.stderr or "") + (r.stdout or "")   # metadata=print:file=- goes to stdout on some ffmpeg builds
 
 
 def measure(clip: Clip) -> dict:

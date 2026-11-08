@@ -103,7 +103,7 @@ h1 i{font-family:var(--accent);font-style:normal;color:var(--gold)}
 
 /* apps row */
 .apps{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.apps span{font-family:var(--caps);font-size:10px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--line);padding:6px 14px;color:var(--muted)}
+.apps span,.apps a{font-family:var(--caps);font-size:10px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--line);padding:6px 14px;color:var(--muted)}
 .apps .default{border-color:var(--gold);color:var(--gold)}
 
 /* beats aside */
@@ -136,7 +136,12 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
   </div>
   <h1>The <i>Edit</i> Pipeline</h1>
   <p class="sub">End-to-end post-production flow for wedding SDEs, highlight films, and corporate event videos. The footage is prepared by machine, the story is locked by hand, the cut is timed to the music you choose — and every cut is measured before it moves on. Runs on the editor's own Mac or PC; nothing is uploaded.</p>
-  <div class="apps" style="margin-top:16px"><span class="default">/buwan:intake</span><span class="default">/buwan:assemble</span><span>/buwan:organize</span><span>/buwan:plot</span><span>/buwan:rough-cut</span><span>/buwan:proof-gate</span><span>/buwan:audio</span><span>/buwan:grade</span><span>/buwan:graphics</span><span>/buwan:sfx</span><span>/buwan:review</span><span>/buwan:export</span><span>/buwan:clipper</span><span class="default">/buwan:sde</span></div>
+  <div class="aside" style="margin-top:18px">
+    <span class="tag">Starting a wedding project? Pick your app's pipeline first</span>
+    <div class="apps" style="margin-top:8px"><a class="default" href="https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A" style="text-decoration:none">Premiere Pro pipeline →</a><a class="default" href="https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF" style="text-decoration:none">Final Cut Pro pipeline →</a></div>
+    <p style="margin-top:8px">Each one says what you do by hand (the project, the music) and what Claude Code does for you (dedupe, cull, categorize, dead air, label colors, shaky creative shots) — and stops. This page is the full map of every stage, for when you ask for more.</p>
+  </div>
+  <div class="apps" style="margin-top:16px"><span class="default">/buwan:basics</span><span>/buwan:multicam</span><span class="default">/buwan:intake</span><span class="default">/buwan:assemble</span><span>/buwan:organize</span><span>/buwan:plot</span><span>/buwan:rough-cut</span><span>/buwan:proof-gate</span><span>/buwan:audio</span><span>/buwan:grade</span><span>/buwan:graphics</span><span>/buwan:sfx</span><span>/buwan:review</span><span>/buwan:export</span><span>/buwan:clipper</span><span class="default">/buwan:sde</span></div>
 </header>
 
 <div class="legend">
@@ -182,8 +187,8 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
   <div class="stage auto">
     <div class="card">
       <span class="tag">01 · <b class="auto">Automatic</b></span>
-      <h3>Intake</h3>
-      <p>Reference the cards in place (or copy and verify). Project folder created, footage locked read-only. <span class="spec">/buwan:intake</span></p>
+      <h3>Intake — a working copy on the drive</h3>
+      <p>Same-day: the raw clips are mirrored into <span class="spec">&lt;raw&gt;_WORK/RAW_COPY/</span> next to the raw folder on the same SSD — free space checked first, every file verified by SHA-256, <b>byte-identical duplicates skipped</b> and logged (a card copied twice or a <span class="spec">z/</span> backup never imports twice). <span class="spec">PROJECT/</span>, <span class="spec">AUDIO_CLEAN/</span>, <span class="spec">EXPORTS/</span> and <span class="spec">logs/</span> sit beside it; the project reads only from the copy and both the copy and the originals are read-only to Claude. Highlights and features copy into the workspace instead; no room → reference in place with the duplicate check. <span class="spec">/buwan:intake --work-copy</span></p>
     </div>
   </div>
 
@@ -194,9 +199,10 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
       <p>One run, on the editor's machine, deterministic: same footage in, same result out. Rejects are flags, never deletions; the editor can un-reject anything by name. <span class="spec">/buwan:assemble</span></p>
       <div class="substeps">
         <span>Scan · probe every file</span><span class="arrow">→</span>
-        <span>Cull · false starts, black, blown, dark, soft, shaky, dead</span><span class="arrow">→</span>
+        <span>Cull · rejects the unusable; soft, dark in <b>Flagged</b></span><span class="arrow">→</span>
+        <span>Steady · shaky creative shots: best cut or stabilize</span><span class="arrow">→</span>
         <span>Music · tempo, beats, bars, energy, peak</span><span class="arrow">→</span>
-        <span>Sync · every camera aligned by sound</span><span class="arrow">→</span>
+        <span>Sync · on request · cameras aligned by sound</span><span class="arrow">→</span>
         <span>Organize · bins, colors, roles, multicam</span><span class="arrow">→</span>
         <span>Enhance · dialogue levelled, denoised</span><span class="arrow">→</span>
         <span>Dead air · silences out, A-Roll clean</span><span class="arrow">→</span>
@@ -204,7 +210,11 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
       </div>
       <div class="aside">
         <span class="tag">The basics, in order — what the editor opens first</span>
-        <p style="margin-top:6px"><b>Organize</b> — every clip in one of the 12 studio bins. <b>Color</b> — the same colors in every app: Premiere labels, Final Cut roles, Resolve clip colors. <b>Grade</b> — one look per film (<span class="spec">Buwan_Warm</span> · <span class="spec">Cool</span> · <span class="spec">BW</span>) on every camera clip, never on music or graphics. <b>Enhance</b> — each speech clip measured (loudness, noise floor, SNR) and levelled toward −17 LUFS with noise reduction and voice isolation scaled to the noise; non-destructive in Final Cut, cleaned WAVs for Premiere and Resolve. <b>Dead air</b> — silences found and removed; speech ranges become Favorites and the <b>A-Roll clean</b> project is the whole day's speech back to back. <b>Cull</b> — the unusable is flagged Rejected, never deleted.</p>
+        <p style="margin-top:6px"><b>Organize</b> — every clip in one of the 12 studio bins. <b>Color</b> — the same colors in every app: Premiere labels, Final Cut roles, Resolve clip colors. <b>Grade</b> — one look per film (<span class="spec">Buwan_Warm</span> · <span class="spec">Cool</span> · <span class="spec">BW</span>) on every camera clip, never on music or graphics. <b>Enhance</b> — each speech clip measured (loudness, noise floor, SNR) and levelled toward −17 LUFS with noise reduction and voice isolation scaled to the noise; non-destructive in Final Cut, cleaned WAVs for Premiere and Resolve. <b>Dead air</b> — silences found and removed; speech ranges become Favorites and the <b>A-Roll clean</b> project is the whole day's speech back to back. <b>Cull</b> — the unusable is marked Rejected, never deleted; heavy-motion, soft-focus, dark, blown and frozen b-roll is parked in <span class="spec">00 Flagged/&lt;reason&gt;</span>, out of the picking bins but one drag away.</p>
+      </div>
+      <div class="aside">
+        <span class="tag">A new wedding project: the basics, then stop</span>
+        <p style="margin-top:6px">The editor makes the project and places the music. Claude Code does six things — <b>dedupe</b> (the working copy), <b>cull</b>, <b>categorize</b>, <b>dead air</b> (with the <b>A-Roll clean</b>), <b>label colors</b>, and <b>shaky Creative/Glider shots</b> (the best steady cut as a Steady pick, else Warp Stabilizer / Stabilization, else Flagged; other cameras untouched) — writes <span class="spec">EDITOR_START_HERE.md</span>, and stops. No multicam sync, no story, no cut, no sequence to cut in. Those are skills the editor asks for: <span class="spec">/buwan:multicam</span>, <span class="spec">/buwan:plot</span>, <span class="spec">/buwan:sde</span>. Per-app detail: <a href="https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A" style="color:var(--gold)">Premiere Pro</a> · <a href="https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF" style="color:var(--gold)">Final Cut Pro</a>. <span class="spec">/buwan:basics</span></p>
       </div>
       <div class="aside">
         <span class="tag">Sync by sound, not by clock</span>
@@ -355,7 +365,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
   <div class="rule"></div>
 </div>
 <footer>
-  Same-day note — <span class="spec">/buwan:sde</span> runs the whole pipeline compressed for a reception screening: assemble → Story-Lock → the music-driven cut → gates → title plate and end card → export. Gates still apply, rounds don't. Grade from a saved look, captions minimal, one converge pass.<br><br>
+  Same-day note — a new wedding project gets the basics only (<span class="spec">/buwan:basics</span>). <span class="spec">/buwan:sde</span> is the full flow when the editor asks for it: Story-Lock → the music-driven cut → gates → title plate and end card → export. Gates still apply, rounds don't. Grade from a saved look, captions minimal, one converge pass.<br><br>
   Shared by every editor through the <span class="spec">buwan</span> Claude Code plugin (github.com/Buwan-Films/buwan-claude): Hailo-style footage prep (cull, sync, organize), Plotline-style story work (transcripts, speakers, focus, exclusions, Story-Lock), the studio's own rules, and your music. A thin panel inside Premiere / Final Cut / Resolve can sit on top of the same engine later; the rules and the builder live here.
 </footer>
 </div>

@@ -10,14 +10,18 @@
  *  Steps (the basics, in house order):
  *      status    what is in the project vs the manifest (new clips from shooters, missing ones)
  *      import    import manifest clips that are not in the project yet, straight into their bins
- *      organize  bins per category + Premiere label colors (rejects -> 00 Rejected (cull), Brown)
+ *      organize  bins per category + Premiere label colors (rejects -> 00 Rejected (cull), Brown;
+ *                shaky / soft / dark / frozen b-roll -> 00 Flagged/<reason>, category label kept)
  *      cull      only the rejects, with reasons
  *      grade     Lumetri Color + studio LUT on every camera clip of a sequence (opts.sequence or active)
  *      enhance   speech clips of a sequence: measured gain, DeNoise, Hard Limiter
  *      deadair   subclips of the speech ranges (dead air removed), bin "01 Speech/Speech ranges"
  *      aroll     the A-Roll clean sequence: every speech range back to back
  *      sync      one stacked SYNC sequence per multicam group, clips at their audio-sync offsets
+ *      steady    shaky Creative/Glider clips: best-cut subclips in <category>/Steady picks, the rest in a STABILIZE sequence with Warp Stabilizer
+ *      skeleton  (optional) an empty assembly sequence with section markers — only when asked
  *      build     the music-driven timeline from the plan (speech V1/A1, b-roll V2, music A3/A4, markers)
+ *      basics    import, organize (bins, labels, rejects, flagged), deadair, aroll, steady — and stops. The same-day scope.
  *      all       import, organize, deadair, aroll, sync, build (if plan), grade, enhance
  *
  *  Nothing here deletes, renames or re-encodes footage. Everything is additive and undoable.
@@ -368,16 +372,19 @@ var BUWAN = (function () {
   }
   function stepOrganize(opts, onlyRejects) {
     reindex();
-    var moved = 0, labeled = 0, missing = 0, rejects = [], warned = 0;
+    var moved = 0, labeled = 0, missing = 0, rejects = [], warned = 0, flagged = 0;
+    var flagWarnings = (opts.flag_warnings !== undefined) ? !!opts.flag_warnings : (M.flag_warnings !== false);
     for (var i = 0; i < M.clips.length; i++) {
       var c = M.clips[i];
       if (onlyRejects && !(c.reject && c.reject.length)) continue;
       var it = itemFor(c.path);
       if (!it) { missing++; continue; }
-      var target = bin(c.bin), parent = parentOf(c.path);
+      var flagIt = flagWarnings && c.flag_bin && !(c.reject && c.reject.length);
+      var target = bin(flagIt ? c.flag_bin : c.bin), parent = parentOf(c.path);
       if (!parent || parent.nodeId !== target.nodeId) {
-        try { it.moveBin(target); moved++; } catch (e) { log("move failed " + c.name + ": " + e); }
-      }
+        try { it.moveBin(target); moved++; if (flagIt) flagged++; } catch (e) { log("move failed " + c.name + ": " + e); }
+      } else if (flagIt) flagged++;
+      if (flagIt) { try { it.setProjectMetadata("Column.Intrinsic.Description", ["flagged: " + c.flag.join(", ") + " (was " + c.bin + ")"]); } catch (eD) {} }
       if (c.label >= 0) {
         var cur = -1; try { cur = it.getColorLabel(); } catch (e2) {}
         if (cur !== c.label) { try { it.setColorLabel(c.label); labeled++; } catch (e3) { log("label failed " + c.name + ": " + e3); } }
@@ -387,6 +394,7 @@ var BUWAN = (function () {
     }
     reindex();
     return { moved: moved, labeled: labeled, not_in_project: missing, rejected: rejects.length, rejected_clips: rejects.slice(0, 40), with_warnings: warned,
+             flagged: flagged, flag_bin: flagWarnings ? (M.flag_bin || "00 Flagged") : null,
              bins: M.bins, labels: M.labels, hint: missing ? "run the import step first for the " + missing + " clips not in the project" : "" };
   }
   function stepGrade(opts) {
@@ -551,6 +559,78 @@ var BUWAN = (function () {
     }
     return { sync_sequences: out, next: "In the Project panel select each SYNC sequence → right-click → Multi-Camera → Enable, then edit it as a multicam clip (Program Monitor → Multi-Camera view)." };
   }
+  function stepSteady(opts) {
+    // Shaky Creative/Glider clips: best-cut -> subclip in <category>/Steady picks; warp -> STABILIZE sequence with Warp Stabilizer applied.
+    reindex();
+    var picks = 0, warped = 0, missing = 0, exists = 0, failed = [], seq = null, t = 0;
+    var warpList = [];
+    for (var i = 0; i < M.clips.length; i++) {
+      var c = M.clips[i], st = c.steady;
+      if (!st) continue;
+      var it = itemFor(c.path);
+      if (!it) { missing++; continue; }
+      if (st.decision === "best-cut" && st.range) {
+        var target = bin((c.category || c.bin) + "/Steady picks"), nm = c.name + " - steady [" + fmt(st.range[0]) + "-" + fmt(st.range[1]) + "]";
+        var dup = false;
+        for (var k = 0; k < target.children.numItems; k++) if (target.children[k].name === nm) dup = true;
+        if (dup) { exists++; continue; }
+        try {
+          var sub = it.createSubClip(nm, ticks(st.range[0]), ticks(st.range[1]), 0, 1, 1);
+          if (sub) { try { sub.moveBin(target); } catch (e) {} if (c.label >= 0) { try { sub.setColorLabel(c.label); } catch (e2) {} } picks++; }
+        } catch (e3) { failed.push(nm + ": " + e3); }
+      } else if (st.decision === "warp") {
+        warpList.push({ clip: c, item: it });
+      }
+    }
+    if (warpList.length) {
+      seq = findSequence(opts.name || "STABILIZE - Warp") || createSequence(opts.name || "STABILIZE - Warp", opts, warpList[0].item);
+      app.enableQE();
+      var qs = qe.project.getActiveSequence();
+      for (var w = 0; w < warpList.length; w++) {
+        var wc = warpList[w];
+        if (place(seq, wc.item, 0, wc.clip.duration, t, 0, 0)) {
+          var dom = clipAt(seq.videoTracks[0], t);
+          try { addVideoEffect(qs, 0, dom, "Warp Stabilizer", seq.videoTracks[0].clips.numItems - 1); warped++; }
+          catch (e4) { failed.push(wc.clip.name + ": Warp Stabilizer not applied (" + e4 + ")"); marker(seq, t, "WARP: apply by hand", "Effects > Distort > Warp Stabilizer", 3); }
+          marker(seq, t, wc.clip.name, wc.clip.steady.reason || "", 7);
+          t += wc.clip.duration + 0.5;
+        }
+      }
+    }
+    return { steady_picks: picks, already_there: exists, warp_clips: warped, stabilize_sequence: seq ? seq.name : null, not_in_project: missing, failed: failed.length, failed_clips: failed.slice(0, 20),
+             next: "Steady picks sit next to their category bin. Open the STABILIZE sequence once so Warp Stabilizer analyses in the background; copy a stabilized clip from there into your cut." };
+  }
+  function stepSkeleton(opts) {
+    // The empty same-day assembly sequence: the editor drops picks on V1 and goes.
+    reindex();
+    var K = M.skeleton || {}, name = opts.name || K.name || "SDE_ASSEMBLY_v1";
+    var seed = null;
+    for (var i = 0; i < M.clips.length && !seed; i++) if (M.clips[i].kind === "video") seed = itemFor(M.clips[i].path);
+    if (!seed) throw new Error("no video clip in the project to seed a sequence from — run the import step first");
+    var seq = createSequence(name, opts, seed);
+    ensureTracks(seq, 3, 3);
+    var sections = K.sections || ["INTRO", "STORYLINE", "CEREMONY", "OUTRO"];
+    var targetMin = (K.target_min && K.target_min[1]) || 5, span = targetMin * 60 / sections.length;
+    for (var k = 0; k < sections.length; k++) marker(seq, k * span, sections[k], "section", 2);
+    marker(seq, 0, "TARGETS", (K.notes || "dialogue -17 LUFS, peaks -6 dBFS, music bed -20 dB") + "; target " + ((K.target_min || [4, 5]).join("-")) + " min", 1);
+    marker(seq, 0.5, "V2: adjustment layer + studio look", "File > New > Adjustment Layer, drag to V2 over the full length, Lumetri > Creative > Look = Buwan LUT (or run the grade step once clips are on V1)", 3);
+    marker(seq, 1.0, "V3: letterbox 2.39:1", "kit clip 'letterbox' from kit/overlays on V3 (" + (K.letterbox_px || 110) + " px bars at 1080p)", 3);
+    var musicPlaced = 0, bedDb = (K.music_bed_db !== undefined) ? K.music_bed_db : -20;
+    if (M.music) {
+      var m2 = M.music.main || M.music.intro;
+      if (m2 && m2.path) {
+        var mi = itemFor(m2.path);
+        if (mi && place(seq, mi, 0, m2.duration || 300, 0, -1, 2)) {
+          musicPlaced++;
+          var mc = clipAt(seq.audioTracks[2], 0);
+          if (mc) { var vm = component(mc, "Volume"), lm = vm ? property(vm, "Level") : null; if (lm) { try { lm.setValue(dB(bedDb), true); } catch (e1) { log("music level not set: " + e1); } } }
+          marker(seq, 0, "A3 music bed " + bedDb + " dB", "placeholder — swap for the final track", 0);
+        }
+      }
+    }
+    return { sequence: seq.name, sections: sections, music_bed: musicPlaced, music_bed_db: bedDb,
+             next: "V1 is empty on purpose. Listen through the A-Roll clean, mark the lines, drop the picks on V1 between the section markers. Orange markers are the two hand steps (adjustment layer, letterbox)." };
+  }
   function stepBuild(opts) {
     if (!M.plan) throw new Error("no plan in the manifest: assemble.js premiere <project> --plan edit/<cut>.plan.json");
     reindex();
@@ -632,7 +712,16 @@ var BUWAN = (function () {
         case "deadair": r = stepDeadair(o); break;
         case "aroll": r = stepAroll(o); break;
         case "sync": r = stepSync(o); break;
+        case "steady": r = stepSteady(o); break;
+        case "skeleton": r = stepSkeleton(o); break;
         case "build": r = stepBuild(o); break;
+        case "basics":
+          // the same-day scope: import, organize (bins + labels, rejects, flagged), dead air, A-Roll clean, steady. No sync, no sequences to cut in.
+          r = { "import": stepImport({ limit: 100000 }), organize: stepOrganize(o, false), deadair: stepDeadair({ limit: 100000 }) };
+          try { r.aroll = stepAroll(o); } catch (eB1) { r.aroll = { error: String(eB1) }; }
+          try { r.steady = stepSteady(o); } catch (eB2) { r.steady = { error: String(eB2) }; }
+          r.next = "Basics done. Multicam sync (/buwan:multicam), the story (/buwan:plot) and the cut are the editor's call.";
+          break;
         case "all":
           r = { "import": stepImport({ limit: 100000 }), organize: stepOrganize(o, false), deadair: stepDeadair({ limit: 100000 }) };
           r.aroll = stepAroll(o);
@@ -644,7 +733,7 @@ var BUWAN = (function () {
             try { r.enhance = stepEnhance(so); } catch (e3) { r.enhance = { error: String(e3) }; }
           }
           break;
-        default: throw new Error("unknown step: " + step + " (status, import, organize, cull, grade, enhance, deadair, aroll, sync, build, all)");
+        default: throw new Error("unknown step: " + step + " (status, import, organize, cull, grade, enhance, deadair, aroll, steady, sync, skeleton, build, basics, all)");
       }
       r.ok = true; r.step = step; r.seconds = Math.round((new Date().getTime() - t0) / 100) / 10; r.log = logs;
       try { app.project.save(); r.saved = true; } catch (e4) { r.saved = false; }
@@ -654,5 +743,5 @@ var BUWAN = (function () {
     }
   }
 
-  return { run: run, version: "1.0.0", steps: ["status", "import", "organize", "cull", "grade", "enhance", "deadair", "aroll", "sync", "build", "all"] };
+  return { run: run, version: "1.1.0", steps: ["status", "import", "organize", "cull", "grade", "enhance", "deadair", "aroll", "steady", "sync", "skeleton", "build", "basics", "all"] };
 })();

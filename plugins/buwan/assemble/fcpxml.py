@@ -275,8 +275,10 @@ class Writer:
                 inner += f'<keyword start="0s" duration="{dur}" value={quoteattr(k)}/>'
             if path in rej:
                 inner += f'<rating start="0s" duration="{dur}" value="reject" note={quoteattr(notes.get(path, ""))}/>'
-            for a, b in (p.get("favorites") or {}).get(path, []):
-                inner += f'<rating start="{rt(a, fps) if fps else rt_samples(a, c.audio_rate)}" duration="{rt(b - a, fps) if fps else rt_samples(b - a, c.audio_rate)}" value="favorite" name="speech"/>'
+            for fav in (p.get("favorites") or {}).get(path, []):
+                a, b = fav[0], fav[1]
+                fname = fav[2] if len(fav) > 2 else "speech"
+                inner += f'<rating start="{rt(a, fps) if fps else rt_samples(a, c.audio_rate)}" duration="{rt(b - a, fps) if fps else rt_samples(b - a, c.audio_rate)}" value="favorite" name={quoteattr(fname)}/>'
             role_attr = ""
             r = roles.get(path)
             if r:

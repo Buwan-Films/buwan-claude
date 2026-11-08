@@ -36,6 +36,8 @@ LABEL_NAMES = ["Violet", "Iris", "Caribbean", "Lavender", "Cerulean", "Forest", 
                "Purple", "Blue", "Teal", "Magenta", "Tan", "Green", "Brown", "Yellow"]
 REJECT_BIN = "00 Rejected (cull)"
 REJECT_LABEL = 14  # Brown
+FLAG_BIN = "00 Flagged"   # warnings that make a clip a poor b-roll pick; kept with its category label, moved out of the picking bins
+FLAG_REASONS = {"heavy-motion": "Heavy motion", "soft-focus": "Soft focus", "dark": "Dark", "bright": "Blown exposure", "frozen": "Frozen"}
 NO_GRADE = {"09 Music", "10 SFX & Ambience", "11 Graphics", "12 Grade & Adjust"}
 LUT_FILES = {"warm": "Buwan_Warm", "cool": "Buwan_Cool", "bw": "Buwan_BW"}
 
@@ -69,7 +71,7 @@ def _load_optional(p: Path, default):
 
 
 def build_manifest(project: Path, clips: dict[str, Clip], categories: dict, grade: str | None, lut_mix: float,
-                   plan_path: Path | None, use_clean: bool) -> dict:
+                   plan_path: Path | None, use_clean: bool, flag_warnings: bool = True, skeleton_name: str | None = None) -> dict:
     adir = project / "edit" / "assemble"
     cull = {m["path"]: m for m in _load_optional(adir / "cull.json", [])}
     sync = _load_optional(adir / "sync.json", {"clips": {}})
@@ -77,21 +79,30 @@ def build_manifest(project: Path, clips: dict[str, Clip], categories: dict, grad
     enhance = _load_optional(adir / "enhance.json", {})
     ranges = _load_optional(adir / "speech_ranges.json", {})
     music = _load_optional(adir / "music.json", {})
+    steady = _load_optional(adir / "steady.json", {})
 
     out_clips = []
     for p, c in clips.items():
         cat = categories.get(p) or ("09 Music" if c.camera == "music" else "")
         cm = cull.get(p, {})
         rej = list(cm.get("reject") or [])
+        warn = list(cm.get("warn") or [])
+        flags = [w for w in warn if w in FLAG_REASONS and c.kind == "video" and cat != "01 Speech"]
+        st = steady.get(p)
+        if st and st["decision"] in ("best-cut", "warp"):
+            flags = [w for w in flags if w != "heavy-motion"]   # saved: it has a steady cut or goes to Warp Stabilizer
         entry = {
             "path": p, "name": c.name, "camera": c.camera, "kind": c.kind, "duration": round(c.duration, 3),
             "fps": round(c.fps_num / c.fps_den, 3) if c.fps_num else 0, "has_audio": bool(c.has_audio),
             "category": cat,
             "bin": REJECT_BIN if rej else (cat or ("Footage/" + c.camera if c.camera else "Footage")),
             "label": REJECT_LABEL if rej else LABELS.get(cat, -1),
-            "reject": rej, "warn": list(cm.get("warn") or []),
+            "reject": rej, "warn": warn,
+            "flag": flags,
+            "flag_bin": f"{FLAG_BIN}/{FLAG_REASONS[flags[0]]}" if flags and not rej else None,
             "sync_offset": (sync["clips"].get(p) or {}).get("offset"),
             "speech_ranges": (ranges.get(p) or {}).get("ranges") or [],
+            "steady": ({"decision": st["decision"], "range": st.get("range"), "reason": st.get("reason")} if st else None),
         }
         e = enhance.get(p) or {}
         if e.get("recipe"):
@@ -107,8 +118,12 @@ def build_manifest(project: Path, clips: dict[str, Clip], categories: dict, grad
         "project": project.name,
         "project_dir": str(project.resolve()),
         "sequence": {"fps": 23.976, "width": 1920, "height": 1080, "timecode_start": "01:00:00:00"},
-        "labels": LABELS, "label_names": LABEL_NAMES, "reject_bin": REJECT_BIN,
+        "labels": LABELS, "label_names": LABEL_NAMES, "reject_bin": REJECT_BIN, "flag_bin": FLAG_BIN,
+        "flag_warnings": bool(flag_warnings),
         "bins": sorted(set(LABELS) | {REJECT_BIN}),
+        "skeleton": {"name": skeleton_name or "SDE_ASSEMBLY_v1", "sections": ["INTRO", "STORYLINE", "CEREMONY", "OUTRO"],
+                     "target_min": [4, 5], "music_bed_db": -20, "letterbox_px": 110,
+                     "notes": "dialogue -17 LUFS, peaks -6 dBFS, music bed -20 dB; V1 picture, V2 adjustment layer (studio look), V3 letterbox 2.39:1, A1-A2 dialogue, A3 music bed"},
         "clips": out_clips,
         "multicams": multicams,
         "music": {k: {"path": v["path"], "duration": v["duration"], "tempo_bpm": v.get("tempo_bpm"), "sections": v.get("sections")}
@@ -119,7 +134,10 @@ def build_manifest(project: Path, clips: dict[str, Clip], categories: dict, grad
         "counts": {"clips": len(out_clips), "rejected": sum(1 for c in out_clips if c["reject"]),
                    "speech": sum(1 for c in out_clips if c["category"] == "01 Speech"),
                    "enhanced": sum(1 for c in out_clips if c.get("enhance")),
-                   "with_speech_ranges": sum(1 for c in out_clips if c["speech_ranges"])},
+                   "with_speech_ranges": sum(1 for c in out_clips if c["speech_ranges"]),
+                   "flagged": sum(1 for c in out_clips if c.get("flag_bin")),
+                   "steady_best_cut": sum(1 for c in out_clips if (c.get("steady") or {}).get("decision") == "best-cut"),
+                   "steady_warp": sum(1 for c in out_clips if (c.get("steady") or {}).get("decision") == "warp")},
     }
     if grade:
         lut = find_lut(project, grade)
@@ -144,12 +162,13 @@ def cmd_premiere(a, clips: dict[str, Clip], categories: dict):
     plan_path = Path(a.plan) if a.plan else None
     if plan_path and not plan_path.exists():
         raise SystemExit(f"plan not found: {plan_path}")
-    m = build_manifest(project, clips, categories, a.grade, a.lut_mix, plan_path, bool(a.use_clean))
+    m = build_manifest(project, clips, categories, a.grade, a.lut_mix, plan_path, bool(a.use_clean),
+                       flag_warnings=not getattr(a, "no_flags", False), skeleton_name=getattr(a, "skeleton", None))
     out = Path(a.out) if a.out else project / "edit" / "premiere" / "manifest.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     save_json(out, m)
     c = m["counts"]
-    log(f"wrote {out}\n  {c['clips']} clips ({c['rejected']} rejected, {c['speech']} speech, {c['enhanced']} with sound recipes, "
+    log(f"wrote {out}\n  {c['clips']} clips ({c['rejected']} rejected, {c['flagged']} flagged, {c['speech']} speech, {c['enhanced']} with sound recipes, "
         f"{c['with_speech_ranges']} with speech ranges), {len(m['multicams'])} multicam groups"
         + (f", grade {m['grade']['look']} -> {m['grade']['lut']}" if m.get('grade') else "")
         + (f", plan {m['plan']['name']} ({len(m['plan']['spine'])} spine items, {len(m['plan']['connected'])} connected)" if m.get('plan') else ""))

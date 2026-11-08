@@ -9,10 +9,10 @@ argument-hint: "<step|all> <project folder> [opts]"
 Everything the editor sees in Premiere (bins, label colors, subclips, sequences, effects) comes from `<project>/edit/premiere/manifest.json`, written by the engine, and applied by the ExtendScript library `jsx/buwan.jsx` through the bridge's `execute_extendscript`. Same manifest → same project on every editor's machine. Nothing is deleted, renamed or re-encoded; every step is additive and undoable (Edit → Undo).
 
 ## Before the first step
-1. `/buwan:assemble` steps 1–6 must have run (`scan`, `cull`, `music`, `sync`, `categories.json`, `enhance --render`, `deadair`). `build` (step 8) only when the Story-Lock is approved.
+1. The basics must have run (`workcopy`, `scan`, `cull`, `categories.json`, `enhance --render`, `deadair`, `steady` — `/buwan:basics`). `sync` only after `/buwan:multicam`; `build` (plan) only when the Story-Lock is approved.
 2. Write the manifest (re-run it whenever the engine outputs change):
-   `node "<buwan plugin>/scripts/assemble.js" premiere <project> --grade <warm|cool|bw> [--plan <project>/edit/sde-cut_vN.plan.json] [--use-clean]`
-   (`--use-clean` lays the cleaned −17 LUFS WAVs under each speech clip when building, muting the camera audio.)
+   `node "<buwan plugin>/scripts/assemble.js" premiere <project> --grade <warm|cool|bw> [--plan <project>/edit/sde-cut_vN.plan.json] [--use-clean] [--no-flags]`
+   (`--use-clean` lays the cleaned −17 LUFS WAVs under each speech clip when building, muting the camera audio. `--no-flags` keeps shaky/soft/dark clips in their category bins.)
 3. Premiere open, **the job's project open** (`edit/<project>_v<N>.prproj`), **Window → Extensions → MCP Bridge** running. Run "Verify Premiere connection" (`get_full_project_overview` or `get_project_info`). If it fails twice, stop and tell the editor — don't loop.
 
 ## Running a step
@@ -26,11 +26,14 @@ Read the returned object: `ok`, counts, `failed_clips`, `hint`, `log`. Report co
 |---|---|---|
 | `status` | Manifest vs project: clips not imported yet, clips in the project the engine hasn't seen (new footage from the shooters) | |
 | `import` | Imports missing clips straight into their category bins (and `01 Speech/Clean audio` with `--use-clean`). 150 files per call — repeat while `remaining > 0` | `{limit:150}` |
-| `organize` | Moves every clip to its category bin (`01 Speech` … `12 Grade & Adjust`) and sets the **house label color** (Speech Mango, Prep Tan, Portraits Yellow, Ceremony Violet, Reactions Rose, Establishing Cerulean, Reception Magenta, Drone Teal, Music Forest, SFX Caribbean, Graphics Lavender, Adjust Brown). Rejects → `00 Rejected (cull)`, Brown | |
+| `organize` | Moves every clip to its category bin (`01 Speech` … `12 Grade & Adjust`) and sets the **house label color** (Speech Mango, Prep Tan, Portraits Yellow, Ceremony Violet, Reactions Rose, Establishing Cerulean, Reception Magenta, Drone Teal, Music Forest, SFX Caribbean, Graphics Lavender, Adjust Brown). Rejects → `00 Rejected (cull)`, Brown. **Flagged** b-roll (heavy motion, soft focus, dark, blown, frozen — never speech) → `00 Flagged/<reason>`, category label kept, reason in Description | `{flag_warnings:false}` keeps them in their category bins |
 | `cull` | Only the rejects, with reasons (false-start, black, blown, silent-dead) | |
 | `deadair` | One **subclip per speech range** (silences cut) into `01 Speech/Speech ranges`, named `<clip> - speech NN [mm:ss-mm:ss]` | `{limit:400}` |
 | `aroll` | Sequence **A-Roll clean**: every speech range back to back (0.3 s gap), a marker per clip — the whole day's speech to listen through | `{name:"A-Roll clean", gap:0.3}` |
 | `sync` | One **SYNC <group>** sequence per multicam group, each camera on its own V/A track at its audio-sync offset (clocks don't matter). Editor then: Project panel → right-click the SYNC sequence → **Multi-Camera → Enable** | `{group:"mc1"}` |
+| `steady` | Shaky **Creative/Glider** clips only: best steady cut → subclip in `<category>/Steady picks` (label kept); no steady stretch → placed in the **STABILIZE – Warp** sequence with Warp Stabilizer applied; too shaky → stays in `00 Flagged/Heavy motion` | `{name:"STABILIZE - Warp"}` |
+| `skeleton` | (Only when asked.) An empty assembly sequence `SDE_ASSEMBLY_v1` (23.976, 1920×1080, TC 01:00:00:00, 3V/3A): V1 empty, purple section markers INTRO · STORYLINE · CEREMONY · OUTRO over the 4–5 min target, red TARGETS marker (−17 LUFS, −6 dBFS, bed −20 dB), story track on A3 at −20 dB as a placeholder bed, orange markers for the two hand steps (adjustment layer + look on V2, letterbox on V3) | `{name:"SDE_ASSEMBLY_v1"}` |
+| `basics` | import → organize → deadair → aroll → steady, then **stops**. No sync, no sequence to cut in, no build, no grade — the same-day scope (`/buwan:basics`) | |
 | `build` | The plan's timeline as a new sequence (23.976, 1920×1080, TC 01:00:00:00): speech on **V1/A1**, b-roll on **V2** cut on the beats, music 1 on A2/A3 (−3 dB), music 2 as the −20 dB bed, chapter markers per part (purple), red = music peak / final hold, orange = graphics TODO. Slow-mo b-roll is **interpreted** to 23.976 (Modify → Interpret Footage) | `{name:"SDE Cut", preset:"<path>.sqpreset"}` |
 | `grade` | **Lumetri Color** on every camera clip of the sequence (active, or `{sequence:"name"}`) with the studio LUT in **Creative → Look** at the manifest intensity (80%); music, SFX, graphics, adjustment clips skipped. `{slot:"input"}` uses Basic → Input LUT instead | `{sequence:"SDE Cut", slot:"look"}` |
 | `enhance` | Speech clips of the sequence: measured **gain** (toward −17 LUFS), **DeNoise** (amount from the clip's SNR), **Hard Limiter** −6 dB. Verify with Essential Sound → Loudness → Auto-Match and the Loudness Radar | `{sequence:"SDE Cut"}` |

@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // PreToolUse: keep every sources/ folder read-only.
-// - File tools (Write/Edit/MultiEdit/NotebookEdit) may not target anything inside a sources/ folder.
+// - File tools (Write/Edit/MultiEdit/NotebookEdit) may not target anything inside a sources/, RAW_COPY/ or listed original folder.
 // - Shell commands may READ from sources/ and COPY into it (intake), but may not delete, move,
 //   rename, overwrite, redirect into, mirror-sync, or unlock it.
 // Exit 2 blocks the tool call; stderr is shown to Claude as the reason.
 const fs = require("fs");
+const path = require("path");
+const os = require("os");
 
 let input = {};
 try {
@@ -15,11 +17,27 @@ try {
 const tool = input.tool_name || "";
 const ti = input.tool_input || {};
 
-const SRC = /(^|[\\/])sources([\\/]|$)/i;
+// Protected: any sources/ folder, any RAW_COPY/ folder (the working copy on the drive), and every
+// path listed in ~/.buwan/protected-paths.txt (the original card folders, written by `assemble.js workcopy`).
+let protectedRoots = [];
+try {
+  protectedRoots = fs.readFileSync(path.join(os.homedir(), ".buwan", "protected-paths.txt"), "utf8")
+    .split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => l.replace(/[\\/]+$/, "").toLowerCase());
+} catch {}
+const SRC_RE = /(^|[\\/])(sources|RAW_COPY)([\\/]|$)/i;
+const escapeRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const SRC = {
+  test(str) {
+    if (SRC_RE.test(str)) return true;
+    const low = String(str).replace(/\\/g, "/").toLowerCase();
+    // a protected root matches itself and anything under it — not a sibling like <root>_WORK/
+    return protectedRoots.some((r) => new RegExp(escapeRe(r.replace(/\\/g, "/")) + "(/|$|[\\s\"'])").test(low));
+  },
+};
 const block = (why) => {
   process.stderr.write(
     `Blocked by Buwan Films source protection: ${why}\n` +
-      `sources/ holds original footage and audio and is read-only. Write outputs to edit/, captions/ or exports/ instead. ` +
+      `sources/, RAW_COPY/ and the original card folders hold footage and are read-only. Write outputs to edit/, PROJECT/, AUDIO_CLEAN/, captions/ or exports/ instead. ` +
       `If the editor truly needs to change originals, they must do it themselves outside Claude.`
   );
   process.exit(2);
@@ -33,7 +51,7 @@ if (["Write", "Edit", "MultiEdit", "NotebookEdit"].includes(tool)) {
 
 if (tool === "Bash" || tool === "PowerShell") {
   const cmd = String(ti.command || "");
-  if (!/sources/i.test(cmd)) process.exit(0);
+  if (!SRC.test(cmd)) process.exit(0);
 
   // Split into simple commands so "cp a sources/x && rm b" is judged per part.
   const parts = cmd.split(/&&|\|\||;|\r?\n|\|(?!\|)/);
