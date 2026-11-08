@@ -1,6 +1,7 @@
 # Changelog
 
-## buwan 1.5.2 · buwan-premiere 1.2.2 — 2026-11-08  (/plugin marketplace update buwan-films, then update both plugins and restart)
+## buwan 1.6.0 · buwan-premiere 1.3.0 — 2026-11-08  (/plugin marketplace update buwan-films, then update both plugins and restart)
+A new rule, so a minor version (it first went out as 1.5.2 / 1.2.2 in bf9be28; same content). The Premiere, Final Cut and Edit Pipeline artifacts now show it, and their pages are saved in `plugins/buwan/reference/`.
 - **Steady — best cut first, stabilize gimbal shots only.** Every shaky Creative/Glider clip gets its best cut chosen first: a steady stretch (≥2.5 s) is a Steady pick and is not stabilized. Only **gimbal** shots with no steady stretch are stabilized, and only on their **best cut** (the least-shaky ~5 s, `BEST_CUT_S`), never the whole clip — Premiere places that range in `STABILIZE – Warp` with Warp Stabilizer; Final Cut gets keyword `stabilize` + a Favorite `stabilize` on the range. Handheld shaky shots are **not stabilized** (new decision `handheld`) and stay in `00 Flagged/Heavy motion` with their best cut in the reason.
 - Gimbal shots: camera/folder name (`GIMBAL_CAMERAS`: Glider, Gimbal, Ronin, Steadi, Crane, Weebill, Zhiyun, RS 2/3/4), or listed per job in `edit/assemble/gimbal.txt` / `assemble.js steady --gimbal "1-Creative/5/" C0022 …` (`*` = the whole Creative camera). A "Creative" folder alone no longer counts as a gimbal. `steady_report.md` gains a Gimbal column. Skills, house rules, session card, README, MAINTAINING and the pipeline pages updated.
 
