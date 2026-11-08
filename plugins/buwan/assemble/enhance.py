@@ -76,10 +76,13 @@ def enhance(clips: list[Clip], workers=4) -> dict:
 
 def render_clean(clip: Clip, m: dict, out_dir: Path) -> str:
     out_dir.mkdir(parents=True, exist_ok=True)
-    out = out_dir / f"{clip.name}_clean.wav"
+    # name by the clip's path: cameras and card folders reuse file names (C0001...), so the bare name collides
+    rel = Path(clip.rel or f"{clip.camera}/{clip.name}").with_suffix("")
+    stem = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in "_".join(rel.parts))
+    out = out_dir / f"{stem}_clean.wav"
     snr = m.get("snr_db") or 30
     nr = "" if snr > 35 else f"afftdn=nf={max(-80, min(-20, (m.get('noise_floor_db') or -60) - 5)):.0f}:nr={12 if snr > 20 else 20},"
-    af = f"highpass=f=80,{nr}loudnorm=I={TARGET_LUFS}:TP={TARGET_TP}:LRA=9,alimiter=limit={TARGET_TP}dB"
+    af = f"highpass=f=80,{nr}loudnorm=I={TARGET_LUFS}:TP={TARGET_TP}:LRA=9,alimiter=limit={TARGET_TP}dB:level=disabled"   # level=disabled: alimiter auto-levels to 0 dBFS by default
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", clip.path, "-vn", "-af", af, "-ar", "48000", "-ac", "2", "-c:a", "pcm_s24le", str(out)], check=True)
     return str(out)
 

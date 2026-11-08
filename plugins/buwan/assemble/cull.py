@@ -43,11 +43,13 @@ def measure(clip: Clip) -> dict:
         return m
     if clip.kind == "video":
         # Two passes at 4 fps / 480px: picture quality, then frame-to-frame motion.
-        err1 = _ff(clip.path, f"fps={SAMPLE_FPS},scale={SCALE_W}:-2,blackdetect=d=0.5:pic_th=0.97:pix_th=0.10,freezedetect=n=-50dB:d=3,blurdetect=block_pct=80,signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=-")
-        err2 = _ff(clip.path, f"fps={SAMPLE_FPS},scale={SCALE_W}:-2,tblend=all_mode=difference,signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=-")
+        err1 = _ff(clip.path, f"fps={SAMPLE_FPS},scale={SCALE_W}:-2,format=yuv420p,blackdetect=d=0.5:pic_th=0.97:pix_th=0.10,freezedetect=n=-50dB:d=3,blurdetect=block_pct=80,signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=-")
+        err2 = _ff(clip.path, f"fps={SAMPLE_FPS},scale={SCALE_W}:-2,format=yuv420p,tblend=all_mode=difference,signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=-")
         yavg = [float(x) for x in re.findall(r"lavfi\.signalstats\.YAVG=([\d.]+)", err1)]
         motion = [float(x) for x in re.findall(r"lavfi\.signalstats\.YAVG=([\d.]+)", err2)]
         blur = [float(x) for x in re.findall(r"lavfi\.blur=([\d.]+)", err1)]
+        if not blur:  # ffmpeg >= 9 only logs a per-clip summary
+            blur = [float(x) for x in re.findall(r"blur mean:\s*([\d.]+)", err1)]
         black = sum(float(d) for d in re.findall(r"black_duration:([\d.]+)", err1))
         frozen = sum(float(d) for d in re.findall(r"freeze_duration: ([\d.]+)", err1))
         if not frozen:

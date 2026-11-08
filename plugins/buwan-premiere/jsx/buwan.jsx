@@ -49,7 +49,7 @@ var BUWAN = (function () {
   function basename(p) { var s = String(p).replace(/\\/g, "/"); return s.substring(s.lastIndexOf("/") + 1); }
   function ticks(sec) { return String(Math.round(sec * TICKS)); }
   function ticksFrame(sec) { return String(Math.round(sec * 24000 / 1001) * FRAME_TICKS); }
-  function dB(db) { return Math.pow(10, db / 20); }
+  function dB(db) { return Math.pow(10, (db - 15) / 20); }   // Premiere Volume.Level: 1.0 = +15 dB, 0.1778 = 0 dB
   function fmt(sec) {
     var m = Math.floor(sec / 60), s = Math.floor(sec - m * 60);
     return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
@@ -245,7 +245,8 @@ var BUWAN = (function () {
       app.enableQE();
       var qs = qe.project.getActiveSequence();
       // addTracks(numVideo, videoIndex, numAudio, audioChannelType(1=mono,2=stereo), audioIndex, numSubmix, submixType, submixIndex)
-      qs.addTracks(Math.max(0, needV), seq.videoTracks.numTracks, Math.max(0, needA), 2, seq.audioTracks.numTracks, 0, 2, 0);
+      // audio channel type: 0 = mono, 1 = stereo, 2 = 5.1 — stereo, or Premiere shifts stereo clips onto another track
+      qs.addTracks(Math.max(0, needV), seq.videoTracks.numTracks, Math.max(0, needA), 1, seq.audioTracks.numTracks, 0, 1, 0);
     } catch (e) { log("could not add tracks (" + e + "); add " + Math.max(0, needV) + " video / " + Math.max(0, needA) + " audio tracks by hand"); }
     return seq.videoTracks.numTracks >= nVideo && seq.audioTracks.numTracks >= nAudio;
   }
@@ -643,7 +644,10 @@ var BUWAN = (function () {
     var useClean = !!M.use_clean;
     // V1 speech, V2 b-roll | A1 speech, A2 clean speech (optional), A3 music intro, A4 music story
     var A_CLEAN = 1, A_INTRO = useClean ? 2 : 1, A_STORY = useClean ? 3 : 2;
-    ensureTracks(seq, 2, A_STORY + 1);
+    // b-roll natural sound gets its own muted track: overwriteClip(item, t, v, -1) still lays linked audio on A1 and cuts the speech
+    var A_NAT = A_STORY + 1;
+    ensureTracks(seq, 2, A_NAT + 1);
+    try { seq.audioTracks[A_NAT].name = "B-roll nat sound"; seq.audioTracks[A_NAT].setMute(1); } catch (eN) {}
     var placedSpeech = 0, placedBroll = 0, placedMusic = 0, missing = [], slowmo = [], levelFails = 0;
     // speech spine
     for (var i = 0; i < P.spine.length; i++) {
@@ -686,7 +690,7 @@ var BUWAN = (function () {
         var factor = mcc.fps / (24000 / 1001);
         try { item.setOverrideFrameRate(24000 / 1001); a = c["in"] * factor; b = c.out * factor; if (!has(slowmo, item.name)) slowmo.push(item.name); } catch (e2) { marker(seq, c.at, "SPEED: slow-mo " + Math.round(100 / factor) + "% — set by hand", "Clip > Speed/Duration", 3); }
       }
-      if (place(seq, item, a, b, c.at, 1, -1)) placedBroll++;
+      if (place(seq, item, a, b, c.at, 1, A_NAT)) placedBroll++;
     }
     var st = P.stats || {};
     return { sequence: seq.name, speech_clips: placedSpeech, broll_shots: placedBroll, music: placedMusic, slowmo_interpreted: slowmo.length, slowmo_clips: slowmo.slice(0, 20),

@@ -46,7 +46,7 @@ def _energy_at(track, t):
     return e[i] if e else 0.5
 
 
-def _cut_points(track, t0, t1, mode="energy", t_music0=0.0, targets=(3.0, 2.0, 1.2)):
+def _cut_points(track, t0, t1, mode="energy", t_music0=0.0, targets=(3.0, 2.0, 1.2), bursts=()):
     """Cut times (timeline seconds) between t0 and t1 for a track positioned at t_music0 on the timeline.
     Shot length targets (seconds): low energy, mid energy, peak. Cuts land on beats; long shots land on bars."""
     beats = [b + t_music0 for b in track["beats"]]
@@ -61,6 +61,9 @@ def _cut_points(track, t0, t1, mode="energy", t_music0=0.0, targets=(3.0, 2.0, 1
         e = _energy_at(track, b - t_music0)
         in_peak = peak[0] <= b < peak[1]
         target = targets[2] if in_peak else targets[1] if e >= 0.55 else targets[0]
+        for (ba, bb, bt) in bursts:          # editor-set burst windows (timeline seconds)
+            if ba <= b < bb:
+                target = bt
         if mode == "slow":
             target = targets[0] * 1.5
         step = max(1, round(target / bi))
@@ -86,6 +89,7 @@ class Pool:
         self.used = defaultdict(float)  # seconds used per clip
         self.last_cam = None
         self.sync = (sync or {}).get("clips", {})
+        self.realtime = set()   # clips that must never be slowed (speech, multicam angles): Premiere interprets slow-mo project-wide
 
     def usable(self, path):
         m = self.cull.get(path, {})
@@ -98,6 +102,17 @@ class Pool:
             return False
         return True
 
+    def take(self, p, need, src_in=None):
+        """A specific clip chosen by the editor (e.g. the final hold)."""
+        c = self.clips[p]
+        slow = bool(c.fps_num and (c.fps_num / c.fps_den) >= 47) and p not in self.realtime
+        factor = ((c.fps_num / c.fps_den) / (24000 / 1001)) if slow else 1.0
+        a = src_in if src_in is not None else min(c.duration * 0.25, max(0.0, c.duration - need / factor))
+        b = min(c.duration, a + need / factor)
+        self.used[p] = max(self.used[p], b * factor + 0.3)
+        self.last_cam = c.camera
+        return {"clip": p, "in": round(a, 3), "out": round(b, 3), "slowmo": slow}
+
     def pick(self, categories: list[str], need: float, avoid_warn=("heavy-motion", "dark", "soft-focus"), prefer_slowmo=False):
         cands = []
         for cat in categories or BEAT_BROLL["default"]:
@@ -106,7 +121,7 @@ class Pool:
                     continue
                 m = self.cull.get(p, {})
                 warn = set(m.get("warn", []))
-                slow = c.fps_num and (c.fps_num / c.fps_den) >= 47
+                slow = c.fps_num and (c.fps_num / c.fps_den) >= 47 and p not in self.realtime
                 avail = c.duration * ((c.fps_num / c.fps_den) / (24000 / 1001) if slow else 1.0) - self.used[p]
                 if avail < need + 0.4:
                     continue
@@ -146,6 +161,7 @@ def build_plan(clips: dict[str, Clip], categories: dict, cull: list[dict], music
     opt.update(options or {})
     cull_by = {m["path"]: m for m in cull}
     pool = Pool(clips, categories, cull_by, sync)
+    pool.realtime = set(opt.get("realtime_clips", [])) | {s["clip"] for s in selects}
     spine, connected, markers_global = [], [], []
     main = music["main"]
     intro = music.get("intro")
@@ -263,13 +279,23 @@ def build_plan(clips: dict[str, Clip], categories: dict, cull: list[dict], music
     for it in items:
         beat_at[(it["at"], it["at"] + it["dur"])] = it.get("beat", "default")
 
+    def part_for(tt):
+        prev = None
+        for it in items:
+            if it["at"] - PART_GAP - 0.5 > tt:
+                break
+            prev = it.get("part")
+        return prev
+
     def beat_for(tt):
         for (a, b), bt in beat_at.items():
             if a - 0.5 <= tt < b + LINE_GAP + 0.5:
                 return bt
         return "default"
 
-    cuts = [T2] + _cut_points(main, T2, film_end, t_music0=T2) + [film_end]
+    tg = tuple(opt.get("cut_targets") or (3.0, 2.0, 1.2))
+    bursts = [(b["from"], b["to"], b.get("target", 2.2)) for b in opt.get("bursts", [])]
+    cuts = [T2] + _cut_points(main, T2, film_end, t_music0=T2, targets=tg, bursts=bursts) + [film_end]
     peak = [T2 + p for p in main["sections"]["peak"]]
     outro0 = T2 + main["sections"]["outro"][0]
     for i in range(len(cuts) - 1):
@@ -284,9 +310,16 @@ def build_plan(clips: dict[str, Clip], categories: dict, cull: list[dict], music
             continue
         bt = beat_for(a)
         cats = BEAT_BROLL.get(bt, BEAT_BROLL["default"])
+        pt = part_for(a)
+        if pt in opt.get("part_broll", {}):
+            cats = opt["part_broll"][pt]
         in_peak = peak[0] <= a < peak[1]
         if in_peak:
-            cats = [REACT, CEREMONY, PARTY, PORTRAITS]
+            cats = opt.get("peak_broll") or [REACT, CEREMONY, PARTY, PORTRAITS]
+        for bw in opt.get("bursts", []):
+            if bw["from"] <= a < bw["to"] and bw.get("cats"):
+                cats = bw["cats"]
+                in_peak = True
         if a >= outro0:
             cats = [PARTY, PORTRAITS, DRONE, ESTAB]
         if not cats:
@@ -302,7 +335,8 @@ def build_plan(clips: dict[str, Clip], categories: dict, cull: list[dict], music
         # one single shot (silhouette / night wide) covers the hold wherever the speech clip doesn't
         start = hs if last["at"] >= hs or last_end <= hs else last_end
         if film_end - start > 1.0:
-            pk = pool.pick([PORTRAITS, ESTAB, DRONE], film_end - start)
+            fh = opt.get("final_hold_clip")
+            pk = pool.take(fh["clip"], film_end - start, fh.get("in")) if fh else pool.pick([PORTRAITS, ESTAB, DRONE], film_end - start)
             if pk:
                 pk.update({"at": start, "lane": opt["connected_lane"], "video_role": "Video.B-roll", "name": "FINAL HOLD"})
                 connected.append(pk)

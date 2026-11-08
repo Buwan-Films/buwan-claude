@@ -1,7 +1,7 @@
 {
   "name": "buwan-premiere",
   "displayName": "Buwan Premiere Bridge",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Connects Claude Code to Adobe Premiere Pro (premiere-pro-mcp 1.11.5 + MCP Bridge panel) and applies the Buwan engine's decisions inside the open project: studio bins and label colors, cull, flagged b-roll, dead-air subclips, the empty SDE assembly sequence, A-Roll clean, multicam SYNC sequences, the music-driven SDE Cut, studio LUT, dialogue levels. Install only if you cut in Premiere.",
   "author": {
     "name": "Buwan Films and Photography",
