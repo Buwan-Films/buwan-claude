@@ -14,7 +14,7 @@ Load `/buwan:house-rules`, then the editor's app playbook (`${user_config.nle}`:
 |---|---|---|---|
 | 1 | **Dedupe + working copy** | `workcopy <project> --source <raw folder>` | `<raw>_WORK/RAW_COPY/` on the same SSD, verified by SHA-256, byte-identical duplicates skipped (`logs/dedupe_report.md`); originals never read again |
 | 2 | **Cull** | `scan <project>` → `cull <project>` | unusable clips rejected (false start, black, blown, dead) — flags, never deletions |
-| 3 | **Categorize** | `/buwan:organize` steps 1–2 → `edit/assemble/categories.json` | every clip in one of the 12 studio categories (same-day: from folder names + audio, no thumbnails) |
+| 3 | **Categorize** | `/buwan:organize` steps 1–2 → `edit/assemble/categories.json` | every clip in one of the 12 studio categories (same-day: from folder names + audio), and `02 Prep & Details` split into **Bride prep** / **Groom prep** sub-bins from one frame per clip (`edit/assemble/subbins.json`) |
 | 4 | **Dead air** | `enhance <project> --render` → `deadair <project>` | speech ranges with the silence cut out; cleaned −17 LUFS WAVs in `AUDIO_CLEAN/`; the **A-Roll clean** to listen through |
 | 5 | **Label colors** | Premiere: bridge `organize` · Final Cut: `organize <project>` FCPXML (roles) | the house colors per category; rejects in `00 Rejected (cull)`; soft / dark / blown / frozen b-roll in `00 Flagged/<reason>` |
 | 6 | **Shaky — Creative/Glider only** | `steady <project>` | for every shaky clip on the creative/glider camera, **select the best cut first**: a steady stretch (≥2.5 s) becomes a Steady pick, no stabilizing. Only **gimbal shots** with no steady stretch are stabilized — **Warp Stabilizer on their best cut** (the least-shaky ~5 s), never the whole clip. Handheld shots aren't stabilized; they stay in Flagged with their best cut in the reason, as does anything nothing can save. Gimbal = the camera folder says so (Glider, Gimbal, Ronin, RS 3…) or the editor lists the cards/clips in `edit/assemble/gimbal.txt` (or `steady --gimbal "1-Creative/5/"`; `*` = the whole Creative camera ran on the gimbal) — ask the editor which cards were on the gimbal if the folders don't say. Shaky clips on other cameras are left alone — a shaky reaction is still a reaction |
@@ -29,7 +29,7 @@ Load `/buwan:house-rules`, then the editor's app playbook (`${user_config.nle}`:
 ## Run (unattended, ~15–25 min per 300 clips)
 1. `workcopy` (step 1). If the SSD is short on space the engine stops and says so → `/buwan:intake --in-place` and `scan --dedupe` instead.
 2. `scan` → `cull` → show the rejected list with reasons.
-3. Categories → `categories.json`. On an SDE, no thumbnails: folder name first, then audio (speech-level loudness over long stretches = `01 Speech`).
+3. Categories → `categories.json`. On an SDE: folder name first, then audio (speech-level loudness over long stretches = `01 Speech`). Then one frame per prep clip on numbered contact sheets → `subbins.json` (Bride prep / Groom prep), and on the same sheets catch venue shots (→ `06 Establishing`) and letters, vows or interviews read on camera (→ `01 Speech`).
 4. `enhance --render` → `deadair`. Report minutes of speech kept and dead air removed; name the clips under 15 dB SNR (use the recorder file).
 5. `steady [--gimbal <cards/clips>]`. Report: best cuts · gimbal shots to Warp (on their best cut) · handheld, not stabilized · too shaky.
 6. Apply in the app:

@@ -32,6 +32,16 @@ LABELS = {
     "11 Graphics": 3,            # Lavender
     "12 Grade & Adjust": 14,     # Brown
 }
+
+# House-rule sub-bins inside a category (edit/assemble/subbins.json: {"<clip path>": "<sub-bin>"}).
+# The clip keeps its category's label; only these names are accepted.
+SUB_BINS = {"02 Prep & Details": ["Bride prep", "Groom prep"]}
+
+
+def sub_bin(category: str, sub: str | None) -> str | None:
+    return sub if sub and sub in SUB_BINS.get(category, []) else None
+
+
 LABEL_NAMES = ["Violet", "Iris", "Caribbean", "Lavender", "Cerulean", "Forest", "Rose", "Mango",
                "Purple", "Blue", "Teal", "Magenta", "Tan", "Green", "Brown", "Yellow"]
 REJECT_BIN = "00 Rejected (cull)"
@@ -80,6 +90,7 @@ def build_manifest(project: Path, clips: dict[str, Clip], categories: dict, grad
     ranges = _load_optional(adir / "speech_ranges.json", {})
     music = _load_optional(adir / "music.json", {})
     steady = _load_optional(adir / "steady.json", {})
+    subbins = _load_optional(adir / "subbins.json", {})
 
     out_clips = []
     for p, c in clips.items():
@@ -95,7 +106,9 @@ def build_manifest(project: Path, clips: dict[str, Clip], categories: dict, grad
             "path": p, "name": c.name, "camera": c.camera, "kind": c.kind, "duration": round(c.duration, 3),
             "fps": round(c.fps_num / c.fps_den, 3) if c.fps_num else 0, "has_audio": bool(c.has_audio),
             "category": cat,
-            "bin": REJECT_BIN if rej else (cat or ("Footage/" + c.camera if c.camera else "Footage")),
+            "sub_bin": sub_bin(cat, subbins.get(p)),
+            "bin": REJECT_BIN if rej else ((cat + "/" + sub_bin(cat, subbins.get(p))) if sub_bin(cat, subbins.get(p))
+                                           else (cat or ("Footage/" + c.camera if c.camera else "Footage"))),
             "label": REJECT_LABEL if rej else LABELS.get(cat, -1),
             "reject": rej, "warn": warn,
             "flag": flags,

@@ -126,6 +126,8 @@ Every clip gets exactly one category. The bin, the color and the meaning are the
 | 12 | Grade & Adjust | adjustment layers, LUT layers | Brown | Brown | Video › Adjust (brown) |
 | — | Sequences / Timelines | Rough Cut vN, Picture Lock vN, Reels | — | — | — |
 
+**Sub-bins** (the only ones; the clip keeps its category label): `02 Prep & Details/Bride prep` (the bride, her mother, bridesmaids and her room, robes, makeup, gown, her letter/vows reading) and `02 Prep & Details/Groom prep` (the groom, groomsmen, his room, suiting up, his letter). Objects on their own (rings, shoes, watch, invitation, vow books) stay in `02 Prep & Details`. Decided from the picture, never from the folder alone. Recorded in `edit/assemble/subbins.json`.
+
 Corporate uses the same table: 01 = keynotes/talks/panels, 04 = main program, 05 = audience reactions, 07 = awards and networking, 02 = booths, branding, partner signage.
 Story-Lock selects are marked with **markers**, not colors: marker name = beat (e.g. `vows`, `about the bride`), marker color Orange.
 

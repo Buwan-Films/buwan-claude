@@ -14,7 +14,7 @@ The editor makes the project and places the music. Claude Code does **the basics
 |---|---|
 | **Dedupe + working copy** | `assemble.js workcopy`: the raw clips mirrored into `<raw>_WORK/RAW_COPY/` on the same SSD, every file verified by hash, byte-identical duplicates skipped and logged; the project reads only from the copy, originals and copy read-only to Claude |
 | **Cull** | unusable clips rejected (false start, black, blown, dead) — flags, never deletions |
-| **Categorize** | every clip in one of the 12 studio categories |
+| **Categorize** | every clip in one of the 12 studio categories; prep split into **Bride prep** / **Groom prep** sub-bins |
 | **Dead air** | silences found and removed; speech ranges become subclips / Favorites, the **A-Roll clean** is the whole day's speech back to back; cleaned −17 LUFS WAVs |
 | **Label colors** | the same colors in every app (Premiere labels, Final Cut roles, Resolve clip colors); soft / dark / blown / frozen b-roll parked in `00 Flagged/<reason>` |
 | **Shaky — Creative/Glider only** | the best cut first (steady stretch → Steady pick); only **gimbal** shots are stabilized — Warp Stabilizer (Premiere) / Stabilization (Final Cut) on their best cut; handheld or too shaky → Flagged. Gimbal = camera folder named Glider/Gimbal/Ronin…, or listed in `edit/assemble/gimbal.txt` / `steady --gimbal` |

@@ -15,6 +15,7 @@ For every clip in `sources/footage` and `sources/audio` (read-only — read, nev
 3. Look at it: extract 3 thumbnails (10%, 50%, 90%) with `ffmpeg -ss <t> -i <clip> -frames:v 1 -vf scale=480:-2 edit/thumbs/<clip>_<n>.jpg` and **view them**. Decide the category from what you actually see (rings on a table = Details; empty ballroom = Establishing; crying guest = Reactions; aerial = Drone).
 4. Use the folder segment (prep / ceremony / reception) and timestamps as tie-breakers.
 5. If unsure, pick the closest category and mark `confidence=low`.
+6. **Prep sub-bins:** every `02 Prep & Details` clip also goes into `Bride prep` or `Groom prep` (house rules), or stays in `02` if it is an object on its own. Look at one frame per clip on numbered contact sheets: who is in it, which room. Save `edit/assemble/subbins.json` (`{"<absolute clip path>": "Bride prep" | "Groom prep"}`). While on those sheets, move what isn't prep: venue façades and signs → `06 Establishing`; a letter or vows read on camera, or an interview → `01 Speech`.
 
 Write `edit/clip-log.csv`:
 ```
@@ -36,4 +37,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/assemble.js" organize <project> --multicam -
 It writes `edit/organize_vN.fcpxml` with every clip keyworded into the bins, roles set from the table, cull rejects as **Rejected** ratings, warnings as notes, and synced multicam clips. The file is validated against Apple's FCPXML DTD. Tell the editor once: **Modify → Edit Roles** → set the role colors from the table (FCP remembers them per library).
 
 ## 3. Report
-Table: category · clips · total duration · color. Then the low-confidence list and anything that couldn't be classified.
+Table: category · clips · total duration · color (with the Bride prep / Groom prep / details split of `02`). Then the low-confidence list and anything that couldn't be classified.

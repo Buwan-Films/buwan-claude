@@ -292,9 +292,15 @@ def cmd_organize(a):
     cull_res = load_json(adir(project) / "cull.json") if (adir(project) / "cull.json").exists() else []
     rejected = [m["path"] for m in cull_res if m["reject"]]
     notes = {m["path"]: "cull: " + ", ".join(m["reject"] or m["warn"]) for m in cull_res if (m["reject"] or m["warn"])}
+    from premiere import sub_bin
+    sp_ = adir(project) / "subbins.json"
+    subs = load_json(sp_) if sp_.exists() else {}
     kw = {}
     for p in clips:
         k = [cats[p]] if cats.get(p) else ["unsorted"]
+        sb = sub_bin(cats.get(p, ""), subs.get(p))
+        if sb:
+            k.append(sb)            # Final Cut: a keyword collection per sub-bin (e.g. "Bride prep")
         kw[p] = k
         if p in notes and not any(x in notes[p] for x in ("cull: false", "cull: black", "cull: blown")):
             kw[p].append("warn")

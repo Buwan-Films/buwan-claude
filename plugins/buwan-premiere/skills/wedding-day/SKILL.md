@@ -20,7 +20,7 @@ Load `/buwan:house-rules`, `/buwan:basics` and `/buwan-premiere:premiere-apply` 
 Engine, in order (`node <buwan>/scripts/assemble.js …`):
 1. `workcopy <project> --source "<raw folder>"` — `RAW_COPY/` on the same SSD, verified by hash, **byte-identical duplicates skipped** and logged (a card copied twice or a `z/` backup never imports twice). From here only `RAW_COPY/` is read. Short on space → `/buwan:intake --in-place` + `scan --dedupe`.
 2. `scan <project>` → `cull <project>` → show the rejected list with reasons.
-3. Categories: `/buwan:organize` steps 1–2 → `edit/assemble/categories.json`. Same-day: folder names + audio, no thumbnails.
+3. Categories: `/buwan:organize` steps 1–2 → `edit/assemble/categories.json`. Same-day: folder names + audio, then one frame per prep clip → `subbins.json` (`02 Prep & Details/Bride prep` · `Groom prep`), catching venue shots (→ 06 Establishing) and on-camera letters/interviews (→ 01 Speech) on the same sheets.
 4. `enhance <project> --render` → `deadair <project>`. Report minutes of speech, minutes of dead air removed, clips under 15 dB SNR.
 5. `steady <project>` — shaky clips on the Creative/Glider camera only, **best cut first**: steady stretch (≥2.5 s) → Steady pick · **gimbal shots only** → Warp Stabilizer on their best cut · handheld or too shaky → Flagged, not stabilized. Ask which cards were on the gimbal if the folder names don't say (`--gimbal "1-Creative/5/"`, or `edit/assemble/gimbal.txt`). Other cameras untouched.
 6. `premiere <project> [--grade <look>]` → `edit/premiere/manifest.json`.
@@ -28,7 +28,7 @@ Engine, in order (`node <buwan>/scripts/assemble.js …`):
 Bridge (`premiere-snippet.js basics <manifest>` → `execute_extendscript`, or step by step: `import` until `remaining` is 0 → `organize` → `deadair` → `aroll` → `steady`).
 
 Result the editor opens:
-- category bins with the **house label colors**; `00 Rejected (cull)` for the unusable; `00 Flagged/Soft focus · Dark · Blown exposure · Frozen` for b-roll that shouldn't be a first pick (label kept, reason in Description);
+- category bins with the **house label colors**, `02 Prep & Details` split into **Bride prep** and **Groom prep** (objects on their own stay in `02`); `00 Rejected (cull)` for the unusable; `00 Flagged/Soft focus · Dark · Blown exposure · Frozen` for b-roll that shouldn't be a first pick (label kept, reason in Description);
 - `01 Speech/Speech ranges` subclips with the dead air gone; `01 Speech/Clean audio` WAVs; the **A-Roll clean** sequence — the whole day's speech back to back, no duplicates;
 - `<category>/Steady picks` — the best steady cut of each shaky Creative/Glider clip as a subclip; **STABILIZE – Warp** — the best cut of each gimbal shot with no steady stretch, placed with Warp Stabilizer applied (open it once so Premiere analyses in the background; copy a stabilized clip from there into the cut); handheld and too-shaky clips in `00 Flagged/Heavy motion`, not stabilized.
 

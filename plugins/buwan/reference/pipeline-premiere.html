@@ -58,7 +58,7 @@
     <ol>
       <li><b>Dedupe + working copy</b> — the raw clips mirrored into <span class="spec">&lt;raw&gt;_WORK/RAW_COPY/</span> on the same SSD, every file verified by SHA-256, byte-identical duplicates skipped and logged (<span class="spec">logs/dedupe_report.md</span>). Only the copy is read from here on.</li>
       <li><b>Cull</b> — false starts, black, blown and dead clips rejected. Flags, never deletions.</li>
-      <li><b>Categorize</b> — every clip into one of the 12 studio categories (Speech, Prep &amp; Details, Portraits, Ceremony, Reactions &amp; BTS, Establishing, Reception &amp; Party, Drone, Music, SFX, Graphics, Grade &amp; Adjust).</li>
+      <li><b>Categorize</b> — every clip into one of the 12 studio categories (Speech, Prep &amp; Details, Portraits, Ceremony, Reactions &amp; BTS, Establishing, Reception &amp; Party, Drone, Music, SFX, Graphics, Grade &amp; Adjust). Prep is split into <span class="spec">Bride prep</span> and <span class="spec">Groom prep</span> sub-bins from one frame per clip; objects on their own stay in Prep &amp; Details.</li>
       <li><b>Dead air</b> — the speech inside every speech clip found, silences cut; cleaned −17 LUFS WAVs in <span class="spec">AUDIO_CLEAN/</span>; the <b>A-Roll clean</b> is the whole day's speech back to back.</li>
       <li><b>Label colors</b> — Premiere label per category (Speech Mango · Prep Tan · Portraits Yellow · Ceremony Violet · Reactions Rose · Establishing Cerulean · Reception Magenta · Drone Teal · Music Forest). Every clip into its bin. Soft-focus, dark, blown and frozen b-roll parked in <span class="spec">00 Flagged/&lt;reason&gt;</span>, label kept.</li>
       <li><b>Shaky — Creative/Glider only</b> — the longest steady stretch (≥2.5 s) becomes a <b>Steady pick</b> (the best cut is always chosen first); no steady stretch on a <b>gimbal</b> shot → its best cut placed in the <b>STABILIZE – Warp</b> sequence with Warp Stabilizer applied; handheld or nothing to save → Flagged, not stabilized. Shaky clips on other cameras are left alone.</li></ol>
@@ -83,6 +83,7 @@
     <tr><th>Where</th><th>What</th></tr>
     
     <tr><td><span class="spec">01 Speech</span> … <span class="spec">12 Grade &amp; Adjust</span></td><td>Category bins with the house label colors. Timeline clips carry the same color.</td></tr>
+    <tr><td><span class="spec">02 Prep &amp; Details/Bride prep</span> · <span class="spec">Groom prep</span></td><td>The bride's and the groom's getting ready, each in its own sub-bin, Tan label kept. Rings, shoes and other details on their own stay in <span class="spec">02 Prep &amp; Details</span>.</td></tr>
     <tr><td><span class="spec">01 Speech/Speech ranges</span></td><td>One subclip per spoken stretch, dead air gone. <span class="spec">01 Speech/Clean audio</span>: the levelled WAVs to lay under the picture.</td></tr>
     <tr><td><b>A-Roll clean</b></td><td>Sequence: every speech range back to back, a marker per source clip. Listen here, never in the raw bins.</td></tr>
     <tr><td><span class="spec">&lt;category&gt;/Steady picks</span></td><td>The usable part of each shaky creative shot, as a subclip.</td></tr>

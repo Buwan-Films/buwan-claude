@@ -15,7 +15,7 @@ The rules live in this repository. The claude.ai artifacts are the visual versio
 | The basics scope (what runs on a new project) | `plugins/buwan/skills/basics/SKILL.md`, `buwan-premiere/skills/wedding-day/SKILL.md`, bridge step `basics` in `buwan.jsx` |
 | Per-app pipeline pages | `plugins/buwan/reference/pipeline-premiere.html`, `pipeline-final-cut.html` — edit the artifact, save the page here |
 | Rule card every session starts with | `plugins/buwan/scripts/session-start.js` |
-| Clip categories, bins, colors | `house-rules/SKILL.md` → "Clip categories, bins and colors" (and `skills/organize`) |
+| Clip categories, bins, colors | `house-rules/SKILL.md` → "Clip categories, bins and colors" (and `skills/organize`); allowed sub-bins in `assemble/premiere.py` (`SUB_BINS`) — keep both in sync |
 | Studio looks | `plugins/buwan/kit/luts/*.cube` — replace with LUTs exported from your reference grade (Resolve: right-click node → Generate LUT → 33 Point Cube). `tools/make-luts.py` regenerates the starting looks |
 | Grade targets | `plugins/buwan/kit/grade/targets.json` — recalibrate: `node plugins/buwan/scripts/grade-check.js calibrate <reference stills> --look warm --targets plugins/buwan/kit/grade/targets.json` |
 | Fonts and logo | `plugins/buwan/kit/fonts`, `plugins/buwan/kit/logo` (fonts are SIL OFL — keep the OFL-*.txt files) |
