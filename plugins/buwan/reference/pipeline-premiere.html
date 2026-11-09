@@ -3,6 +3,72 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Cinzel:wght@400;500;600&family=Italiana&display=swap">
 
 <style>
+/* Buwan base (shared with the Edit Pipeline page) */
+:root{
+  --gold:#C9A24B; --gold2:#E6CE8C; --gold-dim:#8C7232;
+  --crimson:#58151F; --rose:#CE8490;
+  --bg:#0D0C0A; --panel:#17140F; --panel-2:#221E16;
+  --fg:#F2EBDD; --muted:#9A937F; --stone:#8F897B;
+  --line:rgba(201,162,75,.22);
+  --auto:#C9A24B; --you:#CE8490; --cond:#E6CE8C; --read:#8F897B; --gate:#C9A24B;
+  --display:'Cormorant Garamond',Georgia,serif;
+  --caps:'Cinzel',Georgia,serif;
+  --accent:'Italiana',Georgia,serif;
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F5F0E6; --panel:#ECE4D2; --panel-2:#E4DBC6;
+    --fg:#1B1711; --muted:#6E6757; --stone:#6E6757;
+    --line:rgba(140,114,50,.3);
+    --gold:#8C7232; --gold2:#8C7232; --rose:#8d3340;
+    --auto:#8C7232; --you:#8d3340; --cond:#a8842a; --read:#6E6757; --gate:#8C7232;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F5F0E6; --panel:#ECE4D2; --panel-2:#E4DBC6;
+  --fg:#1B1711; --muted:#6E6757; --stone:#6E6757;
+  --line:rgba(140,114,50,.3);
+  --gold:#8C7232; --gold2:#8C7232; --rose:#8d3340;
+  --auto:#8C7232; --you:#8d3340; --cond:#a8842a; --read:#6E6757; --gate:#8C7232;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:var(--display); font-size:17px; line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 72px;
+  margin:0;
+}
+.wrap{max-width:1080px;margin:0 auto}
+.mono{font-family:var(--mono)}
+
+header{padding-block:46px 30px;border-bottom:1px solid var(--gold)}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.brand svg{flex:none}
+.brand .words{font-family:var(--caps);font-size:13px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);line-height:1.5}
+.brand .words small{display:block;font-size:8px;letter-spacing:.52em;color:var(--muted)}
+h1{font-family:var(--display);font-weight:500;font-size:clamp(34px,6vw,58px);line-height:1.05;margin:0 0 10px;text-wrap:balance}
+h1 i{font-family:var(--accent);font-style:normal;color:var(--gold)}
+.sub{color:var(--muted);margin:0;max-width:58ch;font-size:17px}
+
+.legend{display:flex;flex-wrap:wrap;gap:10px 20px;padding-block:16px;border-bottom:1px solid var(--line);font-family:var(--caps);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.auto{background:var(--auto)} .dot.you{background:var(--you)}
+.dot.cond{background:var(--cond)} .dot.read{background:var(--read)}
+.tag{font-family:var(--caps);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.tag b{font-weight:500}
+.tag .auto{color:var(--auto)} .tag .you{color:var(--you)} .tag .cond{color:var(--cond)}
+.spec{font-family:var(--mono);font-size:12px;color:var(--fg);background:var(--panel-2);padding:1px 7px;white-space:nowrap}
+.divider{display:flex;align-items:center;gap:18px;justify-content:center;margin-top:40px}
+.divider .rule{height:1px;background:var(--gold);width:min(180px,28vw)}
+.divider svg{flex:none}
+footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-align:center;font-style:italic;max-width:62ch;margin-inline:auto}
 .cols{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:14px;margin-top:26px}
 @media (max-width:720px){.cols{grid-template-columns:1fr}}
 .col{border:1px solid var(--line);background:var(--panel);padding:18px 20px;min-width:0}
@@ -18,6 +84,8 @@
 .opens th{text-align:left;font-family:var(--caps);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;padding:6px 10px 6px 0;border-bottom:1px solid var(--line)}
 .opens td{padding:8px 10px 8px 0;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top}
 .opens td:first-child{color:var(--fg);white-space:nowrap}
+#steps td:first-child{white-space:normal;min-width:120px}
+#steps td .spec{white-space:normal;word-break:break-word;line-height:1.7}
 .tscroll{overflow-x:auto}
 .prompt{margin-top:22px;background:var(--panel-2);border-left:2px solid var(--gold);padding:14px 16px}
 .prompt .tag{color:var(--gold)}
@@ -68,7 +136,7 @@
       <li><b>Grade</b> — <span class="spec">/buwan:grade</span>: the studio look, built from the studio's own film, applied in Premiere.</li>
       <li><b>Story</b> — <span class="spec">/buwan:plot</span>. <b>Cut</b> — <span class="spec">/buwan:sde</span>.</li>
       <li><b>Couple's names</b> — <span class="spec">/buwan:title "Name and Name"</span>: “The Wedding of”, the names wide-tracked in Cinzel, Buwan Films, over the last wide shot (kit 07.09).</li>
-      <li><b>Logo end card</b> — <span class="spec">/buwan:end-card</span>: the last shot of every film, after the title plate: two blades become one ring, the Buwan emblem lands in a burst of crescent moons (kit 06.08, 7.7 s).</li>
+      <li><b>Logo end card</b> — <span class="spec">/buwan:end-card</span>: the last shot of every film, after the wedding title: two blades become one ring, the Buwan emblem lands in a burst of crescent moons (kit 06.08, 7.7 s).</li>
       <li><b>Finish</b> — <span class="spec">/buwan:graphics</span> · <span class="spec">/buwan:sfx</span> · <span class="spec">/buwan:export</span>.</li>
     </ul>
   </div>
@@ -85,6 +153,27 @@
     <tr><td>Into Premiere</td><td><b>File → Import</b> the enhanced folder (or drag it from the Media Browser): the camera and card folders become bins. The exposure is fixed; no look is on yet.</td></tr>
     <tr><td><span class="spec">&lt;raw&gt;_SPEECH_&lt;date-time&gt;/</span></td><td>From <span class="spec">/buwan:multicam</span>: per moment, every angle on the one clean audio, dead air out, each starting at its timecode → <b>Create Multi-Camera Source Sequence → Timecode</b>.</td></tr>
   </table></div>
+</div>
+
+<div class="opens" id="steps">
+  <span class="tag">Step by step · Premiere</span>
+  <h2>A wedding, from the raw files to the film</h2>
+  <div class="tscroll"><table>
+    <tr><th>Step</th><th>Prompt in Claude Code</th><th>In Premiere</th></tr>
+    <tr><td>0 · Once per computer</td><td><span class="spec">/plugin marketplace update buwan-films<br>/buwan:setup-kit<br>/buwan:check</span></td><td>The studio looks are added to Lumetri → Creative → Look; open <b>Window → Extensions → MCP Bridge</b>.</td></tr>
+    <tr><td>1 · You</td><td>Raw footage on the SSD, one folder per shooter (1-Creative, 2-Main, 3-3rd Cam, 4-Drone, Audio). Start Claude Code in the Buwan workspace.</td><td>—</td></tr>
+    <tr><td>2 · Basics</td><td><span class="spec">/buwan:basics 2026-11-15_Santos-Reyes --footage "&lt;raw folder&gt;"</span></td><td><b>File → Import</b> the <span class="spec">_ENHANCED_</span> folder: the camera and card folders become bins.</td></tr>
+    <tr><td>3 · Vows · interviews · speeches</td><td><span class="spec">/buwan:multicam 2026-11-15_Santos-Reyes --moment "Vows" --type vows --clips &lt;every angle&gt; &lt;lav/recorder&gt;</span></td><td>Import the <span class="spec">_SPEECH_…/VOWS/&lt;moment&gt;</span> folder → select the angles → <b>Create Multi-Camera Source Sequence → Timecode</b>.</td></tr>
+    <tr><td>4 · Story</td><td><span class="spec">/buwan:plot 2026-11-15_Santos-Reyes SDE 4min</span></td><td>You approve the paper edit.</td></tr>
+    <tr><td>5 · Cut</td><td><span class="spec">/buwan:rough-cut 2026-11-15_Santos-Reyes → /buwan:proof-gate</span></td><td>Built in the open project through the bridge as a new sequence. Or cut it yourself.</td></tr>
+    <tr><td>6 · Audio</td><td><span class="spec">/buwan:audio</span></td><td>Essential Sound: Dialogue, Loudness to −17, Hard Limiter −6, music −20 dB.</td></tr>
+    <tr><td>7 · Grade</td><td><span class="spec">/buwan:grade warm</span></td><td>Lumetri → Creative → Look → the Buwan look, on an adjustment layer per scene.</td></tr>
+    <tr><td>8 · Couple's names</td><td><span class="spec">/buwan:title "Santos and Reyes"</span></td><td>Placed through the bridge on the first free track above V1, over the last 7.4 s of picture, with a marker.</td></tr>
+    <tr><td>9 · Logo end card</td><td><span class="spec">/buwan:end-card</span></td><td>Placed through the bridge on V1 right after the last picture, with a marker; extend and fade the music under it.</td></tr>
+    <tr><td>10 · Finish</td><td><span class="spec">/buwan:graphics · /buwan:sfx · /buwan:review · /buwan:export · /buwan:clipper</span></td><td>Kit graphics placed through the bridge · Adobe Media Encoder presets for export.</td></tr>
+  </table></div>
+  <p style="margin:14px 0 0;font-size:14.5px;color:var(--muted);line-height:1.5"><b>The bridge:</b> with the project open and the MCP Bridge running, Claude places clips, the title, the end card, markers and the look in the open project. It only adds: nothing in your cut moves, and new versions get new sequences. Premiere questions: <span class="spec">/buwan:premiere</span>.</p>
+  <p style="margin:10px 0 0;font-size:14.5px;color:var(--muted);line-height:1.5">The film ends: last wide shot with <b>The Wedding of · the names · Buwan Films</b> (07.09) → dip to black → the <b>logo end card</b> (06.08). Same day with no time: <span class="spec">/buwan:sde 2026-11-15_Santos-Reyes</span> runs steps 4–10 compressed.</p>
 </div>
 
 <div class="prompt">
