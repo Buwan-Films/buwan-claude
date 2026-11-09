@@ -45,4 +45,4 @@ Place them on the top video tracks (Premiere bridge: place directly into a dupli
 ## 5c Converge (QA gate, 3 rounds max)
 Fresh-eyes check of every graphic: spelling and names, on-brand fonts/colors, grain present, safe areas (bottom 180px reserved for lower thirds; social: inside the 1080×1350 safe zone), duration readable (≥ 3s for names), never over a vow line's key word. Defects → rebuild (round 2, 3). After round 3, list remaining issues for the editor instead of looping.
 
-Same-day mode: minimal captions, title plate + end card only, one converge pass.
+Same-day mode: minimal captions, title plate, wedding title (07.09) + end card only, one converge pass.

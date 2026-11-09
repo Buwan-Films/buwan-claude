@@ -26,7 +26,7 @@ The engine is code, not improvisation: `node "${CLAUDE_PLUGIN_ROOT}/scripts/asse
    - **View the edit map** (Read the PNG) and describe the shape to the editor: where the holds are, where the burst sits, whether the kiss is on the peak, how much breathing room was added.
    - Run `/buwan:proof-gate` on the `.edl` (mode cut). Fix and rebuild if it fails.
    - Read the build notes: a WARN means the music and the story don't fit (peak too early, music too short). Options: a different track 2, trim selects, or accept.
-9. Editor imports `sde-cut_vN.fcpxml`. It opens as a project: speech on the primary storyline (gaps where the music breathes), b-roll connected above cut on the beats, music on the lanes below (track 1 at −3 dB, track 2 as a −20 dB bed), markers for parts, holds, the music peak, and the graphics to render (`/buwan:graphics` then places the SDE title plate and the logo reveal/end credits).
+9. Editor imports `sde-cut_vN.fcpxml`. It opens as a project: speech on the primary storyline (gaps where the music breathes), b-roll connected above cut on the beats, music on the lanes below (track 1 at −3 dB, track 2 as a −20 dB bed), markers for parts, holds, the music peak, and the graphics to render (`/buwan:graphics` then places the SDE title plate and the logo reveal; `/buwan:title` the 07.09 wedding title and `/buwan:end-card` the 06.08 end card).
 
 ## How the timeline is built (so you can explain it)
 - Track 1: a cold open (~12 s of ~3 s shots: venue, details, drone — no portraits), then b-roll cut on bars, faster as the energy rises. Title plate marker on the first strong hit after 12 s (`title_at: hit`), or the title closes the film (`title_at: end`, SDE).

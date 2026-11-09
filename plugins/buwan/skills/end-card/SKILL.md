@@ -26,4 +26,4 @@ Ask once which sequence (Premiere) or project (Final Cut / Resolve) is the film,
 - **Already exported film (any app):** `node "${CLAUDE_PLUGIN_ROOT}/scripts/end-card.js" append "<film.mp4>" [--fade-tail 2]` → `<film>_endcard.mp4` next to it (the film is never overwritten): the card conformed to the film's size and frame rate, the film's sound kept and padded with silence under the card. Use `--fade-tail` when the film's music ends abruptly.
 
 ## Check
-Play the last 15 s: title plate → black → the logo folds in, no flash frame or gap between them, the music fading under the logo and silent by the end. Report: where it was placed (sequence, timecode, track) and the music tail to fix by hand, if any.
+Play the last 15 s: the wedding title (07.09) → black → the logo folds in, no flash frame or gap between them, the music fading under the logo and silent by the end. Report: where it was placed (sequence, timecode, track) and the music tail to fix by hand, if any.

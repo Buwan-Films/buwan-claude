@@ -11,6 +11,7 @@
 - **Premiere bridge step `title`:** imports into `11 Graphics` and lays the title on the first free track above V1 over the last 7.4 s of picture, with a marker. Nothing in the cut moves.
 - The engine's end marker, the graphics, SDE and end-card skills and the house rules now name 07.09 as the closing title (07.07 stays as the SDE title plate).
 - **06.08 end card:** the petals are now crescent moons, 40 of every size drifting and turning, and a ring of 18 crescents bursts out from the logo on the bloom.
+- House rules, graphics, end-card and assemble skills: the film always ends 07.09 wedding title → 06.08 logo end card (the "title plate" wording at the end is gone).
 
 ## buwan 1.11.0 · buwan-premiere 1.8.0 — 2026-11-10  (/plugin marketplace update buwan-films, update both plugins, restart; then /buwan:setup-kit once to prerender the new card)
 **The logo end card (kit 06.08) and `/buwan:end-card`.** The last shot of every film is now the official emblem landing on black (7.7 s), in the spirit of the studio's reference SDE ending.
