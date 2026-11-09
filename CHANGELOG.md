@@ -1,5 +1,8 @@
 # Changelog
 
+## buwan-premiere 1.9.1 — 2026-11-10
+- wedding-day skill and the pipeline pages: camera folders are 1-Creative / Glider, 2-Main, 3-3rd Cam, 4-Drone, Audio.
+
 ## buwan 1.12.1 — 2026-11-10
 - House rules, graphics, end-card and assemble skills: the film always ends 07.09 wedding title → 06.08 logo end card.
 

@@ -11,7 +11,7 @@ Load `/buwan:house-rules` and `/buwan:basics`. `/buwan:basics` is the whole run;
 **Scope is the basics, then stop:** enhanced clips (exposure fixed, shaky Creative/Glider best cut + glide, no grade) into `<raw>_ENHANCED_<date-time>/`. No copy, no dedupe, no file organizing, no speech work, no grade, no sync, no story, no cut, no music, no sequence to cut in.
 
 ## Phase 0 — check, don't do
-- The raw folder on the SSD, one subfolder per shooter (`1-Main`, `2-Creative` / `Glider`, `3-Reactions`, `4-Drone`, `Audio`). Read only.
+- The raw folder on the SSD, one subfolder per shooter (`1-Creative` / `Glider`, `2-Main`, `3-3rd Cam`, `4-Drone`, `Audio`). Read only.
 - Space: about 0.6 GB per minute of footage next to the raw folder.
 
 ## Phase 1 — the basics (`/buwan:basics`, unattended)
