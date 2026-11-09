@@ -14,7 +14,7 @@ Source of truth: the Edit Pipeline (`${CLAUDE_PLUGIN_ROOT}/reference/edit-pipeli
 - Editors work on deadline (SDEs especially): lead with the deliverable, concrete steps, no theory.
 - Source footage and audio are **read-only**. Never write, move, rename, overwrite, relink-away or delete anything in a `sources/` folder, a `RAW_COPY/` folder or an original card folder. Outputs go to `edit/`, `PROJECT/`, `AUDIO_CLEAN/`, `captions/` or `exports/`.
 - Same-day edits run on a **working copy on the drive**: `/buwan:intake --work-copy` mirrors the raw folder into `<raw>_WORK/RAW_COPY/` on the same SSD, verified by hash, with byte-identical duplicates skipped (a card copied twice never imports twice). The project reads only from the copy.
-- **The basics are the only automatic goal for a new wedding project** (`/buwan:basics`): new **enhanced clips** into `<raw>_ENHANCED_<date-time>/`, the raw folder only read — dead air out of interviews, letters, speeches and vows with cleaned −17 LUFS audio; the exposure fixed on every clip; the studio look matched to the studio's own film; shaky Creative/Glider shots cut to their best part with a smooth glide. No copying, no dedupe, no file organizing. Multicam sync (`/buwan:multicam`), the story (`/buwan:plot`), the cut, and bins/labels in the editor's project run only when the editor asks — never create a sequence for them to cut in.
+- **The basics are the only automatic goal for a new wedding project** (`/buwan:basics`): new **enhanced clips** into `<raw>_ENHANCED_<date-time>/`, the raw folder only read — the exposure fixed on every clip and shaky Creative/Glider shots cut to their best part with a smooth glide. **No grade** and no speech work in the basics. No copying, no dedupe, no file organizing. Interviews / vows / speeches (`/buwan:multicam`: the editor lists each moment's clips → angles synced on the best clean audio, dead air out, into `<raw>_SPEECH_<date-time>/INTERVIEWS|VOWS|SPEECHES/`), the grade (`/buwan:grade`), the story (`/buwan:plot`), the cut, and bins/labels in the editor's project run only when the editor asks — never create a sequence for them to cut in.
 - App-specific steps come from the editor's app playbook (`/buwan:premiere`, `/buwan:final-cut`, `/buwan:resolve`). Don't give generic advice.
 - Stage 02 (Story-Lock) is app-neutral: its outputs are files every app can import, so the story is the same no matter who cuts it.
 
@@ -55,7 +55,7 @@ Each stage has a skill. Run them in order; each one checks the previous stage is
 
 | Stage | Skill |
 |---|---|
-| 01 Intake + the basics | `/buwan:intake`, then `/buwan:basics` (dedupe · cull · categorize · dead air · label colors · steady) — `/buwan:assemble` is the full engine behind it; `/buwan:multicam` for sync on request |
+| 01 Intake + the basics | `/buwan:basics` (cull · steady · exposure → enhanced clips, no grade) — `/buwan:assemble` is the full engine behind it; `/buwan:multicam` for interviews / vows / speeches on request |
 | 02 Story-Lock (2a–2c) | `/buwan:plot` |
 | 02 Rough cut (2d b-roll, picture cut) | `/buwan:rough-cut` → `/buwan:assemble` build (music-driven) |
 | Proof gate | `/buwan:proof-gate` |
@@ -132,15 +132,23 @@ Corporate uses the same table: 01 = keynotes/talks/panels, 04 = main program, 05
 Story-Lock selects are marked with **markers**, not colors: marker name = beat (e.g. `vows`, `about the bride`), marker color Orange.
 
 ## Sound, dead air and the grade are applied by the engine
-- **Enhance:** every speech clip is measured (loudness, noise floor, SNR, peaks). Final Cut gets native, non-destructive enhancements written into the XML (loudness toward −17 LUFS, noise reduction and voice isolation scaled to the SNR, voice EQ). Premiere/Resolve editors get cleaned WAVs in `edit/audio/clean/` (high-pass, denoise, −17 LUFS, −6 dBTP) to lay under the picture. Sources are never modified. Clips under 15 dB SNR are flagged: use the lav/recorder file.
+- **Interviews, vows, speeches** (`/buwan:multicam` → `assemble.js speech`): the editor lists one moment's clips; the best audio (SNR, clipping, level; a lav/recorder wins a tie) carries it, the angles are synced to it by sound, it is cleaned (high-pass, noise reduction, voice EQ) and the dead air cut at the same points on every angle, rendered at −17 LUFS / peaks −6 with the exposure fixed and no grade.
+- **Enhance (older flow, on request):** every speech clip is measured (loudness, noise floor, SNR, peaks). Final Cut gets native, non-destructive enhancements written into the XML (loudness toward −17 LUFS, noise reduction and voice isolation scaled to the SNR, voice EQ). Premiere/Resolve editors get cleaned WAVs in `edit/audio/clean/` (high-pass, denoise, −17 LUFS, −6 dBTP) to lay under the picture. Sources are never modified. Clips under 15 dB SNR are flagged: use the lav/recorder file.
 - **Dead air:** speech clips are scanned for silence (≥0.9 s under −38 dB). The kept speech ranges become **Favorites** on the clips, transcription runs on them only, and the **A-Roll clean** project is every speech clip with the silences cut out — the timeline to read the day from.
 - **Grade:** one studio look per film. Final Cut: Custom LUT effect on camera clips (experimental via XML; otherwise apply the installed Buwan LUT from the Custom LUT list). Resolve: `Workspace → Scripts → buwan_grade` puts the LUT on node 2 of every camera clip. Premiere: `/buwan-premiere:premiere-apply grade` puts Lumetri Creative Look with the studio LUT on every camera clip of the sequence. Music and kit graphics are never graded.
 
 ## Grade looks
 - Studio looks live in `kit/luts/`: `Buwan_Warm.cube`, `Buwan_Cool.cube`, `Buwan_BW.cube` (33-point, Rec.709 in/out). Apply AFTER the camera's own Log→Rec.709 conversion, at 60–100%.
-- **Exposure before the look:** every camera clip is measured (`assemble.js exposure`, 8-bit, keyframes). A clip whose average brightness is outside the look's band in `kit/grade/targets.json` (Warm 55–150) gets Lumetri Basic Correction > Exposure nudging it just inside the band, at most ±1.5 EV, never clipping its highlights. Low-key shots (dark average and nothing bright, e.g. rings on black) are left alone and listed. No fix ever re-encodes footage. Premiere 26.x: a script can set Lumetri and Exposure but can't load a LUT, so the look is picked once by hand (Creative → Look → Buwan_*, listed after `/buwan:setup-kit` + a Premiere restart) and copied by the bridge.
+- **Exposure before the look, in the basics:** every camera clip is measured (`assemble.js exposure`, 8-bit, keyframes). A clip whose average brightness is outside the studio band in `kit/grade/targets.json` (55–150) is nudged just inside it, at most ±1.5 EV, never clipping its highlights, and baked into the enhanced clip. Low-key shots (dark average and nothing bright, e.g. rings on black) are left alone and listed.
+- **The look is applied in the editing app, with `/buwan:grade`, when the editor asks** — never baked in by the basics. The studio look can be built from the studio's own film (`assemble.js look --reference <film>` → a `.cube` + before/after sheet). Premiere 26.x: a script can set Lumetri and Exposure but can't load a LUT, so the look is picked once by hand (Creative → Look → Buwan_*, listed after `/buwan:setup-kit` + a Premiere restart) and copied by the bridge.
 - Pick one look per film (warm or cool, from the day's palette); B&W only for the most intimate beats.
 - Every graded export is measured with `/buwan:grade` (grade check against `kit/grade/targets.json`). Targets are calibrated from the studio's reference stills.
+
+## Camera picture profile (every wedding)
+- **Sony A7 IV and other 10-bit bodies: S-Cinetone, XAVC S 10-bit 4:2:2.** Rec.709-ready, so the basics (exposure, look) work on it directly. No S-Log3 on same-day jobs: the engine has no Log→709 step, and Log needs +1.5–2 stops over-exposure and ND outdoors.
+- **8-bit bodies (A7 III): never S-Log.** A picture profile with Cine4 gamma + Pro color, matched to the A7 IV.
+- **Drone (DJI):** Normal color on SDE days; D-Log M only for the highlight film.
+- **White balance set in Kelvin on every camera, never auto.** Same frame rate per role as agreed on the day.
 
 ## Shoot-day coverage → edit implications
 - Reception messages/reactions and prep-room letters are the speech spine.

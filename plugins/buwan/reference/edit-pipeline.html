@@ -139,7 +139,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
   <div class="aside" style="margin-top:18px">
     <span class="tag">Starting a wedding project? Pick your app's pipeline first</span>
     <div class="apps" style="margin-top:8px"><a class="default" href="https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A" style="text-decoration:none">Premiere Pro pipeline →</a><a class="default" href="https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF" style="text-decoration:none">Final Cut Pro pipeline →</a></div>
-    <p style="margin-top:8px">Each one says what you hand over (the raw folder, the studio film to match) and what Claude Code does for you (enhanced clips: dead air and speech audio, exposure, the studio look, shaky Creative shots with a smooth glide) — and stops. This page is the full map of every stage, for when you ask for more.</p>
+    <p style="margin-top:8px">Each one says what you hand over (the raw folder) and what Claude Code does for you (enhanced clips: exposure fixed on every clip, shaky Creative shots with a smooth glide, no grade) — and stops. Interviews, vows and speeches (<span class="spec">/buwan:multicam</span>) and the grade (<span class="spec">/buwan:grade</span>) are skills you call next. This page is the full map of every stage, for when you ask for more.</p>
   </div>
   <div class="apps" style="margin-top:16px"><span class="default">/buwan:basics</span><span>/buwan:multicam</span><span class="default">/buwan:intake</span><span class="default">/buwan:assemble</span><span>/buwan:organize</span><span>/buwan:plot</span><span>/buwan:rough-cut</span><span>/buwan:proof-gate</span><span>/buwan:audio</span><span>/buwan:grade</span><span>/buwan:graphics</span><span>/buwan:sfx</span><span>/buwan:review</span><span>/buwan:export</span><span>/buwan:clipper</span><span class="default">/buwan:sde</span></div>
 </header>
@@ -199,32 +199,28 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
       <p>One run, on the editor's machine, deterministic: same footage in, same result out. Rejects are flags, never deletions; the editor can un-reject anything by name. <span class="spec">/buwan:assemble</span></p>
       <div class="substeps">
         <span>Scan · probe every file</span><span class="arrow">→</span>
-        <span>Cull · rejects the unusable; soft, dark in <b>Flagged</b></span><span class="arrow">→</span>
-        <span>Steady · shaky creative shots: best cut first, stabilize gimbal only</span><span class="arrow">→</span>
-        <span>Copy by category · BY_CATEGORY folders, clones</span><span class="arrow">→</span>
-        <span>Exposure · fixed toward the look's band</span><span class="arrow">→</span>
-        <span>Music · tempo, beats, bars, energy, peak</span><span class="arrow">→</span>
-        <span>Sync · on request · cameras aligned by sound</span><span class="arrow">→</span>
-        <span>Organize · bins, colors, roles, multicam</span><span class="arrow">→</span>
-        <span>Enhance · dialogue levelled, denoised</span><span class="arrow">→</span>
-        <span>Dead air · silences out, A-Roll clean</span><span class="arrow">→</span>
-        <span>Grade · the studio look on every camera clip</span>
+        <span>Cull · rejects the unusable</span><span class="arrow">→</span>
+        <span>Steady · shaky Creative/Glider shots: best cut, smooth glide</span><span class="arrow">→</span>
+        <span>Exposure · fixed on every clip</span><span class="arrow">→</span>
+        <span>Render · <b>&lt;raw&gt;_ENHANCED_…</b>, no grade</span><span class="arrow">→</span>
+        <span>On request · <b>multicam</b>: interviews, vows, speeches</span><span class="arrow">→</span>
+        <span>On request · <b>grade</b>: the studio look in the app</span>
       </div>
       <div class="aside">
-        <span class="tag">The basics, in order — what the editor opens first</span>
-        <p style="margin-top:6px"><b>Organize</b> — every clip in one of the 12 studio bins; prep split into Bride prep and Groom prep. <b>Color</b> — the same colors in every app: Premiere labels, Final Cut roles, Resolve clip colors. <b>Grade</b> — one look per film (<span class="spec">Buwan_Warm</span> · <span class="spec">Cool</span> · <span class="spec">BW</span>) on every camera clip, never on music or graphics. <b>Enhance</b> — each speech clip measured (loudness, noise floor, SNR) and levelled toward −17 LUFS with noise reduction and voice isolation scaled to the noise; non-destructive in Final Cut, cleaned WAVs for Premiere and Resolve. <b>Dead air</b> — silences found and removed; speech ranges become Favorites and the <b>A-Roll clean</b> project is the whole day's speech back to back. <b>Cull</b> — the unusable is marked Rejected, never deleted; heavy-motion, soft-focus, dark, blown and frozen b-roll is parked in <span class="spec">00 Flagged/&lt;reason&gt;</span>, out of the picking bins but one drag away.</p>
+        <span class="tag">Interviews, vows, speeches — /buwan:multicam, on request</span>
+        <p style="margin-top:6px">The editor lists the clips of one moment — every angle plus the lav or recorder file. The <b>best audio</b> is picked (signal-to-noise, clipping, level) and the other angles are <b>synced to it by sound</b>. That audio is <b>cleaned</b> (noise reduction, voice EQ) to −17 LUFS, peaks −6, and the <b>dead air</b> between words is cut at the same points on every angle — words never cut. Each angle is rendered with its exposure fixed and starts at its timecode in the cut moment, into <span class="spec">&lt;raw&gt;_SPEECH_&lt;date-time&gt;/INTERVIEWS · VOWS · SPEECHES/&lt;moment&gt;/</span>: the multicam is built by timecode in any app.</p>
       </div>
       <div class="aside">
         <span class="tag">A new wedding project: the basics, then stop</span>
-        <p style="margin-top:6px">Claude Code makes <b>enhanced clips</b> and stops. It reads the raw folder and writes a new one next to it on every run, <span class="spec">&lt;raw&gt;_ENHANCED_&lt;date-time&gt;/</span>, same folders and names: <b>dead air</b> out of interviews, letters, speeches and vows on cleaned −17 LUFS audio; <b>exposure</b> fixed on every clip; the <b>studio look</b> matched to the studio's own film; shaky <b>Creative/Glider</b> shots cut to their best part with a smooth glide. No copying, no dedupe, no sorting, no sync, no story, no cut. Per-app hand-off: <a href="https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A" style="color:var(--gold)">Premiere Pro</a> · <a href="https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF" style="color:var(--gold)">Final Cut Pro</a>. <span class="spec">/buwan:basics</span></p>
+        <p style="margin-top:6px">Claude Code makes <b>enhanced clips</b> and stops. It reads the raw folder and writes a new one next to it on every run, <span class="spec">&lt;raw&gt;_ENHANCED_&lt;date-time&gt;/</span>, same folders and names: <b>exposure</b> fixed on every clip; shaky <b>Creative/Glider</b> shots cut to their best part with a smooth glide; the original audio. <b>No grade</b>, no speech work, no copying, no dedupe, no sorting, no story, no cut. Per-app hand-off: <a href="https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A" style="color:var(--gold)">Premiere Pro</a> · <a href="https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF" style="color:var(--gold)">Final Cut Pro</a>. <span class="spec">/buwan:basics</span></p>
       </div>
       <div class="aside">
         <span class="tag">Sync by sound, not by clock</span>
-        <p style="margin-top:6px">Cameras are matched on their audio, so a camera whose clock was never set still lands to the frame. Overlapping cameras become multicam clips with the angles aligned. Clips are grouped into one of the 12 studio categories — the same bins, the same colors, in Premiere, Final Cut and Resolve.</p>
+        <p style="margin-top:6px">Cameras are matched on their audio, so a camera whose clock was never set still lands to the frame. In <span class="spec">/buwan:multicam</span> every angle of a moment is synced to its best audio. Bins and colors (the 12 studio categories, the same in Premiere, Final Cut and Resolve) are applied only when the editor asks.</p>
       </div>
       <div class="aside">
         <span class="tag">Imports as</span>
-        <p style="margin-top:6px">A validated FCPXML (Final Cut, Resolve; Premiere via the bridge): every clip keyworded into its bin, rejects marked <span class="spec">Rejected</span>, warnings as notes, synced multicam clips ready to cut.</p>
+        <p style="margin-top:6px">Folders of HEVC 10-bit clips that any app imports as they are: <span class="spec">_ENHANCED_</span> (camera and card folders become bins) and <span class="spec">_SPEECH_</span> (one folder per moment; angles → multicam by timecode). Bins, labels and keywords only when the editor asks (validated FCPXML for Final Cut and Resolve; the bridge for Premiere).</p>
       </div>
     </div>
   </div>
@@ -307,7 +303,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
     <div class="card">
       <span class="tag">04 · <b class="cond">Camera only</b></span>
       <h3>Grade</h3>
-      <p>Studio looks as one <span class="spec">.cube</span> per mood — <span class="spec">Buwan_Warm</span> · <span class="spec">Buwan_Cool</span> · <span class="spec">Buwan_BW</span> — the same file in every app, applied after the camera's Log→709. B&amp;W only for the most intimate beats. Every graded export is measured by the grade check against the studio targets. Corporate: clean, brand-true; crimson reserved for award beats. <span class="spec">/buwan:grade</span></p>
+      <p>Applied in the editing app when the editor asks — never baked in by the basics, which only fix the exposure. The studio look is built from the studio's own film (a <span class="spec">.cube</span> + before/after sheet), or one of <span class="spec">Buwan_Warm</span> · <span class="spec">Buwan_Cool</span> · <span class="spec">Buwan_BW</span> — the same file in every app. Shoot S-Cinetone; no Log on same-day jobs. B&amp;W only for the most intimate beats. Every graded export is measured by the grade check against the studio targets. Corporate: clean, brand-true; crimson reserved for award beats. <span class="spec">/buwan:grade</span></p>
     </div>
   </div>
 

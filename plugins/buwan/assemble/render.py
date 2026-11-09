@@ -1,13 +1,12 @@
 """Render: new enhanced clips from the raw footage, into a new folder on every run. The raw files are only read.
 
 Per clip (read from the raw folder, same relative path; written as <out>/<camera>/<card>/<clip>.mov):
-  every camera clip  exposure fix (exposure.json) -> the studio look LUT (look.json / --look) -> HEVC 10-bit
-  speech clips       (01 Speech: interviews, letters, speeches, vows) cut to their speech ranges (dead air out)
-                     with the cleaned speech audio (enhance --render: noise reduction, voice EQ, -17 LUFS)
-                     and 20 ms audio fades at every join; no speech found -> whole clip, flagged
+  every camera clip  exposure fix (exposure.json) -> HEVC 10-bit. No grade: the look is applied in the editing app
+                     (/buwan:grade). `--look <.cube>` bakes a look in, only when asked.
   shaky Creative/Glider clips (steady.json: best-cut / warp) trimmed to the best cut, then a smooth glide with
                      vid.stab (two passes; needs the Buwan ffmpeg with libvidstab: ~/.buwan/ffmpeg-vidstab)
-  everything else    the original audio, untouched
+  everything else    the original audio, untouched (interviews and vows too: their angles, best audio and dead air
+                     are made by `assemble.js speech` into <raw>_SPEECH_<date-time>/)
 Resumable: a clip whose output already exists is skipped (pass --out to continue a run). Log: <out>/render_log.csv.
 """
 from __future__ import annotations
@@ -46,6 +45,14 @@ def _esc(p: str) -> str:
 
 
 def _grade_chain(ev: float, cube: str | None) -> str:
+    if not cube:
+        # exposure only (the default): a 16-bit RGB gain, same result as the float exposure filter, ~1.5x faster
+        if not ev:
+            return "format=p010le"
+        g = 2.0 ** ev
+        lv = ":".join(f"{c}imax={1 / g:.5f}" for c in "rgb") if g >= 1 else ":".join(f"{c}omax={g:.5f}" for c in "rgb")
+        return f"format=rgb48le,colorlevels={lv},format=p010le"
+    # baking a look in (only when render --look is passed; normally the grade is applied in the editing app: /buwan:grade)
     parts = ["format=gbrpf32le"]
     if ev:
         parts.append(f"exposure=exposure={ev:.3f}")
@@ -114,14 +121,15 @@ def render_clip(ff: str, src: Path, out: Path, job: dict, cube: str | None, vids
     tmp.rename(out)
     if job["ev"]:
         what.append(f"exposure {job['ev']:+.2f} EV")
-    what.append("look" if cube else "no look")
+    if cube:
+        what.append("look baked in")
     return "; ".join(what)
 
 
 def plan_jobs(project: Path, clips: dict[str, Clip], categories: dict) -> dict[str, dict]:
     adir = project / "edit" / "assemble"
     load = lambda n: json.loads((adir / n).read_text()) if (adir / n).exists() else {}
-    expo, ranges, enh, steady = load("exposure.json"), load("speech_ranges.json"), load("enhance.json"), load("steady.json")
+    expo, steady = load("exposure.json"), load("steady.json")
     cull = {m["path"]: m for m in (json.loads((adir / "cull.json").read_text()) if (adir / "cull.json").exists() else [])}
     jobs = {}
     for p, c in clips.items():
@@ -130,15 +138,10 @@ def plan_jobs(project: Path, clips: dict[str, Clip], categories: dict) -> dict[s
         if (cull.get(p) or {}).get("reject"):
             continue
         j = {"ev": (expo.get(p) or {}).get("ev") or 0.0}
-        if categories.get(p) == "01 Speech":
-            r = (ranges.get(p) or {}).get("ranges") or []
-            if r:
-                j["ranges"] = r
-                j["clean"] = (enh.get(p) or {}).get("clean")
-            else:
-                j["flag"] = "speech clip with no usable speech in its own audio: whole clip, original audio (find the recorder/lav file)"
+        # interviews, letters, speeches and vows go through like any clip (exposure, original audio, full length);
+        # merging their angles, the best audio and dead air are the speech skill's job (assemble.js speech)
         st = steady.get(p) or {}
-        if "ranges" not in j and st.get("decision") in ("best-cut", "warp") and st.get("range") and \
+        if st.get("decision") in ("best-cut", "warp") and st.get("range") and \
                 any(k in (c.camera or "").lower() for k in CREATIVE):
             j["trim"] = st["range"]
         jobs[p] = j
@@ -158,11 +161,11 @@ def run(project: Path, clips: dict[str, Clip], categories: dict, raw_copy: Path,
         src = source / rel
         if not src.exists():
             src = Path(p)   # fall back to the working copy (same bytes) if the raw folder moved
-        kind = "speech" if "ranges" in j else ("shaky" if "trim" in j else "clip")
+        kind = "shaky" if "trim" in j else "clip"
         if only and kind != only:
             continue
         items.append((p, src, out / rel.with_suffix(".mov"), j, kind))
-    items.sort(key=lambda x: (x[4] != "speech", x[4] != "shaky", str(x[2])))   # speech and shaky first: the ones to check
+    items.sort(key=lambda x: (x[4] != "shaky", str(x[2])))   # shaky first: the ones to check
     if limit:
         items = items[:limit]
     log(f"render: {len(items)} clips -> {out} (ffmpeg {'with' if vidstab else 'WITHOUT'} vid.stab, look {Path(cube).name if cube else 'none'})")

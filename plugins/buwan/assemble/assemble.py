@@ -9,9 +9,10 @@
   assemble.py music     <project> --intro <track1> --main <track2>   -> edit/assemble/music.json
   assemble.py sync      <project> [--anchor "2-Main"] [--trusted cam ...]  -> edit/assemble/sync.json + multicams.json
   assemble.py bycategory <project>           -> <WORK>/BY_CATEGORY/<category>[/<sub-bin>]/ (APFS clones of RAW_COPY; rejects left out; shaky Creative clips trimmed to their best cut)
-  assemble.py exposure  <project>            -> edit/assemble/exposure.json (per-clip exposure fix applied before the look)
-  assemble.py look      <project> --reference <film>  -> edit/grade/Buwan_Film.cube (a look LUT matched to the studio's film)
-  assemble.py render    <project> [--source <raw>]    -> <raw>_ENHANCED_<date-time>/ (exposure + look, speech cut to its ranges with clean audio, shaky Creative best cut + vid.stab; HEVC 10-bit)
+  assemble.py exposure  <project>            -> edit/assemble/exposure.json (per-clip exposure fix, baked into the enhanced clips)
+  assemble.py look      <project> --reference <film>  -> edit/grade/Buwan_Film.cube (a look LUT matched to the studio's film; used by /buwan:grade)
+  assemble.py speech    <project> --moment <name> --type <interview|vows|speech> --clips <clip> ...  -> <raw>_SPEECH_<date-time>/<TYPE>/<moment>/ (angles synced, best audio cleaned, dead air out)
+  assemble.py render    <project> [--source <raw>]    -> <raw>_ENHANCED_<date-time>/ (exposure fixed, no grade; shaky Creative best cut + vid.stab; HEVC 10-bit)
   assemble.py organize  <project> --categories edit/assemble/categories.json  -> edit/organize_vN.fcpxml
   assemble.py selects   <project> --selects edit/assemble/selects.json      -> edit/selects_vN.fcpxml
   assemble.py build     <project> --selects edit/assemble/selects.json [--name "SDE Cut v1"]  -> edit/sde-cut_vN.fcpxml + .edl
@@ -186,6 +187,30 @@ def cmd_look(a):
     look.run(project, clips, Path(a.reference), a.name, Path(a.out) if a.out else project / "edit" / "grade", a.strength)
 
 
+def cmd_speech(a):
+    """Interviews / vows / speeches: the editor's angles synced, the best audio cleaned, dead air out, one folder per moment."""
+    import speech
+    project = Path(a.project)
+    wc = load_json(adir(project) / "workcopy.json") if (adir(project) / "workcopy.json").exists() else {}
+    from workcopy import _footage_root
+    raw_copy = Path(wc["raw_copy"]) if wc.get("raw_copy") else _footage_root(project)
+    source = Path(a.source) if a.source else Path(wc.get("source") or raw_copy)
+    mp = adir(project) / "speech_moments.json"
+    saved = load_json(mp) if mp.exists() else []
+    if a.moment:
+        if not (a.type and a.clips):
+            raise SystemExit("speech: --moment needs --type (interview|vows|speech) and --clips")
+        new = {"name": a.moment, "type": a.type, "clips": a.clips}
+        saved = [m for m in saved if m["name"] != a.moment] + [new]
+        save_json(mp, saved)
+        todo = [new]
+    else:
+        todo = load_json(a.moments) if a.moments else saved
+    if not todo:
+        raise SystemExit("speech: no moments. Give --moment <name> --type <interview|vows|speech> --clips <clip> <clip> ...")
+    speech.run(project, todo, source, raw_copy, Path(a.out) if a.out else None, a.workers)
+
+
 def cmd_render(a):
     import render
     project = Path(a.project)
@@ -193,9 +218,7 @@ def cmd_render(a):
     from workcopy import _footage_root
     raw_copy = Path(wc["raw_copy"]) if wc.get("raw_copy") else _footage_root(project)
     source = Path(a.source) if a.source else Path(wc.get("source") or raw_copy)
-    cube = a.look
-    if not cube and (adir(project) / "look.json").exists():
-        cube = load_json(adir(project) / "look.json").get("cube")
+    cube = a.look   # no grade by default: the look is applied in the editing app (/buwan:grade)
     render.run(project, load_clips(project), load_categories(project, a.categories), raw_copy, source,
                Path(a.out) if a.out else None, cube, a.workers, a.limit, a.only)
 
@@ -504,7 +527,8 @@ def main():
     s = sub.add_parser("exposure"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=6)
     s.add_argument("--look", default="warm", choices=["warm", "cool", "bw"]); s.add_argument("--remeasure", action="store_true", help="read the footage again instead of reusing exposure.json"); s.set_defaults(f=cmd_exposure)
     s = sub.add_parser("look"); s.add_argument("project"); s.add_argument("--reference", required=True, help="the studio's finished film to match"); s.add_argument("--name", default="Buwan_Film"); s.add_argument("--out"); s.add_argument("--strength", type=float, default=1.0); s.set_defaults(f=cmd_look)
-    s = sub.add_parser("render"); s.add_argument("project"); s.add_argument("--source", help="the raw folder (read only; default: the original from workcopy.json)"); s.add_argument("--out", help="continue an earlier run"); s.add_argument("--look", help=".cube (default: edit/assemble/look.json)"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=3); s.add_argument("--limit", type=int, default=0); s.add_argument("--only", choices=["speech", "shaky", "clip"]); s.set_defaults(f=cmd_render)
+    s = sub.add_parser("speech"); s.add_argument("project"); s.add_argument("--moment", help="e.g. \"Bride vows\""); s.add_argument("--type", choices=["interview", "vows", "speech"]); s.add_argument("--clips", nargs="+", help="the moment's clips, relative to the raw folder or full paths (cameras + lav/recorder)"); s.add_argument("--moments", help="a JSON list of {name, type, clips} (default: every moment saved in speech_moments.json)"); s.add_argument("--source"); s.add_argument("--out", help="add to an earlier _SPEECH_ folder"); s.add_argument("--workers", type=int, default=3); s.set_defaults(f=cmd_speech)
+    s = sub.add_parser("render"); s.add_argument("project"); s.add_argument("--source", help="the raw folder (read only; default: the original from workcopy.json)"); s.add_argument("--out", help="continue an earlier run"); s.add_argument("--look", help="bake this .cube in (default: no grade; the look is applied in the editing app)"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=3); s.add_argument("--limit", type=int, default=0); s.add_argument("--only", choices=["shaky", "clip"]); s.set_defaults(f=cmd_render)
     s = sub.add_parser("music"); s.add_argument("project"); s.add_argument("--intro"); s.add_argument("--main", required=True); s.set_defaults(f=cmd_music)
     s = sub.add_parser("sync"); s.add_argument("project"); s.add_argument("--anchor"); s.add_argument("--trusted", nargs="*"); s.set_defaults(f=cmd_sync)
     s = sub.add_parser("enhance"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=4); s.add_argument("--render", action="store_true", help="also write cleaned WAVs to edit/audio/clean"); s.set_defaults(f=cmd_enhance)

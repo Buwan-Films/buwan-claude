@@ -1,5 +1,20 @@
 # Changelog
 
+## buwan 1.10.0 · buwan-premiere 1.7.0 — 2026-11-09  (/plugin marketplace update buwan-films, update both plugins, restart)
+**The basics no longer grade and no longer touch speech.** `/buwan:basics` and `/buwan-premiere:wedding-day` now do two things into `<raw>_ENHANCED_<date-time>/`: the exposure fix on every clip and the best cut + smooth glide on shaky Creative/Glider clips. Every other clip, interviews and vows included, keeps its original audio and full length.
+- **No test render by default:** the basics go straight to the full render (shaky clips first, spot-check one while the rest renders). A short `--limit 2` test only after an engine update or with a new camera.
+- **No grade in the basics.** `render` bakes no look by default (`--look <.cube>` only when asked). The exposure fix now runs as a 16-bit RGB gain: the same result within 2 luma points, and the whole render is about 2.4× faster than exposure + look (8.6 s → 3.6 s per 10 s of 1080p60 10-bit).
+- **`/buwan:grade` applies the look, on request.** It builds the look from the studio's film (`assemble.js look --reference`, before/after sheet) or uses the stock LUTs, and applies it in the editing app. Premiere: the editor picks it once in Lumetri and the bridge copies it (`grade {look_from}`).
+- **`/buwan:multicam` is now interviews, vows and speeches** (new `assemble.js speech`). The editor lists a moment's clips (cameras + lav/recorder), and the engine:
+  - picks the best audio (SNR, clipping, level; a sound-only file wins a tie);
+  - syncs the other angles to it by sound (2.5 ms; quiet camera mics still sync);
+  - cleans it (high-pass, noise reduction, voice EQ);
+  - cuts the dead air at the same points on every angle (20 ms fades, words never cut);
+  - renders each angle with its exposure fixed, no grade, HEVC 10-bit, the clean audio at −17 LUFS / peaks −6.
+  - Output: `<raw>_SPEECH_<date-time>/INTERVIEWS|VOWS|SPEECHES/<moment>/`. Each angle holds only what it covered and starts at its timecode in the cut moment, so Premiere / Final Cut / Resolve build the multicam **by timecode**. A clip that doesn't match by sound is left out and listed. Moments are saved in `edit/assemble/speech_moments.json`.
+- **Camera picture profile in the house rules:** S-Cinetone 10-bit 4:2:2 on 10-bit bodies; Cine4 + Pro color on 8-bit bodies (never S-Log); drone Normal on SDE days; white balance in Kelvin. No S-Log3 on same-day jobs (the engine has no Log→709 step).
+- Skills (basics, wedding-day, multicam, grade), house rules, session card, README, MAINTAINING and the pipeline pages were updated.
+
 ## buwan 1.9.0 · buwan-premiere 1.6.0 — 2026-11-09  (/plugin marketplace update buwan-films, update both plugins, restart; then /buwan:setup-kit once to build the vid.stab ffmpeg)
 **The basics are now enhanced clips, nothing else.** `/buwan:basics` and `/buwan-premiere:wedding-day` read the raw folder (never written) and render new clips into a new folder next to it on every run, `<raw>_ENHANCED_<date-time>/`, with the same camera/card folders and names. No copying, no dedupe, no file organizing, no Premiere bins in the basics (those skills stay, on request).
 - **`assemble.js render`:** every camera clip gets the exposure fix and then the studio look, encoded as HEVC 10-bit 4:2:0, 80 Mbps, Rec.709 tags (VideoToolbox).

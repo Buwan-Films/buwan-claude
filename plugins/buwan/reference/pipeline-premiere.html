@@ -48,7 +48,7 @@
     <h2>Hand over the footage</h2>
     <ol>
       <li>The raw clips on the SSD, one subfolder per shooter: <span class="spec">1-Main</span>, <span class="spec">2-Creative</span> (or <span class="spec">Glider</span>), <span class="spec">3-Reactions</span>, <span class="spec">4-Drone</span>, <span class="spec">Audio</span>. Claude only ever reads them.</li>
-      <li>Name the studio film the look should match, the first time (e.g. your last SDE).</li>
+      <li>Shot in S-Cinetone (10-bit bodies) or Cine4 + Pro color (8-bit), white balance in Kelvin.</li>
       <li>Room on the SSD: about 0.6 GB per minute of footage.</li>
       <li>Start Claude Code in your Buwan workspace.</li></ol>
   </div>
@@ -56,19 +56,17 @@
     <span class="tag"><b class="auto">The basics</b> · Claude Code · one run, unattended</span>
     <h2>Enhanced clips, then stop</h2>
     <ol>
-      <li><b>Dead air + speech audio</b> — interviews, letters, speeches and vows cut down to their speech (silences out, soft joins) on cleaned audio levelled to −17 LUFS, peaks −6 dBFS. A speech clip with silent camera audio comes through whole and is flagged.</li>
-      <li><b>Exposure on every clip</b> — measured and gently fixed toward the look's brightness band (±1.5 EV at most, highlights protected; low-key shots like rings on black left alone).</li>
-      <li><b>The studio look</b> — a LUT built to match this wedding to the studio's own film: soft film contrast, whites that stay white, color by shadows, mids and highlights. You see a before / after sheet first.</li>
+      <li><b>Exposure on every clip</b> — measured and gently fixed toward the studio brightness band (±1.5 EV at most, highlights protected; low-key shots like rings on black left alone).</li>
       <li><b>Shaky — Creative/Glider only</b> — the best part of each shaky shot, with a smooth glide (vid.stab). Other cameras are left alone.</li></ol>
-    <div class="stop">The raw folder is never touched · a new folder every run · no copy · no dedupe · no sorting</div>
+    <div class="stop">The raw folder is never touched · a new folder every run · no grade · no copy · no dedupe · no sorting</div>
   </div>
   <div class="col">
     <span class="tag">Only when you ask</span>
     <h2>Separate skills</h2>
     <ul>
-      <li><b>Multicam</b> — <span class="spec">/buwan:multicam</span>: vows, interviews, ceremony synced by audio.</li>
-      <li><b>Story</b> — <span class="spec">/buwan:plot</span>: transcribe the speech (Taglish verbatim), tag beats, pick lines.</li>
-      <li><b>Cut</b> — the music-driven timeline and the proof gate: <span class="spec">/buwan:sde</span>.</li>
+      <li><b>Interviews · vows · speeches</b> — <span class="spec">/buwan:multicam</span>: you list a moment's clips; the best audio is picked and cleaned (−17 LUFS), the angles synced to it, the dead air cut on every angle → <span class="spec">&lt;raw&gt;_SPEECH_…/INTERVIEWS · VOWS · SPEECHES</span>.</li>
+      <li><b>Grade</b> — <span class="spec">/buwan:grade</span>: the studio look, built from the studio's own film, applied in Premiere.</li>
+      <li><b>Story</b> — <span class="spec">/buwan:plot</span>. <b>Cut</b> — <span class="spec">/buwan:sde</span>.</li>
       <li><b>Finish</b> — <span class="spec">/buwan:graphics</span> · <span class="spec">/buwan:sfx</span> · <span class="spec">/buwan:export</span>.</li>
     </ul>
   </div>
@@ -79,17 +77,17 @@
   <h2>A folder of finished clips</h2>
   <div class="tscroll"><table>
     <tr><th>Where</th><th>What</th></tr>
-    <tr><td><span class="spec">&lt;raw&gt;_ENHANCED_&lt;date-time&gt;/</span></td><td>Every clip, the same camera and card folders and names as the raw, as HEVC 10-bit <span class="spec">.mov</span> (Rec.709): exposure fixed, the studio look on, ready to cut.</td></tr>
-    <tr><td>Speech clips</td><td>Shorter than the raw: only the speech, on the cleaned −17 LUFS audio. No audio repair needed in the edit.</td></tr>
-    <tr><td>Shaky Creative/Glider clips</td><td>Only their best part, already gliding. No Warp Stabilizer needed.</td></tr>
-    <tr><td><span class="spec">render_log.csv</span></td><td>In the folder: what was done to each clip, and the ones to check (speech with no usable audio).</td></tr>
-    <tr><td>Into Premiere</td><td><b>File → Import</b> the enhanced folder (or drag it from the Media Browser): the camera and card folders become bins. No LUT, Lumetri or audio repair needed on these clips.</td></tr>
+    <tr><td><span class="spec">&lt;raw&gt;_ENHANCED_&lt;date-time&gt;/</span></td><td>Every clip, the same camera and card folders and names as the raw, as HEVC 10-bit <span class="spec">.mov</span> (Rec.709) with the exposure fixed and the original audio. No grade baked in.</td></tr>
+    <tr><td>Shaky Creative/Glider clips</td><td>Only their best part, already gliding. No stabilizer needed.</td></tr>
+    <tr><td><span class="spec">render_log.csv</span></td><td>In the folder: what was done to each clip.</td></tr>
+    <tr><td>Into Premiere</td><td><b>File → Import</b> the enhanced folder (or drag it from the Media Browser): the camera and card folders become bins. The exposure is fixed; no look is on yet.</td></tr>
+    <tr><td><span class="spec">&lt;raw&gt;_SPEECH_&lt;date-time&gt;/</span></td><td>From <span class="spec">/buwan:multicam</span>: per moment, every angle on the one clean audio, dead air out, each starting at its timecode → <b>Create Multi-Camera Source Sequence → Timecode</b>.</td></tr>
   </table></div>
 </div>
 
 <div class="prompt">
   <span class="tag">The prompt</span>
-  <code>/buwan-premiere:wedding-day 2026-11-15_Santos-Reyes --footage /Volumes/T7/Santos-Reyes --reference "~/Downloads/Studio SDE.mp4"</code>
+  <code>/buwan-premiere:wedding-day 2026-11-15_Santos-Reyes --footage /Volumes/T7/Santos-Reyes</code>
   <p style="margin:10px 0 0;font-size:14px;color:var(--muted)">New cards from the shooters later: run it again. A new enhanced folder is made; the raw is still untouched.</p>
 </div>
 

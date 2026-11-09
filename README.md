@@ -8,16 +8,21 @@ One studio standard for every Buwan editor, in every editing app. Claude Code lo
 | `buwan-premiere` | Premiere editors only | The Premiere Pro bridge (premiere-pro-mcp 1.11.5) + the apply layer: everything the engine decided, done inside the open Premiere project (`/buwan-premiere:premiere-apply`, `/buwan-premiere:wedding-day`) |
 
 ## What happens on a new wedding project
-Claude Code makes **enhanced clips** from the raw footage and stops. The raw folder is only read; every run writes a new folder next to it, `<raw>_ENHANCED_<date-time>/`, with the same camera/card folders and clip names (HEVC 10-bit `.mov`). No copying, no dedupe, no file organizing.
+Claude Code makes **enhanced clips** from the raw footage and stops. The raw folder is only read; every run writes a new folder next to it, `<raw>_ENHANCED_<date-time>/`, with the same camera/card folders and clip names (HEVC 10-bit `.mov`). No copying, no dedupe, no file organizing, **no grade**.
 
 | | How |
 |---|---|
-| **Dead air + speech audio** | interviews, letters, speeches and vows cut down to their speech (silences out, 20 ms fades at the joins) on cleaned audio levelled to −17 LUFS, peaks −6 dBFS. A speech clip with silent camera audio renders whole and is flagged |
-| **Exposure on every clip** | `assemble.js exposure`: a gentle per-clip fix toward the studio look's brightness band (±1.5 EV max, highlights protected, low-key shots left alone) |
-| **The studio look** | `assemble.js look --reference <studio film>`: a LUT that matches this wedding's footage to the studio's finished film (tone with a soft film shoulder, color by shadows / mids / highlights); checked on a before / after sheet |
+| **Exposure on every clip** | `assemble.js exposure`: a gentle per-clip fix toward the studio brightness band (±1.5 EV max, highlights protected, low-key shots left alone) |
 | **Shaky — Creative/Glider only** | the best cut of each shaky clip, then a smooth glide (vid.stab). Other cameras untouched |
 
-`assemble.js render` writes it all. On request only: `/buwan:multicam` (sync by audio), `/buwan:plot` (story), the cut, Premiere bins and labels (`/buwan-premiere:premiere-apply`), graphics, export.
+`assemble.js render` writes it all. Then, when the editor asks:
+
+| Skill | What it makes |
+|---|---|
+| `/buwan:multicam` — interviews, vows, speeches | the editor lists a moment's clips → the best audio picked, the angles synced to it by sound, cleaned to −17 LUFS / peaks −6, the dead air cut at the same points on every angle, each angle rendered with its exposure fixed → `<raw>_SPEECH_<date-time>/INTERVIEWS\|VOWS\|SPEECHES/<moment>/`, ready for a multicam |
+| `/buwan:grade` — the look | a LUT built from the studio's own film (`assemble.js look --reference <film>`, before/after sheet) or the stock studio LUTs, applied in the editing app |
+
+Also on request: `/buwan:plot` (story), the cut, Premiere bins and labels (`/buwan-premiere:premiere-apply`), graphics, export.
 
 Pipeline pages, one per app — the editor opens theirs before starting: [**Premiere Pro**](https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A) · [**Final Cut Pro**](https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF) (copies in `plugins/buwan/reference/pipeline-*.html`).
 
@@ -54,8 +59,8 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 | Stage | Skill |
 |---|---|
 | New wedding project — **the basics** | `/buwan:basics` (Premiere: `/buwan-premiere:wedding-day`) |
-| 01 Intake (part of the basics) | `/buwan:intake --work-copy` |
-| Multicam · on request | `/buwan:multicam` |
+| Interviews / vows / speeches · on request | `/buwan:multicam` (angles synced on the best audio, dead air out → `<raw>_SPEECH_*/`) |
+| Grade · on request | `/buwan:grade` (the look, in the app) |
 | 02 Story-Lock · on request | `/buwan:plot` |
 | 02 Rough cut · on request | `/buwan:rough-cut` → `assemble build` (music-driven timeline + edit map) |
 | Proof gate | `/buwan:proof-gate` (also automatic on every EDL) |
