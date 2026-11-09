@@ -9,7 +9,7 @@ argument-hint: "[project folder]"
 Only kit components. If something isn't in the kit, say so and ask — never improvise a graphic.
 
 ## 5a Plan
-Storyboard every beat that needs a graphic in `edit/graphics-plan_vN.md`: `record TC · beat · component code · text · duration`. Defaults (house rules): intro → 07.07 SDE title plate or 07.01 couple introduction · vows → 07.02 vow caption · speeches → 07.03 speaker lower third · opening establishing → 07.04 date & venue tag · between parts → dip to black or 03.03 moonrise · end → 07.07 title plate, then **06.08 logo end card** as the last shot (`/buwan:end-card`; with credits: 06.07 → 06.08). 06.02 logo reveal opens a film. Corporate: 08.xx components, no Italiana.
+Storyboard every beat that needs a graphic in `edit/graphics-plan_vN.md`: `record TC · beat · component code · text · duration`. Defaults (house rules): intro → 07.07 SDE title plate or 07.01 couple introduction · vows → 07.02 vow caption · speeches → 07.03 speaker lower third · opening establishing → 07.04 date & venue tag · between parts → dip to black or 03.03 moonrise · end → 07.09 wedding title over the last wide shot (`/buwan:title`), then **06.08 logo end card** as the last shot (`/buwan:end-card`; with credits: 06.07 → 06.08). 06.02 logo reveal opens a film. Corporate: 08.xx components, no Italiana.
 Check every proper noun against the paper edit's spot-check list. Ask the editor for anything unknown (spellings, roles, venue).
 
 ## 5b Build — render with the kit renderer

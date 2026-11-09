@@ -342,7 +342,7 @@ def build_plan(clips: dict[str, Clip], categories: dict, cull: list[dict], music
                 connected.append(pk)
     markers_global.append({"at": peak[0], "name": "MUSIC PEAK — burst montage", "chapter": False})
     if opt["title_at"] == "end":
-        markers_global.append({"at": max(T2, film_end - 10.0), "name": "GRAPHIC: 07.07 title card — The Wedding of … (title closes the film)", "todo": True})
+        markers_global.append({"at": max(T2, film_end - 10.0), "name": "GRAPHIC: 07.09 wedding title — The Wedding of … (/buwan:title, over the last wide shot)", "todo": True})
         markers_global.append({"at": film_end, "name": "GRAPHIC: 06.08 logo end card — after the title plate, on black (/buwan:end-card)", "todo": True})
     else:
         markers_global.append({"at": max(T2, film_end - opt["logo_lead"]), "name": "GRAPHIC: 06.07 end credits, then 06.08 logo end card (/buwan:end-card)", "todo": True})

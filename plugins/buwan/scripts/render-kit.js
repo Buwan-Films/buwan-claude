@@ -68,9 +68,9 @@ const NATIVE_TRANSITIONS = new Set(["03.01", "03.02", "03.06", "03.07", "03.08"]
 // Components whose only text is fixed brand text (or text we blank out) are pre-rendered once.
 const FIXED = { "06.02": {}, "06.03": {}, "06.08": {}, "02.03": { "the first look": "" } };
 // Components that end on their own fade-out: only a short hold of black after (default hold is 2 s).
-const HOLD = { "06.08": 0.4 };
+const HOLD = { "06.08": 0.4, "07.09": 0.2 };
 // ... and whose still (--still PNG) is taken mid-hold, not from the last frame (which is black).
-const STILL_AT = { "06.08": 5.0 };
+const STILL_AT = { "06.08": 5.0, "07.09": 4.0 };
 
 async function openKit(pw) {
   const browser = await pw.chromium.launch();

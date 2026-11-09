@@ -1,6 +1,6 @@
 ---
 name: end-card
-description: Close a Buwan film with the logo end card (kit 06.08) — two crescent blades sweep in from opposite sides and draw two interlocking rings that glide together into the logo ring ("two become one"); on a warm bloom and a heartbeat the official emblem snaps in from shards, petals and small moons drifting down, a soft gold glow and a sheen, BUWAN / FILMS rise out of a blur, a slow push-in, then it fades to black (7.7 s). Placed after the last picture of the editor's cut (after the 07.07 title plate on an SDE), in Premiere through the bridge, in Final Cut or Resolve by hand, or appended to an already-exported film. Use when an editor says "end card", "logo at the end", "outro logo", "close with the logo", "add our logo like the reference", or finishes an SDE / highlight film.
+description: Close a Buwan film with the logo end card (kit 06.08) — two crescent blades sweep in from opposite sides and draw two interlocking rings that glide together into the logo ring ("two become one"); on a warm bloom and a heartbeat the official emblem snaps in from shards, a ring of crescent moons bursts out and more drift and turn, a soft gold glow and a sheen, BUWAN / FILMS rise out of a blur, a slow push-in, then it fades to black (7.7 s). Placed after the last picture of the editor's cut (after the 07.09 wedding title), in Premiere through the bridge, in Final Cut or Resolve by hand, or appended to an already-exported film. Use when an editor says "end card", "logo at the end", "outro logo", "close with the logo", "add our logo like the reference", or finishes an SDE / highlight film.
 argument-hint: "[sequence name | exported film path]"
 ---
 
@@ -12,10 +12,10 @@ Load `/buwan:house-rules`. The card is a kit graphic: never redraw or restyle th
 - 0.2–0.75 s — two crescent blades, one from each side, sweep in and cross over the logo; small Buwan crescents break off along each cut
 - 0.8–1.85 s — they draw two interlocking rings (wedding bands) that glide together into the logo's ring
 - 1.85 s — a warm ivory bloom and a heartbeat pulse; the official emblem (the logo file itself, cut into shards) snaps in; a soft gold glow rises behind it
-- petals (ivory, blush, gold) and small moons drift down throughout · 2.8 s BUWAN, 3.3 s FILMS rise out of a blur; a light sheen crosses the gold
+- 1.85 s a ring of 18 crescent moons bursts out from the logo and turns away · crescent moons of every size (gold, ivory) drift and turn throughout · 2.8 s BUWAN, 3.3 s FILMS rise out of a blur; a light sheen crosses the gold
 - slow push-in the whole time · fades to black 6.4–7.3 s · 0.4 s of black after
 
-**Where it goes:** the very last shot. On an SDE / highlight film the order is: final hold → **07.07 title plate** ("The Wedding of …") dipping to black → **06.08 logo end card**. With end credits: 06.07 credits → 06.08. Nothing after it. The music rings out under the card and is faded out by its end (about −20 dB under the logo is right; never a hard cut at the picture's last frame).
+**Where it goes:** the very last shot. On an SDE / highlight film the order is: final wide shot with the **07.09 wedding title** ("The Wedding of …", `/buwan:title`) dipping to black → **06.08 logo end card**. With end credits: 06.07 credits → 06.08. Nothing after it. The music rings out under the card and is faded out by its end (about −20 dB under the logo is right; never a hard cut at the picture's last frame).
 
 ## Apply
 Ask once which sequence (Premiere) or project (Final Cut / Resolve) is the film, if it isn't clear. Only ever **append** after the last picture — nothing already in the editor's cut moves.

@@ -816,12 +816,59 @@ var BUWAN = (function () {
              next: "Play the last 15 s: the title plate should dip to black, then the logo folds in. Extend the music tail to cover ~7.7 s past the picture, fading out by the card's end." };
   }
 
+  function stepTitle(opts) {
+    // the wedding title (kit 07.09, rendered with the couple's names) over the last shots of the picture, on the
+    // first video track free there above V1. Only adds: nothing in the editor's cut moves.
+    // {file:"<project>/edit/graphics/07.09_wedding-title.mov", sequence:"SDE v3", at:<sec>}
+    if (!opts.file) throw new Error("title needs {file:'<project>/edit/graphics/07.09_wedding-title.mov'}");
+    var f = new File(opts.file);
+    if (!f.exists) throw new Error("title not found: " + opts.file + " (render it with render-kit.js render 07.09)");
+    var seq = targetSequence(opts);
+    var want = norm(f.fsName), item = null;
+    walk(app.project.rootItem, null, function (it) {
+      if (item || it.type === 2) return;
+      try { if (!it.isSequence() && norm(it.getMediaPath()) === want) item = it; } catch (e) {}
+    });
+    if (!item) {
+      var target = bin("11 Graphics");
+      app.project.importFiles([f.fsName], true, target, false);
+      for (var i = 0; i < target.children.numItems; i++) {
+        try { if (norm(target.children[i].getMediaPath()) === want) item = target.children[i]; } catch (e2) {}
+      }
+    }
+    if (!item) throw new Error("could not import " + f.fsName);
+    var dur = 7.4;
+    try { dur = item.getOutPoint().seconds - item.getInPoint().seconds || 7.4; } catch (e3) {}
+    var end = 0;   // end of the picture, before any end card already placed
+    for (var v = 0; v < seq.videoTracks.numTracks; v++) {
+      var tr = seq.videoTracks[v];
+      for (var c = 0; c < tr.clips.numItems; c++) {
+        var cl = tr.clips[c], isCard = false;
+        try { isCard = /06\.08_logo-end-card/.test(cl.projectItem.getMediaPath()); } catch (e4) {}
+        if (!isCard) end = Math.max(end, cl.end.seconds);
+      }
+    }
+    var at = (opts.at !== undefined && opts.at !== null) ? Number(opts.at) : Math.max(0, end - dur);
+    var track = -1;
+    for (var t = 1; t < seq.videoTracks.numTracks && track < 0; t++) {
+      var busy = false, tt = seq.videoTracks[t];
+      for (var k = 0; k < tt.clips.numItems; k++) if (tt.clips[k].end.seconds > at + 0.01 && tt.clips[k].start.seconds < at + dur - 0.01) busy = true;
+      if (!busy) track = t;
+    }
+    if (track < 0) { ensureTracks(seq, seq.videoTracks.numTracks + 1, seq.audioTracks.numTracks); track = seq.videoTracks.numTracks - 1; }
+    seq.overwriteClip(item, ticksFrame(at), track, -1);
+    marker(seq, at, "Wedding title", "kit 07.09 — fades out by itself; the picture dips to black under it, then the 06.08 logo end card", 4);
+    log("wedding title on V" + (track + 1) + " at " + fmt(at));
+    return { sequence: seq.name, at_s: Math.round(at * 1000) / 1000, track: "V" + (track + 1), picture_end_s: Math.round(end * 1000) / 1000,
+             next: "Play it: the names should sit on a calm wide shot of the couple. Slide it (or the shot under it) if a cut lands mid-title." };
+  }
+
   function run(step, manifestPath, opts) {
     logs = [];
     var t0 = new Date().getTime();
     try {
       if (!app.project) throw new Error("no project open in Premiere");
-      if (String(step) !== "endcard" || manifestPath) loadManifest(manifestPath);   // the end card needs no manifest
+      if ((String(step) !== "endcard" && String(step) !== "title") || manifestPath) loadManifest(manifestPath);   // the end card and title need no manifest
       var o = parseOpts(opts), r;
       switch (String(step)) {
         case "status": r = stepStatus(o); break;
@@ -838,6 +885,7 @@ var BUWAN = (function () {
         case "skeleton": r = stepSkeleton(o); break;
         case "build": r = stepBuild(o); break;
         case "endcard": r = stepEndcard(o); break;
+        case "title": r = stepTitle(o); break;
         case "basics":
           // the same-day scope: import, organize (bins + labels, rejects, flagged), dead air, A-Roll clean, steady. No sync, no sequences to cut in.
           r = { "import": stepImport({ limit: 100000 }), organize: stepOrganize(o, false), deadair: stepDeadair({ limit: 100000 }) };
@@ -874,5 +922,5 @@ var BUWAN = (function () {
     }
   }
 
-  return { run: run, version: "1.7.0", steps: ["status", "import", "organize", "cull", "relink", "grade", "enhance", "deadair", "aroll", "steady", "sync", "skeleton", "build", "endcard", "basics", "all"] };
+  return { run: run, version: "1.9.0", steps: ["status", "import", "organize", "cull", "relink", "grade", "enhance", "deadair", "aroll", "steady", "sync", "skeleton", "build", "endcard", "title", "basics", "all"] };
 })();

@@ -1,5 +1,17 @@
 # Changelog
 
+## buwan 1.12.0 · buwan-premiere 1.9.0 — 2026-11-10  (/plugin marketplace update buwan-films, update both plugins, restart; then /buwan:setup-kit once to re-render 06.08)
+**The couple's names: kit 07.09 "Wedding title" and `/buwan:title`.**
+- **The look:** a see-through title over the last calm wide shot of the couple, no panel, no letterbox.
+  - "The Wedding of" in Cormorant Garamond 50 px at the top.
+  - The names in Cinzel capitals, 52 px, with wide tracking that opens from .62 em to .92 em, joined by "and".
+  - A gold hairline, then "BUWAN FILMS" in gold Cinzel 20 px at the foot.
+  - It fades in out of a soft blur, holds, and fades out 6.2–7.2 s by itself, before the 06.08 end card.
+- **`/buwan:title "<Name> and <Name>"`:** checks the spelling, renders the title with the real names (`render-kit.js render 07.09 --text …`), and places it.
+- **Premiere bridge step `title`:** imports into `11 Graphics` and lays the title on the first free track above V1 over the last 7.4 s of picture, with a marker. Nothing in the cut moves.
+- The engine's end marker, the graphics, SDE and end-card skills and the house rules now name 07.09 as the closing title (07.07 stays as the SDE title plate).
+- **06.08 end card:** the petals are now crescent moons, 40 of every size drifting and turning, and a ring of 18 crescents bursts out from the logo on the bloom.
+
 ## buwan 1.11.0 · buwan-premiere 1.8.0 — 2026-11-10  (/plugin marketplace update buwan-films, update both plugins, restart; then /buwan:setup-kit once to prerender the new card)
 **The logo end card (kit 06.08) and `/buwan:end-card`.** The last shot of every film is now the official emblem landing on black (7.7 s), in the spirit of the studio's reference SDE ending.
 - **The animation, "two become one":**

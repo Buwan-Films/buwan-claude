@@ -17,7 +17,7 @@ Gates still apply, rounds don't. Saved look, minimal captions, one converge pass
 | Gate | `/buwan:proof-gate <edl> --mode sde` — must pass (or a one-line override). |
 | 03 Audio | Auto-match to −17 LUFS + limiter −6 dBFS, one measurement. |
 | 04 Grade | Saved look (Warm or Cool) on an adjustment layer, grade check on 6 stills. |
-| 05 Graphics | SDE title plate (07.07) + the logo end card (06.08, `/buwan:end-card`) only; captions only where speech is unclear. One converge pass. |
+| 05 Graphics | SDE title plate (07.07) at the open, the wedding title (07.09, `/buwan:title`) and the logo end card (06.08, `/buwan:end-card`) only; captions only where speech is unclear. One converge pass. |
 | 06 SFX | Riser into the title, hit on the logo. |
 | 07 Review | One watch-down with the editor. |
 | 08 Export | H.264 master for the venue screen: 1920×1080, 23.976, 20 Mbps, −17 LUFS (check the venue's playback device), plus a backup copy on a second drive/USB. |
