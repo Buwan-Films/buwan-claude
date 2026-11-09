@@ -85,6 +85,13 @@ try {
   bad("Kit files", e.message);
 }
 
+// the engine's ffmpeg with vid.stab (smooth glide on shaky Creative/Glider shots in the enhanced clips)
+if (isMac) {
+  const r = spawnSync("bash", [path.join(ROOT, "scripts", "build-ffmpeg-vidstab.sh")], { encoding: "utf8" });
+  if (r.status === 0) ok("ffmpeg with vid.stab", (r.stdout || "").trim().split("\n").pop());
+  else bad("ffmpeg with vid.stab", "build failed: see ~/.buwan/build/*.log (needs Homebrew). Without it shaky clips are cut to their best part but not stabilized.");
+}
+
 // 3 + 4. Renderer and pre-rendered clips
 if (!has("ffmpeg")) bad("ffmpeg", isWin ? "Install: winget install Gyan.FFmpeg  (then reopen the terminal)" : "Install: brew install ffmpeg");
 else ok("ffmpeg found");

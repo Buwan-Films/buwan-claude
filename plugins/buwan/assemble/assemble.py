@@ -10,6 +10,8 @@
   assemble.py sync      <project> [--anchor "2-Main"] [--trusted cam ...]  -> edit/assemble/sync.json + multicams.json
   assemble.py bycategory <project>           -> <WORK>/BY_CATEGORY/<category>[/<sub-bin>]/ (APFS clones of RAW_COPY; rejects left out; shaky Creative clips trimmed to their best cut)
   assemble.py exposure  <project>            -> edit/assemble/exposure.json (per-clip exposure fix applied before the look)
+  assemble.py look      <project> --reference <film>  -> edit/grade/Buwan_Film.cube (a look LUT matched to the studio's film)
+  assemble.py render    <project> [--source <raw>]    -> <raw>_ENHANCED_<date-time>/ (exposure + look, speech cut to its ranges with clean audio, shaky Creative best cut + vid.stab; HEVC 10-bit)
   assemble.py organize  <project> --categories edit/assemble/categories.json  -> edit/organize_vN.fcpxml
   assemble.py selects   <project> --selects edit/assemble/selects.json      -> edit/selects_vN.fcpxml
   assemble.py build     <project> --selects edit/assemble/selects.json [--name "SDE Cut v1"]  -> edit/sde-cut_vN.fcpxml + .edl
@@ -175,6 +177,27 @@ def cmd_exposure(a):
             rep.append(f"| {v['name']} | {v['camera']} | {v.get('yavg', '')} | {v['ev']:+.2f} | {v['reason']} |")
     (project / "edit" / "exposure_report.md").write_text("\n".join(rep) + "\n")
     log(f"wrote {adir(project) / 'exposure.json'} and edit/exposure_report.md")
+
+
+def cmd_look(a):
+    import look
+    project = Path(a.project)
+    clips = [c for c in load_clips(project).values() if c.camera != "music"]
+    look.run(project, clips, Path(a.reference), a.name, Path(a.out) if a.out else project / "edit" / "grade", a.strength)
+
+
+def cmd_render(a):
+    import render
+    project = Path(a.project)
+    wc = load_json(adir(project) / "workcopy.json") if (adir(project) / "workcopy.json").exists() else {}
+    from workcopy import _footage_root
+    raw_copy = Path(wc["raw_copy"]) if wc.get("raw_copy") else _footage_root(project)
+    source = Path(a.source) if a.source else Path(wc.get("source") or raw_copy)
+    cube = a.look
+    if not cube and (adir(project) / "look.json").exists():
+        cube = load_json(adir(project) / "look.json").get("cube")
+    render.run(project, load_clips(project), load_categories(project, a.categories), raw_copy, source,
+               Path(a.out) if a.out else None, cube, a.workers, a.limit, a.only)
 
 
 def cmd_music(a):
@@ -480,6 +503,8 @@ def main():
     s = sub.add_parser("bycategory"); s.add_argument("project"); s.add_argument("--raw", help="the RAW_COPY folder (default: from edit/SOURCES.md)"); s.add_argument("--categories"); s.set_defaults(f=cmd_bycategory)
     s = sub.add_parser("exposure"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=6)
     s.add_argument("--look", default="warm", choices=["warm", "cool", "bw"]); s.add_argument("--remeasure", action="store_true", help="read the footage again instead of reusing exposure.json"); s.set_defaults(f=cmd_exposure)
+    s = sub.add_parser("look"); s.add_argument("project"); s.add_argument("--reference", required=True, help="the studio's finished film to match"); s.add_argument("--name", default="Buwan_Film"); s.add_argument("--out"); s.add_argument("--strength", type=float, default=1.0); s.set_defaults(f=cmd_look)
+    s = sub.add_parser("render"); s.add_argument("project"); s.add_argument("--source", help="the raw folder (read only; default: the original from workcopy.json)"); s.add_argument("--out", help="continue an earlier run"); s.add_argument("--look", help=".cube (default: edit/assemble/look.json)"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=3); s.add_argument("--limit", type=int, default=0); s.add_argument("--only", choices=["speech", "shaky", "clip"]); s.set_defaults(f=cmd_render)
     s = sub.add_parser("music"); s.add_argument("project"); s.add_argument("--intro"); s.add_argument("--main", required=True); s.set_defaults(f=cmd_music)
     s = sub.add_parser("sync"); s.add_argument("project"); s.add_argument("--anchor"); s.add_argument("--trusted", nargs="*"); s.set_defaults(f=cmd_sync)
     s = sub.add_parser("enhance"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=4); s.add_argument("--render", action="store_true", help="also write cleaned WAVs to edit/audio/clean"); s.set_defaults(f=cmd_enhance)

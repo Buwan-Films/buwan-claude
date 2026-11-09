@@ -1,50 +1,45 @@
 ---
 name: basics
-description: The Buwan same-day basics — what Claude Code does for a new wedding project and nothing more — dedupe (working copy on the SSD), cull, categorize, dead air, label colors, and shaky Creative/Glider footage (best cut first; Warp Stabilizer only on gimbal shots, on their best cut). No multicam sync, no story, no cut, no music. The editor made the project and placed the music by hand. Use when an editor says "basics", "prep the footage", "start the wedding project", "run it on the cards", or drops a footage folder for a wedding. Works for Premiere Pro (through the bridge) and Final Cut Pro (through the FCPXML).
-argument-hint: "<YYYY-MM-DD>_<Couple> --footage <raw folder on the SSD> [--grade warm|cool|bw] [--new-clips]"
+description: The Buwan same-day basics — what Claude Code does for a new wedding project and nothing more: new ENHANCED clips from the raw footage, into a new folder on every run, the raw files never touched — dead air out of interviews, letters, speeches and vows with cleaned −17 LUFS audio; the exposure fixed on every clip; the studio look matched to the studio's own film; shaky Creative/Glider shots cut to their best part with a smooth glide. No copying, no dedupe, no file organizing, no sync, no story, no cut, no music. Use when an editor says "basics", "enhance the clips", "prep the footage", "start the wedding project", "run it on the cards", or drops a footage folder for a wedding. Works for any editing app (the clips are HEVC 10-bit .mov).
+argument-hint: "<YYYY-MM-DD>_<Couple> --footage <raw folder on the SSD> [--reference <studio film>]"
 ---
 
-# The basics — the only goal for a new wedding project
+# The basics — enhanced clips, the raw untouched
 
-Load `/buwan:house-rules`, then the editor's app playbook (`${user_config.nle}`: `/buwan:premiere` + `/buwan-premiere:premiere-apply`, or `/buwan:final-cut`). The engine does the work (`node "${CLAUDE_PLUGIN_ROOT}/scripts/assemble.js" …`); you make the category calls and report.
+Load `/buwan:house-rules`. The engine does the work (`node "${CLAUDE_PLUGIN_ROOT}/scripts/assemble.js" …`); you check the results and report.
 
-**Scope — do these eight things and stop:**
+**The rule:** the raw folder is only ever read. Every run writes new clips into a new folder next to it, `<raw>_ENHANCED_<YYYYMMDD-HHMM>/`, with the same camera/card folders and clip names (`.mov`). Nothing is copied, deduplicated, moved or reorganized.
 
-| # | Step | Engine | What the editor gets |
+**Scope — these four things, then stop:**
+
+| # | What | Engine | What the editor gets |
 |---|---|---|---|
-| 1 | **Dedupe + working copy** | `workcopy <project> --source <raw folder>` | `<raw>_WORK/RAW_COPY/` on the same SSD, verified by SHA-256, byte-identical duplicates skipped (`logs/dedupe_report.md`); originals never read again |
-| 2 | **Cull** | `scan <project>` → `cull <project>` | unusable clips rejected (false start, black, blown, dead) — flags, never deletions |
-| 3 | **Categorize** | `/buwan:organize` steps 1–2 → `edit/assemble/categories.json` | every clip in one of the 12 studio categories (same-day: from folder names + audio), and `02 Prep & Details` split into **Bride prep** / **Groom prep** sub-bins from one frame per clip (`edit/assemble/subbins.json`) |
-| 4 | **Dead air** | `enhance <project> --render` → `deadair <project>` | speech ranges with the silence cut out; cleaned −17 LUFS WAVs in `AUDIO_CLEAN/`; the **A-Roll clean** to listen through |
-| 5 | **Label colors** | Premiere: bridge `organize` · Final Cut: `organize <project>` FCPXML (roles) | the house colors per category; rejects in `00 Rejected (cull)`; soft / dark / blown / frozen b-roll in `00 Flagged/<reason>` |
-| 6 | **Shaky — Creative/Glider only** | `steady <project>` | for every shaky clip on the creative/glider camera, **select the best cut first**: a steady stretch (≥2.5 s) becomes a Steady pick, no stabilizing. Only **gimbal shots** with no steady stretch are stabilized — **Warp Stabilizer on their best cut** (the least-shaky ~5 s), never the whole clip. Handheld shots aren't stabilized; they stay in Flagged with their best cut in the reason, as does anything nothing can save. Gimbal = the camera folder says so (Glider, Gimbal, Ronin, RS 3…) or the editor lists the cards/clips in `edit/assemble/gimbal.txt` (or `steady --gimbal "1-Creative/5/"`; `*` = the whole Creative camera ran on the gimbal) — ask the editor which cards were on the gimbal if the folders don't say. Shaky clips on other cameras are left alone — a shaky reaction is still a reaction |
-| 7 | **Copy by category** | `bycategory <project>` | `<WORK>/BY_CATEGORY/<category>[/Bride prep · Groom prep]/<camera>_<card>_<clip>` — the working copy organized like the bins: APFS clones of `RAW_COPY` (instant, no extra space), cull rejects left out, flagged clips in `00 Flagged/<reason>`, and each shaky Creative clip trimmed to its best cut (`…_best_<in>-<out>`, no re-encode; the full clip stays in `RAW_COPY`). Read-only like `RAW_COPY`. Premiere relinks to it (bridge `relink`) |
-| 8 | **Grade + exposure** | `exposure <project>` → `premiere --grade <look>` | every camera clip measured; clips outside the look's brightness band (`kit/grade/targets.json`, e.g. 55–150 for Warm) get a gentle Lumetri **Exposure** fix (±1.5 EV max, nudged just inside the band, low-key shots like rings on black left alone), then the **Buwan look LUT** (Premiere 26.x: the editor picks Creative → Look → Buwan_Warm once on one clip and the bridge copies it with `grade {look_from}`; a script can't load a LUT there). Premiere: on the **A-Roll clean** and **STABILIZE – Warp** sequences now, the editor's own sequences only when asked (Premiere can't script effects on bin clips). Report: `edit/exposure_report.md` |
+| 1 | **Dead air + speech audio** — interviews, letters, speeches, vows | `enhance <project> --render` → `deadair <project>` | each speech clip cut down to its speech ranges (silences out, 20 ms fades at the joins), laid on the cleaned audio (high-pass, noise reduction scaled to the noise, voice EQ) and levelled to **−17 LUFS, peaks −6 dBFS**. A speech clip whose own audio is silent (lav or recorder elsewhere) is rendered whole and flagged |
+| 2 | **Exposure on every clip** | `exposure <project>` | every camera clip measured (8-bit, keyframes); outside the look's brightness band (`kit/grade/targets.json`, Warm 55–150) it gets a gentle fix, at most ±1.5 EV, never clipping highlights; low-key shots (rings on black) left alone and listed. `edit/exposure_report.md` |
+| 3 | **The studio look** | `look <project> --reference <studio film>` (once per reference; reuse the `.cube`) | a 33-point LUT that matches this wedding's footage to the studio's finished film: its tone (soft film contrast, lifted blacks, a soft shoulder that keeps whites white) and its color by shadows / mids / highlights. Check `edit/grade/<name>_preview.jpg` (before / after) before rendering |
+| 4 | **Shaky Creative/Glider shots** | `steady <project> [--gimbal …]` | the best cut of each shaky clip on the Creative/Glider camera, then a smooth glide (vid.stab, two passes, a slight zoom to hide the moving edge). Other cameras are left alone |
 
-**Not in scope — only when the editor asks:** multicam sync (`/buwan:multicam`), the story (`/buwan:plot`), the cut (`/buwan:rough-cut` / `assemble.js build`), music, graphics, grading the editor's own sequences, export. Never start any of them on your own, and never create a cutting sequence.
+Then `render <project>` writes every clip: exposure fix → look → HEVC 10-bit 4:2:0, 80 Mbps, Rec.709 tags, the original audio on non-speech clips. Speech and shaky clips render first so they can be checked while the rest finishes. `render_log.csv` in the folder says what was done to each clip.
 
-## What the editor did first (check, don't do)
-- Made the project by hand: Premiere `<WORK>/PROJECT/<Couple>_SDE.prproj` with **File → Project Settings → Scratch Disks** on `PROJECT/` (and Window → Extensions → MCP Bridge running); Final Cut: a library on the SSD next to `<WORK>/`.
-- Put the music where they want it. The engine does not touch music in this run.
-- Pointed you at the raw clips folder: one subfolder per shooter (`1-Main`, `2-Creative` or `Glider`, `3-Reactions`, `4-Drone`, `Audio`). Shooters add clips to their own folder as the day goes.
+**Not in scope — only when the editor asks:** multicam sync (`/buwan:multicam`), the story (`/buwan:plot`), the cut (`/buwan:rough-cut`, `/buwan:sde`), Premiere bins and labels (`/buwan-premiere:premiere-apply`), music, graphics, export.
 
-## Run (unattended, ~15–25 min per 300 clips)
-1. `workcopy` (step 1). If the SSD is short on space the engine stops and says so → `/buwan:intake --in-place` and `scan --dedupe` instead.
-2. `scan` → `cull` → show the rejected list with reasons.
-3. Categories → `categories.json`. On an SDE: folder name first, then audio (speech-level loudness over long stretches = `01 Speech`). Then one frame per prep clip on numbered contact sheets → `subbins.json` (Bride prep / Groom prep), and on the same sheets catch venue shots (→ `06 Establishing`) and letters, vows or interviews read on camera (→ `01 Speech`).
-4. `enhance --render` → `deadair`. Report minutes of speech kept and dead air removed; name the clips under 15 dB SNR (use the recorder file).
-5. `steady [--gimbal <cards/clips>]`. Report: best cuts · gimbal shots to Warp (on their best cut) · handheld, not stabilized · too shaky.
-6. `bycategory` (step 7) → `exposure` (step 8). Report the folder counts, the trimmed shaky clips and the exposure fixes (how many brighter / darker, the low-key ones left alone).
-7. Apply in the app:
-   - **Premiere:** `premiere <project> --grade <look>` → bridge `basics` (= `import` → `organize` → `deadair` → `aroll` → `steady` → `relink` → `grade` on A-Roll clean and STABILIZE). If the bridge times out, run the steps one by one (`relink` in batches of 150). Result: category bins with labels, `00 Rejected (cull)`, `00 Flagged/<reason>`, `01 Speech/Speech ranges` subclips, `01 Speech/Clean audio`, the **A-Roll clean** sequence, `<category>/Steady picks` subclips, and a **STABILIZE – Warp** sequence holding the clips that need Warp Stabilizer (effect applied; open it once so Premiere analyses).
-   - **Final Cut:** `organize <project> --event "<Couple>"` → `edit/organize_vN.fcpxml` (keywords = bins, roles = colors, rejects as Rejected, warnings as notes, speech ranges as Favorites named `speech`, steady picks as Favorites named `steady` + keyword `steady pick`, gimbal clips for stabilizing with keyword `stabilize`, a Favorite named `stabilize` on the best cut and a note). Then `aroll <project> --event "<Couple>"` → `edit/aroll-clean_vN.fcpxml`. Editor imports both (**File → Import → XML**), sets the role colors once (**Modify → Edit Roles**), ticks **Stabilization** in the Inspector on the `stabilize` clips (cut from their `stabilize` Favorite).
-8. `handoff <project> --title "<Couple>"` → `<WORK>/EDITOR_START_HERE.md`.
-9. Report a table: step · result · check by hand. **Stop.**
+## Run (unattended; ~1 h per 4 h of footage on Apple Silicon)
+1. `scan <project> --footage "<raw folder>"` → `cull <project>` (unusable clips — black, false starts — are left out of the render and listed). No copy, no dedupe.
+2. Find the speech: `/buwan:organize` step 1 on audio (speech-level loudness over long stretches = `01 Speech`), then **look at one frame per candidate**: a letter or vows read on camera, or an interview, is speech even when it sits among prep clips. Save `edit/assemble/categories.json`.
+3. `enhance --render` → `deadair`. Report minutes of speech kept and dead air removed; name the speech clips with no usable audio of their own.
+4. `steady` (ask which Creative cards were on the gimbal if the folders don't say) → `exposure`.
+5. `look --reference "<studio film>"` the first time (the editor names the film, e.g. the studio's last SDE); show the preview sheet. Later runs reuse `edit/assemble/look.json`, or `render --look <.cube>`.
+6. Test first: `render <project> --out <folder> --only speech --limit 2`, then `--only shaky --limit 2`, then `--only clip --limit 2`. Check: HEVC Main 10; speech duration = speech kept; speech −17 ±1 LUFS, peaks ≤ −6; a graded frame against its raw frame. Then `render <project>` for everything (a new folder; pass `--out` only to continue a run that stopped).
+7. Report a table: what · result · check by hand. **Stop.**
 
-## New clips from the shooters (`--new-clips`)
-Same folders, more files: `workcopy` again (copies only the new, skips duplicates of anything already copied) → `scan` → `cull` → categories for the new paths → `enhance --render` → `deadair` → `steady` → `bycategory` → `exposure` → apply (Premiere `status` → `import` → `organize` → `deadair` → `steady` → `relink`; Final Cut: a new `organize_vN.fcpxml`, import adds only what is new) → `handoff`. Nothing already in the project is touched.
+## New clips from the shooters
+Run the same skill again on the same raw folder: a new `<raw>_ENHANCED_<date-time>/` with every clip. To only add the new ones to an earlier run, pass that run's folder with `--out`; clips already rendered there are skipped.
+
+## Needs
+- ffmpeg with vid.stab: `~/.buwan/ffmpeg-vidstab/bin/ffmpeg` (`scripts/build-ffmpeg-vidstab.sh`, called by `/buwan:setup-kit`). Without it the shaky clips are cut to their best part but not stabilized, and the log says so.
+- Disk: about 0.6 GB per minute of footage for the enhanced clips.
 
 ## Rules
-- Never write into the raw folder, `RAW_COPY/` or `BY_CATEGORY/` by hand (the hook blocks it; only `assemble.js bycategory` adds clips there). Outputs go to `<project>/edit/`, `AUDIO_CLEAN/`, `PROJECT/`.
-- Rejects and flags are never deletions; the editor can un-reject by name (`cull.json`, `reject: []`).
-- One line the editor can act on at the end of every step; no theory.
+- Never write into the raw folder (the hook blocks it). Outputs go to `<raw>_ENHANCED_*/` and `<project>/edit/`.
+- Keep vows, letters and speeches verbatim: dead air is cut only between words, never inside them.
+- The look comes from the studio's own film, never a stock LUT. B&W is not applied in the basics.

@@ -139,7 +139,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
   <div class="aside" style="margin-top:18px">
     <span class="tag">Starting a wedding project? Pick your app's pipeline first</span>
     <div class="apps" style="margin-top:8px"><a class="default" href="https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A" style="text-decoration:none">Premiere Pro pipeline →</a><a class="default" href="https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF" style="text-decoration:none">Final Cut Pro pipeline →</a></div>
-    <p style="margin-top:8px">Each one says what you do by hand (the project, the music) and what Claude Code does for you (dedupe, cull, categorize, dead air, label colors, shaky creative shots) — and stops. This page is the full map of every stage, for when you ask for more.</p>
+    <p style="margin-top:8px">Each one says what you hand over (the raw folder, the studio film to match) and what Claude Code does for you (enhanced clips: dead air and speech audio, exposure, the studio look, shaky Creative shots with a smooth glide) — and stops. This page is the full map of every stage, for when you ask for more.</p>
   </div>
   <div class="apps" style="margin-top:16px"><span class="default">/buwan:basics</span><span>/buwan:multicam</span><span class="default">/buwan:intake</span><span class="default">/buwan:assemble</span><span>/buwan:organize</span><span>/buwan:plot</span><span>/buwan:rough-cut</span><span>/buwan:proof-gate</span><span>/buwan:audio</span><span>/buwan:grade</span><span>/buwan:graphics</span><span>/buwan:sfx</span><span>/buwan:review</span><span>/buwan:export</span><span>/buwan:clipper</span><span class="default">/buwan:sde</span></div>
 </header>
@@ -187,8 +187,8 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
   <div class="stage auto">
     <div class="card">
       <span class="tag">01 · <b class="auto">Automatic</b></span>
-      <h3>Intake — a working copy on the drive</h3>
-      <p>Same-day: the raw clips are mirrored into <span class="spec">&lt;raw&gt;_WORK/RAW_COPY/</span> next to the raw folder on the same SSD — free space checked first, every file verified by SHA-256, <b>byte-identical duplicates skipped</b> and logged (a card copied twice or a <span class="spec">z/</span> backup never imports twice). <span class="spec">PROJECT/</span>, <span class="spec">AUDIO_CLEAN/</span>, <span class="spec">EXPORTS/</span> and <span class="spec">logs/</span> sit beside it; the project reads only from the copy and both the copy and the originals are read-only to Claude. Highlights and features copy into the workspace instead; no room → reference in place with the duplicate check. <span class="spec">/buwan:intake --work-copy</span></p>
+      <h3>Intake — the raw folder, read only</h3>
+      <p>Same-day: the raw clips stay where the shooters put them, one subfolder per shooter, and Claude only reads them. Enhanced clips go into a new folder next to the raw on every run (<span class="spec">&lt;raw&gt;_ENHANCED_&lt;date-time&gt;/</span>); nothing is copied, deduplicated or moved. Highlights and features: <span class="spec">/buwan:intake</span> sets up the project folder.</p>
     </div>
   </div>
 
@@ -216,7 +216,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
       </div>
       <div class="aside">
         <span class="tag">A new wedding project: the basics, then stop</span>
-        <p style="margin-top:6px">The editor makes the project and places the music. Claude Code does six things — <b>dedupe</b> (the working copy), <b>cull</b>, <b>categorize</b>, <b>dead air</b> (with the <b>A-Roll clean</b>), <b>label colors</b>, and <b>shaky Creative/Glider shots</b> (the best cut first: a steady stretch becomes a Steady pick; only gimbal shots are stabilized, with Warp Stabilizer / Stabilization on their best cut; handheld or too shaky stays Flagged; other cameras untouched) — writes <span class="spec">EDITOR_START_HERE.md</span>, and stops. No multicam sync, no story, no cut, no sequence to cut in. Those are skills the editor asks for: <span class="spec">/buwan:multicam</span>, <span class="spec">/buwan:plot</span>, <span class="spec">/buwan:sde</span>. Per-app detail: <a href="https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A" style="color:var(--gold)">Premiere Pro</a> · <a href="https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF" style="color:var(--gold)">Final Cut Pro</a>. <span class="spec">/buwan:basics</span></p>
+        <p style="margin-top:6px">Claude Code makes <b>enhanced clips</b> and stops. It reads the raw folder and writes a new one next to it on every run, <span class="spec">&lt;raw&gt;_ENHANCED_&lt;date-time&gt;/</span>, same folders and names: <b>dead air</b> out of interviews, letters, speeches and vows on cleaned −17 LUFS audio; <b>exposure</b> fixed on every clip; the <b>studio look</b> matched to the studio's own film; shaky <b>Creative/Glider</b> shots cut to their best part with a smooth glide. No copying, no dedupe, no sorting, no sync, no story, no cut. Per-app hand-off: <a href="https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A" style="color:var(--gold)">Premiere Pro</a> · <a href="https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF" style="color:var(--gold)">Final Cut Pro</a>. <span class="spec">/buwan:basics</span></p>
       </div>
       <div class="aside">
         <span class="tag">Sync by sound, not by clock</span>

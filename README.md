@@ -8,20 +8,16 @@ One studio standard for every Buwan editor, in every editing app. Claude Code lo
 | `buwan-premiere` | Premiere editors only | The Premiere Pro bridge (premiere-pro-mcp 1.11.5) + the apply layer: everything the engine decided, done inside the open Premiere project (`/buwan-premiere:premiere-apply`, `/buwan-premiere:wedding-day`) |
 
 ## What happens on a new wedding project
-The editor makes the project and places the music. Claude Code does **the basics** and stops:
+Claude Code makes **enhanced clips** from the raw footage and stops. The raw folder is only read; every run writes a new folder next to it, `<raw>_ENHANCED_<date-time>/`, with the same camera/card folders and clip names (HEVC 10-bit `.mov`). No copying, no dedupe, no file organizing.
 
 | | How |
 |---|---|
-| **Dedupe + working copy** | `assemble.js workcopy`: the raw clips mirrored into `<raw>_WORK/RAW_COPY/` on the same SSD, every file verified by hash, byte-identical duplicates skipped and logged; the project reads only from the copy, originals and copy read-only to Claude |
-| **Cull** | unusable clips rejected (false start, black, blown, dead) — flags, never deletions |
-| **Categorize** | every clip in one of the 12 studio categories; prep split into **Bride prep** / **Groom prep** sub-bins |
-| **Dead air** | silences found and removed; speech ranges become subclips / Favorites, the **A-Roll clean** is the whole day's speech back to back; cleaned −17 LUFS WAVs |
-| **Label colors** | the same colors in every app (Premiere labels, Final Cut roles, Resolve clip colors); soft / dark / blown / frozen b-roll parked in `00 Flagged/<reason>` |
-| **Copy by category** | `assemble.js bycategory`: `<raw>_WORK/BY_CATEGORY/<category>[/Bride prep · Groom prep]/` — APFS clones of the working copy (no extra space), rejects left out, shaky Creative clips trimmed to their best cut; Premiere relinks to it |
-| **Grade + exposure** | `assemble.js exposure`: gentle per-clip exposure fix toward the studio look's brightness band, then the Buwan look LUT (in Premiere, picked once by hand on one clip and copied by the bridge) — on the A-Roll clean and STABILIZE sequences; the editor's own sequences when asked |
-| **Shaky — Creative/Glider only** | the best cut first (steady stretch → Steady pick); only **gimbal** shots are stabilized — Warp Stabilizer (Premiere) / Stabilization (Final Cut) on their best cut; handheld or too shaky → Flagged. Gimbal = camera folder named Glider/Gimbal/Ronin…, or listed in `edit/assemble/gimbal.txt` / `steady --gimbal` |
+| **Dead air + speech audio** | interviews, letters, speeches and vows cut down to their speech (silences out, 20 ms fades at the joins) on cleaned audio levelled to −17 LUFS, peaks −6 dBFS. A speech clip with silent camera audio renders whole and is flagged |
+| **Exposure on every clip** | `assemble.js exposure`: a gentle per-clip fix toward the studio look's brightness band (±1.5 EV max, highlights protected, low-key shots left alone) |
+| **The studio look** | `assemble.js look --reference <studio film>`: a LUT that matches this wedding's footage to the studio's finished film (tone with a soft film shoulder, color by shadows / mids / highlights); checked on a before / after sheet |
+| **Shaky — Creative/Glider only** | the best cut of each shaky clip, then a smooth glide (vid.stab). Other cameras untouched |
 
-On request only: `/buwan:multicam` (sync by audio: vows, interviews, ceremony), `/buwan:plot` (story), the cut, grading your own sequences, graphics, export.
+`assemble.js render` writes it all. On request only: `/buwan:multicam` (sync by audio), `/buwan:plot` (story), the cut, Premiere bins and labels (`/buwan-premiere:premiere-apply`), graphics, export.
 
 Pipeline pages, one per app — the editor opens theirs before starting: [**Premiere Pro**](https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A) · [**Final Cut Pro**](https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF) (copies in `plugins/buwan/reference/pipeline-*.html`).
 

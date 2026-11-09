@@ -1,5 +1,21 @@
 # Changelog
 
+## buwan 1.9.0 · buwan-premiere 1.6.0 — 2026-11-09  (/plugin marketplace update buwan-films, update both plugins, restart; then /buwan:setup-kit once to build the vid.stab ffmpeg)
+**The basics are now enhanced clips, nothing else.** `/buwan:basics` and `/buwan-premiere:wedding-day` read the raw folder (never written) and render new clips into a new folder next to it on every run, `<raw>_ENHANCED_<date-time>/`, with the same camera/card folders and names. No copying, no dedupe, no file organizing, no Premiere bins in the basics (those skills stay, on request).
+- **`assemble.js render`:** every camera clip gets the exposure fix and then the studio look, encoded as HEVC 10-bit 4:2:0, 80 Mbps, Rec.709 tags (VideoToolbox).
+  - Speech clips (interviews, letters, speeches, vows) are cut to their speech ranges with 20 ms fades, laid on the cleaned audio, and levelled again after the cut: −17 LUFS, peaks −6 dBFS. Tested at −17.8 / −16.9 LUFS on clips that came out of the clean-up at −21.3 / −18.2.
+  - A speech clip with silent camera audio renders whole and is flagged.
+  - Shaky Creative/Glider clips are cut to their best part and stabilized with vid.stab (two passes, smoothing 25, optimal zoom).
+  - Other clips keep their original audio.
+  - Speech and shaky clips render first. The run is resumable (`--out`), test runs use `--only speech|shaky|clip --limit N`, and every clip is logged in `render_log.csv`.
+- **`assemble.js look --reference <studio film>`:** builds the studio look from the studio's own film.
+  - The reference frames have the letterbox cropped, and black, title and B&W frames are skipped. This wedding's footage is sampled with its exposure fix applied.
+  - Matched in CIE Lab: the tone curve takes 70% of the reference's contrast, with a soft film shoulder (L* 100 → 95, so whites stay white).
+  - Color: a/b mean and spread are matched in 5 lightness bands, with saturation capped at +10% and near-whites protected.
+  - Output: a 33-point `.cube`, `edit/assemble/look.json`, and a before / after preview sheet.
+- `scripts/build-ffmpeg-vidstab.sh` builds ffmpeg 7.1.1 with libvidstab + VideoToolbox into `~/.buwan/ffmpeg-vidstab` (the system ffmpeg is untouched). `/buwan:setup-kit` runs it on macOS.
+- Skills, house rules, session card, README, MAINTAINING and the pipeline pages describe the new basics. `bycategory`, `relink`, Premiere sub-bins and the `basics` bridge step remain available on request.
+
 ## buwan 1.8.0 · buwan-premiere 1.5.0 — 2026-11-09  (/plugin marketplace update buwan-films, then update both plugins and restart; reload the MCP Bridge panel)
 - **The working copy, organized by category** (`assemble.js bycategory`): `<raw>_WORK/BY_CATEGORY/<category>[/Bride prep · Groom prep]/<camera>_<card>_<clip>`, the same layout as the bins. Clips are APFS clones of `RAW_COPY` (instant, no extra space; a hard link or copy on other drives). Cull rejects are left out, flagged clips sit in `00 Flagged/<reason>`, and each shaky Creative clip with a best cut is trimmed to it without re-encoding (`…_best_<in>-<out>`; the full clip stays in `RAW_COPY`). The originals and `RAW_COPY` are only read. `BY_CATEGORY/` is protected by the source-protection hook like `RAW_COPY/`. The map is in `edit/assemble/bycategory.json`, the log in `logs/bycategory.csv`.
 - **Premiere relink** (bridge `relink`, in batches): project items point at their `BY_CATEGORY` clone. Same bytes, so subclips and sequence clips are unaffected. Trimmed clips stay on `RAW_COPY` so their ranges hold. Every bridge step still finds a clip by its `RAW_COPY` path after the relink.
