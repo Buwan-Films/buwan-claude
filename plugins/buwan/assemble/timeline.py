@@ -343,9 +343,9 @@ def build_plan(clips: dict[str, Clip], categories: dict, cull: list[dict], music
     markers_global.append({"at": peak[0], "name": "MUSIC PEAK — burst montage", "chapter": False})
     if opt["title_at"] == "end":
         markers_global.append({"at": max(T2, film_end - 10.0), "name": "GRAPHIC: 07.07 title card — The Wedding of … (title closes the film)", "todo": True})
-        markers_global.append({"at": max(T2, film_end - 4.0), "name": "GRAPHIC: 06.02 logo reveal", "todo": True})
+        markers_global.append({"at": film_end, "name": "GRAPHIC: 06.08 logo end card — after the title plate, on black (/buwan:end-card)", "todo": True})
     else:
-        markers_global.append({"at": max(T2, film_end - opt["logo_lead"]), "name": "GRAPHIC: 06.02 logo reveal + 06.07 end credits", "todo": True})
+        markers_global.append({"at": max(T2, film_end - opt["logo_lead"]), "name": "GRAPHIC: 06.07 end credits, then 06.08 logo end card (/buwan:end-card)", "todo": True})
     if opt["final_hold_s"] > 0:
         markers_global.append({"at": max(T2, film_end - opt["final_hold_s"]), "name": f"FINAL HOLD — one shot, {opt['final_hold_s']:.0f}s, last vow lines over it", "todo": False})
     # pin global markers to the gap/clip they fall in

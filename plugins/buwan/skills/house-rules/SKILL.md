@@ -99,7 +99,7 @@ Measured from the Adrian & Lara reference (6:52, 146 cuts, 2.8 s average). These
 5. **Hold the vow.** Two-shot of the couple, 3–4 s per shot, at most two cutaways. No b-roll churn under the vow lines. It sits in the quietest part of the film.
 6. **Move the kiss to peak 2.** Chronology bends for the music.
 7. **Three B&W shots, intimate only** — a smile in prep, a parent's embrace, a tear. Never a wide, never the entourage.
-8. **End on one long hold with the last vow lines.** 25–30 s, one shot, no cuts. Then the title card and the logo — **the title closes an SDE** (highlight films keep the title on the first hit).
+8. **End on one long hold with the last vow lines.** 25–30 s, one shot, no cuts. Then the title card and the **logo end card (06.08)** as the very last shot — **the title closes an SDE** (highlight films keep the title on the first hit).
 9. Gate numbers for SDE (`/buwan:proof-gate --mode sde`): avg shot 2.5–3 s · burst ≥15 cuts/30 s at ~1.5 s · vow shots 3–4 s · final hold 25–30 s · two peaks · title in the last 10 s.
 
 ## Deliverables
@@ -162,8 +162,8 @@ Every component is a true 1920×1080 frame (05 Social = 1080×1920). Graphics ar
 - **03 Transitions:** crossfade · dip to black · moonrise mask · gold line wipe · light leak · soft blur · whip pan · Ken Burns zoom
 - **04 Motion graphics:** crescent accents · highlight ring · hairline underline · countdown numbers · animated stats · progress hairline · timeline of the day · floating tag
 - **05 Social (9:16):** hook screen · chapter card · location tag · BTS label · tip card · countdown teaser · kind words card · CTA end screen
-- **06 Branding:** official logo · logo reveal · logo placement · watermark · font pairings · ghost mark texture · end credits
+- **06 Branding:** official logo · logo reveal · logo placement · watermark · font pairings · ghost mark texture · end credits · **logo end card** (06.08: two crescent blades draw two interlocking rings that glide into one — the logo ring; on a warm bloom the official emblem snaps in from shards, petals and moons drifting, glow and sheen, BUWAN / FILMS out of a blur, fades to black, 7.7 s — the last shot of every film, `/buwan:end-card`)
 - **07 Film overlays (wedding):** couple introduction · vow caption · speaker lower third · date & venue tag · quote overlay panel · caption styles · SDE title plate · B-roll return
 - **08 Corporate events:** event title card · speaker lower third · run of show · stat screen · segment header · executive quote · partner logo wall · recap end card
 
-Default graphics by wedding beat: intro → SDE title plate or couple introduction · first looks / vows → vow caption (Italiana, one word max) · speeches → speaker lower third · between parts → dip to black or moonrise mask · peak bursts → whip pan / light leak, sparingly · end → logo reveal + end credits.
+Default graphics by wedding beat: intro → SDE title plate or couple introduction · first looks / vows → vow caption (Italiana, one word max) · speeches → speaker lower third · between parts → dip to black or moonrise mask · peak bursts → whip pan / light leak, sparingly · end → title plate (or end credits), then the logo end card 06.08 last.

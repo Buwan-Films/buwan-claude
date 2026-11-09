@@ -1,5 +1,24 @@
 # Changelog
 
+## buwan 1.11.0 · buwan-premiere 1.8.0 — 2026-11-10  (/plugin marketplace update buwan-films, update both plugins, restart; then /buwan:setup-kit once to prerender the new card)
+**The logo end card (kit 06.08) and `/buwan:end-card`.** The last shot of every film is now the official emblem landing on black (7.7 s), in the spirit of the studio's reference SDE ending.
+- **The animation, "two become one":**
+  - 0.2–0.75 s: two crescent blades, one from each side, sweep in and cross over the logo. Small Buwan crescents break off along each cut.
+  - 0.8–1.4 s: they draw two interlocking rings, like wedding bands.
+  - 1.35–1.85 s: the rings glide together into the logo's ring.
+  - 1.85 s: a warm ivory bloom and a heartbeat pulse. The official logo file itself (never redrawn), cut into seeded shards, snaps in with a soft gold glow behind it.
+  - Petals (ivory, blush, gold) and small moons drift down throughout.
+  - A light sheen crosses the gold, BUWAN (2.8 s) and FILMS (3.3 s) rise out of a blur, and a slow push-in runs throughout.
+  - It fades to black 6.4–7.3 s.
+  - Output: ProRes 4444, 1920×1080, 23.976. Layers in `reference/assets/buwan-emblem.png`, `buwan-word.png`, `buwan-films.png`.
+- **`/buwan:end-card`:** appends the card after the last picture and only appends; nothing in the editor's cut moves.
+  - **Premiere:** bridge step `endcard` (`premiere-snippet.js endcard - "{file, sequence}"`; needs no manifest). It imports the card into `11 Graphics`, places it on V1 after the last video clip, and adds a marker.
+  - **Final Cut / Resolve:** append by hand (steps in the skill).
+  - **Exported film:** `scripts/end-card.js append <film>` → `<film>_endcard.mp4`, with the card conformed to the film's size and frame rate and the sound padded under it.
+- The SDE timeline's end marker now asks for 06.08 after the title plate. The graphics and SDE skills, house rules and README use 06.08 as the closing shot (06.02 still opens a film).
+- The Buwan Video Kit page (artifact) shows the card as 06.08 and plays it.
+- Kit renderer: per-component hold (`HOLD`) and still frame (`STILL_AT`), so 06.08 ends on 0.4 s of black and its PNG shows the full logo.
+
 ## buwan 1.10.0 · buwan-premiere 1.7.0 — 2026-11-09  (/plugin marketplace update buwan-films, update both plugins, restart)
 **The basics no longer grade and no longer touch speech.** `/buwan:basics` and `/buwan-premiere:wedding-day` now do two things into `<raw>_ENHANCED_<date-time>/`: the exposure fix on every clip and the best cut + smooth glide on shaky Creative/Glider clips. Every other clip, interviews and vows included, keeps its original audio and full length.
 - **No test render by default:** the basics go straight to the full render (shaky clips first, spot-check one while the rest renders). A short `--limit 2` test only after an engine update or with a new camera.

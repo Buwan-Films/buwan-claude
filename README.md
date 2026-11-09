@@ -69,6 +69,7 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 | 05 Graphics + captions | `/buwan:graphics` |
 | 06 SFX | `/buwan:sfx` |
 | 07 Review | `/buwan:review` |
+| Logo end card | `/buwan:end-card` (kit 06.08: two blades become one ring, the emblem lands, last shot of every film) |
 | 08 Export | `/buwan:export`, then `/buwan:clipper` for reels |
 | Same-day edit, the full flow | `/buwan:sde` |
 | Engine reference | `/buwan:assemble` |

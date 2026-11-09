@@ -66,7 +66,11 @@ const VARIANTS = {
 };
 const NATIVE_TRANSITIONS = new Set(["03.01", "03.02", "03.06", "03.07", "03.08"]);
 // Components whose only text is fixed brand text (or text we blank out) are pre-rendered once.
-const FIXED = { "06.02": {}, "06.03": {}, "02.03": { "the first look": "" } };
+const FIXED = { "06.02": {}, "06.03": {}, "06.08": {}, "02.03": { "the first look": "" } };
+// Components that end on their own fade-out: only a short hold of black after (default hold is 2 s).
+const HOLD = { "06.08": 0.4 };
+// ... and whose still (--still PNG) is taken mid-hold, not from the last frame (which is black).
+const STILL_AT = { "06.08": 5.0 };
 
 async function openKit(pw) {
   const browser = await pw.chromium.launch();
@@ -179,7 +183,7 @@ async function renderOne(page, code, opts) {
   if (info.missing.length) console.warn(`Warning: text not found in ${code}: ${info.missing.map((s) => JSON.stringify(s)).join(", ")} (run "texts ${code}")`);
   await page.evaluate(() => document.fonts.ready);
 
-  const durS = Math.max(3, info.end / 1000 + (opts.hold ?? 2));
+  const durS = Math.max(3, info.end / 1000 + (opts.hold ?? HOLD[code] ?? 2));
   const frames = Math.round((durS * FPS_NUM) / FPS_DEN);
   const out = opts.out;
   fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
@@ -193,7 +197,7 @@ async function renderOne(page, code, opts) {
   ], { stdio: ["pipe", "inherit", "inherit"] });
   const ffDone = new Promise((res, rej) => { ff.on("error", rej); ff.on("exit", (c) => (c === 0 ? res() : rej(new Error(`ffmpeg exited ${c}`)))); });
 
-  let last;
+  let last, still;
   for (let i = 0; i < frames; i++) {
     const ms = (i * 1000 * FPS_DEN) / FPS_NUM;
     await page.evaluate((ms) => {
@@ -204,11 +208,12 @@ async function renderOne(page, code, opts) {
       });
     }, ms);
     last = await page.screenshot({ omitBackground: true, type: "png" });
+    if (STILL_AT[code] !== undefined && !still && ms >= STILL_AT[code] * 1000) still = last;
     if (!ff.stdin.write(last)) await new Promise((r) => ff.stdin.once("drain", r));
   }
   ff.stdin.end();
   await ffDone;
-  if (opts.still) fs.writeFileSync(out.replace(/\.mov$/i, ".png"), last);
+  if (opts.still) fs.writeFileSync(out.replace(/\.mov$/i, ".png"), still || last);
   return { out, seconds: +durS.toFixed(2), frames, size: `${W}x${H}` };
 }
 

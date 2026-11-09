@@ -773,12 +773,55 @@ var BUWAN = (function () {
              next: "Open the sequence; chapter markers (purple) mark the parts, red = peak/final hold, orange = graphics TODO (render with /buwan:graphics). Run grade and enhance on this sequence next." };
   }
 
+  function stepEndcard(opts) {
+    // the logo end card (kit 06.08) after the last picture of the sequence the editor names. Only appends:
+    // nothing already in their cut moves. {file:"<kit>/wedding/06.08_logo-end-card.mov", sequence:"SDE v3", at:<sec>}
+    if (!opts.file) throw new Error("endcard needs {file:'<workspace>/kit/wedding/06.08_logo-end-card.mov'}");
+    var f = new File(opts.file);
+    if (!f.exists) throw new Error("end card not found: " + opts.file + " (run /buwan:setup-kit to prerender the kit)");
+    var seq = targetSequence(opts);
+    var want = norm(f.fsName), item = null;
+    walk(app.project.rootItem, null, function (it) {
+      if (item || it.type === 2) return;
+      try { if (!it.isSequence() && norm(it.getMediaPath()) === want) item = it; } catch (e) {}
+    });
+    if (!item) {
+      var target = bin("11 Graphics");
+      app.project.importFiles([f.fsName], true, target, false);
+      for (var i = 0; i < target.children.numItems; i++) {
+        try { if (norm(target.children[i].getMediaPath()) === want) item = target.children[i]; } catch (e2) {}
+      }
+    }
+    if (!item) throw new Error("could not import " + f.fsName);
+    var end = 0;   // end of the picture (music may ring on under the card)
+    for (var v = 0; v < seq.videoTracks.numTracks; v++) {
+      var tr = seq.videoTracks[v];
+      for (var c = 0; c < tr.clips.numItems; c++) end = Math.max(end, tr.clips[c].end.seconds);
+    }
+    var at = (opts.at !== undefined && opts.at !== null) ? Number(opts.at) : end;
+    var track = 0;   // V1 is free after the last picture; with {at} inside the cut, use the first track free there
+    if (at < end - 0.01) {
+      track = -1;
+      for (var t = 0; t < seq.videoTracks.numTracks && track < 0; t++) {
+        var busy = false, tt = seq.videoTracks[t];
+        for (var k = 0; k < tt.clips.numItems; k++) if (tt.clips[k].end.seconds > at + 0.01 && tt.clips[k].start.seconds < at + 7.7) busy = true;
+        if (!busy) track = t;
+      }
+      if (track < 0) { ensureTracks(seq, seq.videoTracks.numTracks + 1, seq.audioTracks.numTracks); track = seq.videoTracks.numTracks - 1; }
+    }
+    seq.overwriteClip(item, ticksFrame(at), track, -1);
+    marker(seq, at, "Logo end card", "kit 06.08 — fades to black by itself; let the music ring out under it", 4);
+    log("end card on V" + (track + 1) + " at " + fmt(at));
+    return { sequence: seq.name, at_s: Math.round(at * 1000) / 1000, track: "V" + (track + 1), picture_end_s: Math.round(end * 1000) / 1000,
+             next: "Play the last 15 s: the title plate should dip to black, then the logo folds in. Extend the music tail to cover ~7.7 s past the picture, fading out by the card's end." };
+  }
+
   function run(step, manifestPath, opts) {
     logs = [];
     var t0 = new Date().getTime();
     try {
       if (!app.project) throw new Error("no project open in Premiere");
-      loadManifest(manifestPath);
+      if (String(step) !== "endcard" || manifestPath) loadManifest(manifestPath);   // the end card needs no manifest
       var o = parseOpts(opts), r;
       switch (String(step)) {
         case "status": r = stepStatus(o); break;
@@ -794,6 +837,7 @@ var BUWAN = (function () {
         case "steady": r = stepSteady(o); break;
         case "skeleton": r = stepSkeleton(o); break;
         case "build": r = stepBuild(o); break;
+        case "endcard": r = stepEndcard(o); break;
         case "basics":
           // the same-day scope: import, organize (bins + labels, rejects, flagged), dead air, A-Roll clean, steady. No sync, no sequences to cut in.
           r = { "import": stepImport({ limit: 100000 }), organize: stepOrganize(o, false), deadair: stepDeadair({ limit: 100000 }) };
@@ -830,5 +874,5 @@ var BUWAN = (function () {
     }
   }
 
-  return { run: run, version: "1.5.0", steps: ["status", "import", "organize", "cull", "relink", "grade", "enhance", "deadair", "aroll", "steady", "sync", "skeleton", "build", "basics", "all"] };
+  return { run: run, version: "1.7.0", steps: ["status", "import", "organize", "cull", "relink", "grade", "enhance", "deadair", "aroll", "steady", "sync", "skeleton", "build", "endcard", "basics", "all"] };
 })();

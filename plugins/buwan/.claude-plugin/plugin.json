@@ -1,7 +1,7 @@
 {
   "name": "buwan",
   "displayName": "Buwan Films",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "Buwan Films house rules, the same-day basics (working copy with duplicates skipped, cull, categorize, dead air, label colors, shaky creative footage), multicam sync on request, a skill for every pipeline stage, the assemble engine (music-driven cut, FCPXML builder), shared clip colors, studio LUTs and grade check, kit graphics renderer, proof gate, source protection, and Premiere / Final Cut / Resolve playbooks.",
   "author": {
     "name": "Buwan Films and Photography",
