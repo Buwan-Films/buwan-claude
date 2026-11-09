@@ -1,5 +1,8 @@
 # Changelog
 
+## buwan 1.12.1 — 2026-11-10
+- House rules, graphics, end-card and assemble skills: the film always ends 07.09 wedding title → 06.08 logo end card.
+
 ## buwan 1.12.0 · buwan-premiere 1.9.0 — 2026-11-10  (/plugin marketplace update buwan-films, update both plugins, restart; then /buwan:setup-kit once to re-render 06.08)
 **The couple's names: kit 07.09 "Wedding title" and `/buwan:title`.**
 - **The look:** a see-through title over the last calm wide shot of the couple, no panel, no letterbox.
