@@ -1,6 +1,6 @@
 ---
 name: multicam
-description: Interviews, vows and speeches on request — the editor lists the clips of one moment (every camera angle plus a lav/recorder file); Claude Code picks the best audio, syncs the angles to it by sound, cleans that audio (−17 LUFS, peaks −6), cuts the dead air at the same points on every angle, and renders each angle with its exposure fixed (no grade) into <raw>_SPEECH_<date-time>/INTERVIEWS|VOWS|SPEECHES/<moment>/, ready for a multicam in any app. Not part of the basics. Use when an editor says "multicam", "merge the angles", "sync the vows / interview / speech", "best audio", "dead air", or lists clips of one moment.
+description: Interviews, vows and speeches on request — the editor lists the clips of one moment (every camera angle plus a lav/recorder file); Claude Code picks the best audio, syncs the angles to it by sound, cleans that audio (−17 LUFS, peaks −6), cuts the dead air at the same points on every angle, and renders each angle with its exposure and white balance fixed (no grade) into <raw>_SPEECH_<date-time>/INTERVIEWS|VOWS|SPEECHES/<moment>/, ready for a multicam in any app. Not part of the basics. Use when an editor says "multicam", "merge the angles", "sync the vows / interview / speech", "best audio", "dead air", or lists clips of one moment.
 argument-hint: "<project> --moment \"<name>\" --type <interview|vows|speech> --clips <clip> <clip> …"
 ---
 
@@ -22,7 +22,7 @@ What it does, per moment:
 2. **Sync** — every other clip placed against the best audio by sound (cross-correlation, refined to 2.5 ms), so wrong camera clocks don't matter. A clip that doesn't match is left out and listed ("check it's the same moment"); a clip with no sound is listed to place by hand.
 3. **Clean** — high-pass, noise reduction scaled to the noise, voice EQ, levelled.
 4. **Dead air** — silences between words (≥ 0.9 s) cut out, the same cuts on every angle so they stay in sync, 20 ms fades at the joins. Words are never cut: vows and speeches stay verbatim.
-5. **Render** — each video angle: the kept ranges, the exposure fix (from `exposure.json`, or measured now), no grade, HEVC 10-bit, the one clean audio at −17 LUFS / peaks −6 dBFS. Each angle holds only the part it covered and **starts at the timecode of where that sits in the cut moment** (the moment starts at 00:00:00:00), so the angles line up by timecode in any app.
+5. **Render** — each video angle: the kept ranges, the exposure and white balance fix (from `exposure.json`, or measured now), no grade, HEVC 10-bit, the one clean audio at −17 LUFS / peaks −6 dBFS. Each angle holds only the part it covered and **starts at the timecode of where that sits in the cut moment** (the moment starts at 00:00:00:00), so the angles line up by timecode in any app.
 
 Output per moment: `<camera>_<clip>.mov` per angle, `<moment>_audio.wav` (the clean audio alone, the whole cut moment), `moment.json` (best audio, offsets, start timecodes, kept ranges, what was left out).
 

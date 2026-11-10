@@ -9,7 +9,7 @@ The editor names the moment and lists its clips (any cameras, plus a lav/recorde
   3. clean    high-pass, noise reduction scaled to the noise, voice EQ, levelled
   4. dead air silences between words found on the clean audio; the same cuts on every angle, so they stay in sync
               (words are never cut: vows and speeches stay verbatim)
-  5. render   each video angle: the kept ranges, the exposure fix (exposure.json, or measured now), no grade,
+  5. render   each video angle: the kept ranges, the exposure and white balance fix (exposure.json, or measured now), no grade,
               HEVC 10-bit, the one clean audio at -17 LUFS / peaks -6 dBFS. Each angle holds only what it covered
               and starts at the timecode of where that sits in the cut moment (the moment starts at 00:00:00:00),
               so the multicam is built by timecode in any app.
@@ -133,7 +133,7 @@ def _timecode(seconds: float, fps_num: int, fps_den: int) -> str:
     return f"{f // (base * 3600):02d}:{f // (base * 60) % 60:02d}:{f // base % 60:02d}:{f % base:02d}"
 
 
-def _render_angle(ff: str, c: Clip, off: float, ranges: list, ev: float, audio: Path, out: Path) -> dict:
+def _render_angle(ff: str, c: Clip, off: float, ranges: list, ev: float, audio: Path, out: Path, wb: list | None = None) -> dict:
     """Kept ranges are on the moment timeline; this angle's source time = moment time - off.
     The angle holds only what it covered (no black head or tail) and starts at the timecode of where that sits
     in the cut moment, so every app builds the multicam by timecode."""
@@ -155,7 +155,7 @@ def _render_angle(ff: str, c: Clip, off: float, ranges: list, ev: float, audio: 
         return {"skipped": "this angle only covered dead air"}
     fc = [f"[0:v]trim=start={lo:.3f}:end={hi:.3f},setpts=PTS-STARTPTS,{norm}[p{i}]" for i, (lo, hi) in enumerate(pics)]
     fc.append("".join(f"[p{i}]" for i in range(len(pics))) + f"concat=n={len(pics)}:v=1:a=0[vc]")
-    fc.append(f"[vc]{_grade_chain(ev, None)}[vo]")
+    fc.append(f"[vc]{_grade_chain(ev, None, wb)}[vo]")
     fc.append(f"[1:a]atrim=start={first:.4f}:end={last:.4f},asetpts=PTS-STARTPTS[ao]")
     tc = _timecode(first, c.fps_num, c.fps_den)
     tmp = out.with_name(out.stem + ".part.mov")
@@ -163,15 +163,19 @@ def _render_angle(ff: str, c: Clip, off: float, ranges: list, ev: float, audio: 
           "-map", "[vo]", "-map", "[ao]", "-c:a", "aac", "-b:a", "320k", "-timecode", tc] + _encode_args(tmp))
     tmp.rename(out)
     return {"timecode": tc, "starts_s": round(first, 3), "length_s": round(last - first, 3),
-            "done": f"exposure {ev:+.2f} EV" if ev else "exposure ok"}
+            "done": (f"exposure {ev:+.2f} EV" if ev else "exposure ok") + ("; white balance R {:.3f} G {:.3f} B {:.3f}".format(*wb) if wb else "")}
 
 
-def _exposure_ev(c: Clip, expo: dict, key: str) -> tuple[float, str]:
+def _exposure_ev(c: Clip, expo: dict, key: str) -> tuple[float, list | None, str]:
+    """The exposure (EV) and white balance (RGB gains) fix for this angle: from the basics' exposure.json, or measured now."""
+    import whitebalance
     if key in expo:
-        return expo[key].get("ev") or 0.0, "exposure.json"
+        e = expo[key]
+        wb = e.get("wb") if "wb_frames" in e else whitebalance.decide(whitebalance.measure(c.path), c.camera).get("wb")
+        return e.get("ev") or 0.0, wb, "exposure.json"
     from exposure import decide, load_band, measure
     d = decide(measure(c), load_band("warm"))
-    return d["ev"], "measured now"
+    return d["ev"], whitebalance.decide(whitebalance.measure(c.path), c.camera).get("wb"), "measured now"
 
 
 
@@ -269,11 +273,11 @@ def run_moment(project: Path, moment: dict, source: Path, raw_copy: Path, out_ro
     def one(c):
         rel = os.path.relpath(c.path, source)
         key = str(raw_copy / rel)
-        ev, how = _exposure_ev(c, expo, key)
+        ev, wb, how = _exposure_ev(c, expo, key)
         out = mdir / f"{c.camera or 'cam'}_{c.name}.mov".replace(" ", "-")
-        r = _render_angle(ff, c, place[c.path]["offset"] - m0, ranges, ev, audio, out)
+        r = _render_angle(ff, c, place[c.path]["offset"] - m0, ranges, ev, audio, out, wb)
         return {"angle": out.name if "skipped" not in r else None, "source": c.path, "offset_s": place[c.path]["offset"],
-                "exposure_ev": ev, "exposure_from": how} | r
+                "exposure_ev": ev, "white_balance": wb, "exposure_from": how} | r
 
     vids = [c for c in synced if c.kind == "video"]
     with cf.ThreadPoolExecutor(max_workers=workers) as ex:
