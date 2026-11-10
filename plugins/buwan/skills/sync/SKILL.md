@@ -15,7 +15,7 @@ Run after `/buwan:basics` has made the first `_ENHANCED_` folder for the wedding
 node "${CLAUDE_PLUGIN_ROOT}/scripts/assemble.js" update <project> [--footage "<raw folder>"]
 ```
 - Finds the clips that are new since the last run (the raw folder from `edit/SOURCES.md`, or `--footage`).
-- Checks only those (cull), judges only the new shaky Creative/Glider clips, measures only their exposure — everything checked before is reused.
+- Checks only those (cull), judges only the new shaky Creative/Glider clips, measures only their exposure and white balance — everything checked before is reused.
 - Renders into the **newest** `<raw>_ENHANCED_*` folder next to the raw (or `--out <folder>`); clips already there are skipped. `--new-folder` starts a new folder instead.
 - `edit/assemble/update_last.json` lists the new clips of this run.
 

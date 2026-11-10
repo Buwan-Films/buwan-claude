@@ -185,6 +185,12 @@ def cmd_exposure(a):
     for v in sorted(res.values(), key=lambda x: (-abs(x["ev"]), x["name"])):
         if v["ev"] or v.get("low_key"):
             rep.append(f"| {v['name']} | {v['camera']} | {v.get('yavg', '')} | {v['ev']:+.2f} | {v['reason']} |")
+    rep += ["", "# White balance", "", "Natural warmth is kept; only casts beyond it are pulled back, gently. Aerials and clips without neutral areas are left alone.", "",
+            "| Clip | Camera | Temp | Tint | Fix | Why |", "|---|---|---|---|---|---|"]
+    for v in sorted(res.values(), key=lambda x: -(abs((x.get("wb_shift") or [0, 0])[0]) + abs((x.get("wb_shift") or [0, 0])[1]))):
+        if v.get("wb") or "changes through" in v.get("wb_reason", ""):
+            fix = "R {:.3f} G {:.3f} B {:.3f}".format(*v["wb"]) if v.get("wb") else "none"
+            rep.append(f"| {v['name']} | {v['camera']} | {v.get('temp', 0):+.2f} | {v.get('tint', 0):+.2f} | {fix} | {v['wb_reason']} |")
     (project / "edit" / "exposure_report.md").write_text("\n".join(rep) + "\n")
     log(f"wrote {adir(project) / 'exposure.json'} and edit/exposure_report.md")
 
@@ -229,7 +235,7 @@ def cmd_render(a):
     source = Path(a.source) if a.source else Path(wc.get("source") or raw_copy)
     cube = a.look   # no grade by default: the look is applied in the editing app (/buwan:grade)
     render.run(project, load_clips(project), load_categories(project, a.categories), raw_copy, source,
-               Path(a.out) if a.out else None, cube, a.workers, a.limit, a.only)
+               Path(a.out) if a.out else None, cube, a.workers, a.limit, a.only, getattr(a, "redo", False))
 
 
 
@@ -568,7 +574,7 @@ def main():
     s.add_argument("--look", default="warm", choices=["warm", "cool", "bw"]); s.add_argument("--remeasure", action="store_true", help="read the footage again instead of reusing exposure.json"); s.set_defaults(f=cmd_exposure)
     s = sub.add_parser("look"); s.add_argument("project"); s.add_argument("--reference", required=True, help="the studio's finished film to match"); s.add_argument("--name", default="Buwan_Film"); s.add_argument("--out"); s.add_argument("--strength", type=float, default=1.0); s.set_defaults(f=cmd_look)
     s = sub.add_parser("speech"); s.add_argument("project"); s.add_argument("--moment", help="e.g. \"Bride vows\""); s.add_argument("--type", choices=["interview", "vows", "speech"]); s.add_argument("--clips", nargs="+", help="the moment's clips, relative to the raw folder or full paths (cameras + lav/recorder)"); s.add_argument("--moments", help="a JSON list of {name, type, clips} (default: every moment saved in speech_moments.json)"); s.add_argument("--source"); s.add_argument("--out", help="add to an earlier _SPEECH_ folder"); s.add_argument("--workers", type=int, default=3); s.set_defaults(f=cmd_speech)
-    s = sub.add_parser("render"); s.add_argument("project"); s.add_argument("--source", help="the raw folder (read only; default: the original from workcopy.json)"); s.add_argument("--out", help="continue an earlier run"); s.add_argument("--look", help="bake this .cube in (default: no grade; the look is applied in the editing app)"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=3); s.add_argument("--limit", type=int, default=0); s.add_argument("--only", choices=["shaky", "clip"]); s.set_defaults(f=cmd_render)
+    s = sub.add_parser("render"); s.add_argument("project"); s.add_argument("--source", help="the raw folder (read only; default: the original from workcopy.json)"); s.add_argument("--out", help="continue an earlier run"); s.add_argument("--look", help="bake this .cube in (default: no grade; the look is applied in the editing app)"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=3); s.add_argument("--limit", type=int, default=0); s.add_argument("--only", choices=["shaky", "clip", "wb", "fixed"]); s.add_argument("--redo", action="store_true", help="re-render clips already in --out (e.g. --only fixed --redo after an engine update)"); s.set_defaults(f=cmd_render)
     s = sub.add_parser("music"); s.add_argument("project"); s.add_argument("--intro"); s.add_argument("--main", required=True); s.set_defaults(f=cmd_music)
     s = sub.add_parser("sync"); s.add_argument("project"); s.add_argument("--anchor"); s.add_argument("--trusted", nargs="*"); s.set_defaults(f=cmd_sync)
     s = sub.add_parser("enhance"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=4); s.add_argument("--render", action="store_true", help="also write cleaned WAVs to edit/audio/clean"); s.set_defaults(f=cmd_enhance)

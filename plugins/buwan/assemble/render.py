@@ -1,13 +1,14 @@
 """Render: new enhanced clips from the raw footage, into a new folder on every run. The raw files are only read.
 
 Per clip (read from the raw folder, same relative path; written as <out>/<camera>/<card>/<clip>.mov):
-  every camera clip  exposure fix (exposure.json) -> HEVC 10-bit. No grade: the look is applied in the editing app
+  every camera clip  exposure + white balance fix (exposure.json) -> HEVC 10-bit. No grade: the look is applied in the editing app
                      (/buwan:grade). `--look <.cube>` bakes a look in, only when asked.
   shaky Creative/Glider clips (steady.json: best-cut / warp) trimmed to the best cut, then a smooth glide with
                      vid.stab (two passes; needs the Buwan ffmpeg with libvidstab: ~/.buwan/ffmpeg-vidstab)
   everything else    the original audio, untouched (interviews and vows too: their angles, best audio and dead air
                      are made by `assemble.js speech` into <raw>_SPEECH_<date-time>/)
-Resumable: a clip whose output already exists is skipped (pass --out to continue a run). Log: <out>/render_log.csv.
+Resumable: a clip whose output already exists is skipped (pass --out to continue a run; --redo re-renders it in place,
+e.g. `--only fixed --redo --out <folder>` after white balance / the superwhite fix were added to an earlier run). Log: <out>/render_log.csv.
 """
 from __future__ import annotations
 
@@ -44,16 +45,29 @@ def _esc(p: str) -> str:
     return p.replace("\\", "/").replace(":", "\\:").replace("'", "\\'")
 
 
-def _grade_chain(ev: float, cube: str | None) -> str:
+HEADROOM = 876 / (1019 - 64)   # 10-bit: white 940, the camera's superwhite top 1019, black 64
+
+
+def _squeeze(k: float) -> str:
+    return f"lutyuv=y='64+(val-64)*{k:.6f}':u='512+(val-512)*{k:.6f}':v='512+(val-512)*{k:.6f}'"
+
+
+def _grade_chain(ev: float, cube: str | None, wb: list[float] | None = None) -> str:
+    wb = wb or [1.0, 1.0, 1.0]
     if not cube:
-        # exposure only (the default): a 16-bit RGB gain, same result as the float exposure filter, ~1.5x faster
-        if not ev:
+        # exposure + white balance (the default): one 16-bit per-channel RGB gain, same result as the float filters, ~1.5x faster
+        gains = [(2.0 ** ev) * k for k in wb]
+        if all(abs(x - 1.0) < 1e-4 for x in gains):
             return "format=p010le"
-        g = 2.0 ** ev
-        lv = ":".join(f"{c}imax={1 / g:.5f}" for c in "rgb") if g >= 1 else ":".join(f"{c}omax={g:.5f}" for c in "rgb")
-        return f"format=rgb48le,colorlevels={lv},format=p010le"
+        # Keep the superwhites (camera video levels above white, up to code 1019) so the grade can still pull them back:
+        # the RGB step clips at white, so the levels are first squeezed under it in YUV (a uniform YUV scale about black
+        # is exactly a uniform RGB gain), the per-channel gains applied in 16-bit RGB, then the squeeze undone.
+        lv = ":".join(f"{c}imax={1 / x:.5f}" if x >= 1 else f"{c}omax={x:.5f}" for c, x in zip("rgb", gains))
+        return f"format=yuv420p10le,{_squeeze(HEADROOM)},format=rgb48le,colorlevels={lv},format=yuv420p10le,{_squeeze(1 / HEADROOM)},format=p010le"
     # baking a look in (only when render --look is passed; normally the grade is applied in the editing app: /buwan:grade)
     parts = ["format=gbrpf32le"]
+    if wb != [1.0, 1.0, 1.0]:
+        parts.append(f"colorchannelmixer=rr={wb[0]:.4f}:gg={wb[1]:.4f}:bb={wb[2]:.4f}")
     if ev:
         parts.append(f"exposure=exposure={ev:.3f}")
     if cube:
@@ -76,7 +90,7 @@ def _run(cmd: list[str]) -> None:
 
 def render_clip(ff: str, src: Path, out: Path, job: dict, cube: str | None, vidstab: bool) -> str:
     tmp = out.with_name(out.stem + ".part.mov")
-    grade = _grade_chain(job["ev"], cube)
+    grade = _grade_chain(job["ev"], cube, job.get("wb"))
     what = []
     if job.get("ranges") is not None and job["ranges"]:
         # speech: cut to the speech ranges, cleaned audio, fades at the joins
@@ -121,6 +135,8 @@ def render_clip(ff: str, src: Path, out: Path, job: dict, cube: str | None, vids
     tmp.rename(out)
     if job["ev"]:
         what.append(f"exposure {job['ev']:+.2f} EV")
+    if job.get("wb"):
+        what.append("white balance R {:.3f} G {:.3f} B {:.3f}".format(*job["wb"]))
     if cube:
         what.append("look baked in")
     return "; ".join(what)
@@ -137,7 +153,11 @@ def plan_jobs(project: Path, clips: dict[str, Clip], categories: dict) -> dict[s
             continue
         if (cull.get(p) or {}).get("reject"):
             continue
-        j = {"ev": (expo.get(p) or {}).get("ev") or 0.0}
+        e = expo.get(p) or {}
+        j = {"ev": e.get("ev") or 0.0, "wb": e.get("wb")}
+        if j["ev"] > 0 and j["wb"] and e.get("yhigh"):   # brighter + a channel gain above 1: keep the 90th percentile under the cap
+            import math
+            j["ev"] = round(max(0.0, min(j["ev"], math.log2(225.0 / (e["yhigh"] * max(j["wb"]))))), 2)
         # interviews, letters, speeches and vows go through like any clip (exposure, original audio, full length);
         # merging their angles, the best audio and dead air are the speech skill's job (assemble.js speech)
         st = steady.get(p) or {}
@@ -149,7 +169,7 @@ def plan_jobs(project: Path, clips: dict[str, Clip], categories: dict) -> dict[s
 
 
 def run(project: Path, clips: dict[str, Clip], categories: dict, raw_copy: Path, source: Path, out: Path | None,
-        cube: str | None, workers: int = 3, limit: int = 0, only: str | None = None) -> dict:
+        cube: str | None, workers: int = 3, limit: int = 0, only: str | None = None, redo: bool = False) -> dict:
     ff = ffmpeg_bin()
     vidstab = has_vidstab(ff)
     out = out or source.parent / f"{source.name}_ENHANCED_{_dt.datetime.now():%Y%m%d-%H%M}"
@@ -162,7 +182,13 @@ def run(project: Path, clips: dict[str, Clip], categories: dict, raw_copy: Path,
         if not src.exists():
             src = Path(p)   # fall back to the working copy (same bytes) if the raw folder moved
         kind = "shaky" if "trim" in j else "clip"
-        if only and kind != only:
+        if only == "wb":
+            if not j.get("wb"):
+                continue
+        elif only == "fixed":   # every clip with an exposure or white-balance fix
+            if not (j.get("wb") or j["ev"]):
+                continue
+        elif only and kind != only:
             continue
         items.append((p, src, out / rel.with_suffix(".mov"), j, kind))
     items.sort(key=lambda x: (x[4] != "shaky", str(x[2])))   # shaky first: the ones to check
@@ -173,7 +199,7 @@ def run(project: Path, clips: dict[str, Clip], categories: dict, raw_copy: Path,
 
     def one(it):
         p, src, dst, j, kind = it
-        if dst.exists() and dst.stat().st_size > 0:
+        if dst.exists() and dst.stat().st_size > 0 and not redo:
             return [str(src), str(dst), kind, "already rendered"]
         dst.parent.mkdir(parents=True, exist_ok=True)
         try:

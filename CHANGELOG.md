@@ -1,5 +1,15 @@
 # Changelog
 
+## buwan 1.14.0 · buwan-premiere 1.9.3 — 2026-11-11  (/plugin marketplace update buwan-films, update both plugins, restart)
+**White balance in the basics.**
+- `exposure` now also reads each clip's colour cast from its neutral surfaces (whites, greys, walls) and sets a gentle per-channel fix, baked into the enhanced clip together with the exposure fix. No grade.
+- Natural warmth is kept (up to +0.3 stops); only warmth beyond it is pulled back partly. A blue cast or a green/magenta tint is corrected most of the way. Never more than 0.5 stops; brightness is kept.
+- Left alone and listed: aerials (drone), clips with nothing neutral, clips whose light changes through the clip.
+- `edit/exposure_report.md` has a second table, "White balance". `render_log.csv` says the gains used.
+- **Highlights kept for the grade:** clips with an exposure or white-balance fix used to lose the camera's superwhites (above 100%) in the RGB step, flattening the brightest highlights. The render now squeezes the levels under white in YUV first and undoes it after, so every enhanced clip keeps the full highlight range for `/buwan:grade`. Clips with no fix were never affected.
+- Older runs: `exposure <project>` (exposure readings reused), then `render <project> --only fixed --redo --out <_ENHANCED_ folder>` re-renders every clip with an exposure or white-balance fix, in place (`--only wb` for white balance only).
+- `/buwan:grade` says what the enhanced clips are (Rec.709 10-bit, no Log, superwhites kept) and how each app should interpret them.
+
 ## buwan 1.13.0 · buwan-premiere 1.9.2 — 2026-11-10  (/plugin marketplace update buwan-films, update both plugins, restart)
 **`/buwan:sync`: new clips during an ongoing wedding.**
 - Finds only the clips that are new since the last run, checks them, fixes their exposure, cuts and smooths the shaky Creative/Glider ones, and renders them into the newest `_ENHANCED_` folder. The clips already there are skipped; the raw folder is only read.

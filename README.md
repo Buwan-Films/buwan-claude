@@ -13,6 +13,7 @@ Claude Code makes **enhanced clips** from the raw footage and stops. The raw fol
 | | How |
 |---|---|
 | **Exposure on every clip** | `assemble.js exposure`: a gentle per-clip fix toward the studio brightness band (±1.5 EV max, highlights protected, low-key shots left alone) |
+| **White balance on every clip** | same pass: casts read from neutral surfaces, natural warmth kept, blue casts and green/magenta tint pulled back (≤0.5 stops); aerials and mixed light left alone |
 | **Shaky — Creative/Glider only** | the best cut of each shaky clip, then a smooth glide (vid.stab). Other cameras untouched |
 
 `assemble.js render` writes it all. Then, when the editor asks:
