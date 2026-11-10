@@ -29,7 +29,7 @@ Report a table (what · result · check by hand) and **stop**. Then remind the e
 - **Bins and labels in the project** — `/buwan-premiere:premiere-apply`.
 
 ## New clips from the shooters
-Run the basics again on the same raw folder (a new ENHANCED folder), or with `render --out <earlier folder>` to add only what's new. Nothing already imported is touched.
+`/buwan:sync <project>` each time new cards land in the raw folders: only the new clips are checked, fixed and rendered, into the same `_ENHANCED_` folder. Then import just the new files (File → Import, or drag the new files from the Media Browser into their camera bin). Nothing already imported is touched.
 
 ## Rules on the day
 - Never write into the raw folder. Never create a sequence for the editor to cut in; never touch their sequences.

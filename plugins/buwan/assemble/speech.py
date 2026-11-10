@@ -174,6 +174,32 @@ def _exposure_ev(c: Clip, expo: dict, key: str) -> tuple[float, str]:
     return d["ev"], "measured now"
 
 
+
+_INDEX = {}
+
+
+def _find_clip(source: Path, want: str) -> Path:
+    """A bare clip name from the editor (C0412, C0412.MP4, ZOOM0007) -> the one file under the raw folder with that name."""
+    if source not in _INDEX:
+        idx = {}
+        for f in source.rglob("*"):
+            if f.is_file() and not f.name.startswith("."):
+                idx.setdefault(f.name.lower(), []).append(f)
+                idx.setdefault(f.stem.lower(), []).append(f)
+        _INDEX[source] = idx
+    key = Path(want).name.lower()
+    hits = _INDEX[source].get(key) or _INDEX[source].get(Path(key).stem) or []
+    hits = list(dict.fromkeys(hits))
+    folder = str(Path(want).parent).lower().strip("./")
+    if folder:   # "2-Main/C0412" or "Main/C0412": keep the clips under that camera folder
+        hits = [h for h in hits if folder in str(h.relative_to(source).parent).lower()] or hits
+    media = [h for h in hits if h.suffix.lower() in (".mp4", ".mov", ".mxf", ".wav", ".mp3", ".m4a", ".aif", ".aiff")] or hits
+    if not media:
+        raise FileNotFoundError(f"{want}: no clip with that name under {source}")
+    if len(media) > 1:
+        raise FileNotFoundError(f"{want}: {len(media)} clips have that name — give the camera folder too: " + ", ".join(str(m.relative_to(source)) for m in media))
+    return media[0]
+
 def run_moment(project: Path, moment: dict, source: Path, raw_copy: Path, out_root: Path, workers: int = 3) -> dict:
     ff = ffmpeg_bin()
     kind = TYPES[moment["type"].lower()]
@@ -187,7 +213,7 @@ def run_moment(project: Path, moment: dict, source: Path, raw_copy: Path, out_ro
     for p in moment["clips"]:
         path = Path(p) if os.path.isabs(p) else source / p
         if not path.exists():
-            raise FileNotFoundError(f"{name}: {p} not found (give it relative to {source} or as a full path)")
+            path = _find_clip(source, p)
         c = probe_clip(path, source)
         if c:
             clips.append(c)

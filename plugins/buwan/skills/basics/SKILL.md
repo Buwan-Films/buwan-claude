@@ -31,7 +31,7 @@ Interviews, letters, speeches and vows go through like every other clip (exposur
 5. Report a table: what · result · check by hand. **Stop.**
 
 ## New clips from the shooters
-Run the same skill again on the same raw folder: a new `<raw>_ENHANCED_<date-time>/` with every clip. To only add the new ones to an earlier run, pass that run's folder with `--out`; clips already rendered there are skipped.
+The wedding is still going and new cards keep coming: `/buwan:sync <project>` — only the new clips are checked, fixed and rendered, into the same `_ENHANCED_` folder (the clips already there are skipped). Run it as often as cards arrive.
 
 ## Needs
 - ffmpeg with vid.stab: `~/.buwan/ffmpeg-vidstab/bin/ffmpeg` (`scripts/build-ffmpeg-vidstab.sh`, called by `/buwan:setup-kit`). Without it the shaky clips are cut to their best part but not stabilized, and the log says so.

@@ -69,6 +69,7 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 | 05 Graphics + captions | `/buwan:graphics` |
 | 06 SFX | `/buwan:sfx` |
 | 07 Review | `/buwan:review` |
+| New cards during the day | `/buwan:sync <project>` (only the new clips, checked, fixed and rendered into the same `_ENHANCED_` folder) |
 | Couple's names | `/buwan:title "Mary Nhor and Jomar"` (kit 07.09: The Wedding of · the names wide-tracked · Buwan Films, over the last wide shot) |
 | Logo end card | `/buwan:end-card` (kit 06.08: two blades become one ring, the emblem lands, last shot of every film) |
 | 08 Export | `/buwan:export`, then `/buwan:clipper` for reels |

@@ -1,5 +1,15 @@
 # Changelog
 
+## buwan 1.13.0 · buwan-premiere 1.9.2 — 2026-11-10  (/plugin marketplace update buwan-films, update both plugins, restart)
+**`/buwan:sync`: new clips during an ongoing wedding.**
+- Finds only the clips that are new since the last run, checks them, fixes their exposure, cuts and smooths the shaky Creative/Glider ones, and renders them into the newest `_ENHANCED_` folder. The clips already there are skipped; the raw folder is only read.
+- Engine: `assemble.js update <project>`. `cull` and `steady` now reuse their earlier results (`--remeasure` to check everything again); `exposure` already did.
+- Can run on its own all day: `/loop 20m /buwan:sync <project>`.
+
+**`/buwan:multicam` takes the clip names the editor gives.**
+- `--clips C0823 C0017 ZOOM0003`: each name is found under the raw folder. Only the listed clips are used.
+- If two cameras share a name, it stops and lists them; add the camera folder (`2-Main/C0823` or `Main/C0823`).
+
 ## buwan-premiere 1.9.1 — 2026-11-10
 - wedding-day skill and the pipeline pages: camera folders are 1-Creative / Glider, 2-Main, 3-3rd Cam, 4-Drone, Audio.
 

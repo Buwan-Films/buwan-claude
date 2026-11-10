@@ -9,9 +9,9 @@ argument-hint: "<project> --moment \"<name>\" --type <interview|vows|speech> --c
 Load `/buwan:house-rules`. The raw folder is only read; every run writes into a new `<raw>_SPEECH_<YYYYMMDD-HHMM>/` next to it. Arguments: $ARGUMENTS
 
 ## 1. The editor lists the moments
-For each moment: a name, the type, and its clips — paths relative to the raw folder (or full paths), every angle plus the lav/recorder file if there is one. Example:
-`Bride vows` · vows · `2-Main/6/20260418_C0823.MP4`, `1-Creative/6/C0017.MP4`, `Audio/ZOOM0003.WAV`.
-If the editor only names the moment, look at one frame per likely clip (same time window, same people) and confirm the list with them before rendering. Types: `interview` → `INTERVIEWS/`, `vows` → `VOWS/`, `speech` → `SPEECHES/` (letters read on camera: interview).
+The editor gives the clip names — use exactly the clips they list, never add or swap one. For each moment: a name, the type, and its clips, every angle plus the lav/recorder file if there is one. Clip names are enough (`C0823`, `C0017.MP4`, `ZOOM0003`): the engine finds each one under the raw folder. If two cameras have a clip with the same name, it stops and lists them; then add the camera folder (`2-Main/C0823`, or just `Main/C0823`). Full paths and paths relative to the raw folder work too. Example:
+`/buwan:multicam 2026-04-18_Marynhor-Jomar --moment "Bride vows" --type vows --clips C0823 C0017 ZOOM0003`
+If the editor only names the moment and asks Claude to find the clips, look at one frame per likely clip (same time window, same people) and confirm the list with them before rendering. Types: `interview` → `INTERVIEWS/`, `vows` → `VOWS/`, `speech` → `SPEECHES/` (letters read on camera: interview).
 
 ## 2. Run
 `node "${CLAUDE_PLUGIN_ROOT}/scripts/assemble.js" speech <project> --moment "<name>" --type <type> --clips <clip> <clip> …`

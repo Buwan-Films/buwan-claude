@@ -12,6 +12,7 @@
   assemble.py exposure  <project>            -> edit/assemble/exposure.json (per-clip exposure fix, baked into the enhanced clips)
   assemble.py look      <project> --reference <film>  -> edit/grade/Buwan_Film.cube (a look LUT matched to the studio's film; used by /buwan:grade)
   assemble.py speech    <project> --moment <name> --type <interview|vows|speech> --clips <clip> ...  -> <raw>_SPEECH_<date-time>/<TYPE>/<moment>/ (angles synced, best audio cleaned, dead air out)
+  assemble.py update    <project> [--footage <dir>] [--out <_ENHANCED_ folder>]  -> new clips only, into the newest _ENHANCED_ folder
   assemble.py render    <project> [--source <raw>]    -> <raw>_ENHANCED_<date-time>/ (exposure fixed, no grade; shaky Creative best cut + vid.stab; HEVC 10-bit)
   assemble.py organize  <project> --categories edit/assemble/categories.json  -> edit/organize_vN.fcpxml
   assemble.py selects   <project> --selects edit/assemble/selects.json      -> edit/selects_vN.fcpxml
@@ -124,8 +125,13 @@ def cmd_cull(a):
     from cull import cull
     project = Path(a.project)
     clips = [c for c in load_clips(project).values() if c.camera != "music"]
-    res = cull(clips, a.workers)
-    save_json(adir(project) / "cull.json", res)
+    cp = adir(project) / "cull.json"
+    prev = {} if getattr(a, "remeasure", False) or not cp.exists() else {m["path"]: m for m in load_json(cp) if not any(str(w).startswith("measure-error") for w in (m.get("warn") or []))}
+    todo = [c for c in clips if c.path not in prev]
+    log(f"cull: {len(todo)} new clips to check, {len(clips) - len(todo)} checked before")
+    got = {m["path"]: m for m in cull(todo, a.workers)} if todo else {}
+    res = [got.get(c.path) or prev[c.path] for c in clips]
+    save_json(cp, res)
     rej = [r for r in res if r["reject"]]
     log(f"rejected {len(rej)}/{len(res)}: " + ", ".join(f"{r['name']}({'/'.join(r['reject'])})" for r in rej[:20]))
 
@@ -139,8 +145,11 @@ def cmd_steady(a):
         sys.exit("run cull first (steady reads the heavy-motion flags)")
     gp = project / "edit" / "assemble" / "gimbal.txt"
     pats = (gp.read_text().splitlines() if gp.exists() else []) + list(a.gimbal or [])
-    res = steady(clips, cull_res, a.workers, pats)
-    save_json(adir(project) / "steady.json", res)
+    sp = adir(project) / "steady.json"
+    prev = {} if getattr(a, "remeasure", False) or not sp.exists() else {k: v for k, v in load_json(sp).items() if "measure error" not in str(v.get("reason", ""))}
+    res = {k: v for k, v in prev.items() if k in {c.path for c in clips}}
+    res.update(steady([c for c in clips if c.path not in res], cull_res, a.workers, pats))
+    save_json(sp, res)
     rep = [f"# Shaky Creative/Glider footage — decisions", "",
            "Best cut first; only gimbal shots are stabilized, and only on their best cut. Gimbal shots: "
            + (", ".join(f"`{x.strip()}`" for x in pats if x.strip() and not x.strip().startswith("#")) or "by camera name only (none listed in `edit/assemble/gimbal.txt`)"), "",
@@ -222,6 +231,32 @@ def cmd_render(a):
     render.run(project, load_clips(project), load_categories(project, a.categories), raw_copy, source,
                Path(a.out) if a.out else None, cube, a.workers, a.limit, a.only)
 
+
+
+def cmd_update(a):
+    """New clips from the shooters during the day: only what is new is checked, fixed and rendered,
+    into the newest <raw>_ENHANCED_ folder (or --out). Clips already rendered there are skipped."""
+    import json as _json, types
+    project = Path(a.project)
+    cp = adir(project) / "clips.json"
+    before = {c["path"] for c in _json.loads(cp.read_text())} if cp.exists() else set()
+    cmd_scan(types.SimpleNamespace(project=a.project, footage=a.footage, dedupe=False, music=None))
+    clips = load_clips(project)
+    new = sorted(p for p, c in clips.items() if p not in before and c.camera != "music")
+    log(f"update: {len(new)} new clips since the last run" + (": " + ", ".join(Path(p).name for p in new[:30]) + (" …" if len(new) > 30 else "") if new else ""))
+    cmd_cull(types.SimpleNamespace(project=a.project, workers=4, remeasure=False))
+    cmd_steady(types.SimpleNamespace(project=a.project, workers=4, gimbal=a.gimbal, remeasure=False))
+    cmd_exposure(types.SimpleNamespace(project=a.project, categories=None, workers=6, look="warm", remeasure=False))
+    wc = load_json(adir(project) / "workcopy.json") if (adir(project) / "workcopy.json").exists() else {}
+    from workcopy import _footage_root
+    source = Path(wc.get("source") or wc.get("raw_copy") or _footage_root(project))
+    out = Path(a.out) if a.out else None
+    if not out:
+        runs = sorted(source.parent.glob(f"{source.name}_ENHANCED_*"), key=lambda d: d.name)
+        out = runs[-1] if runs and not a.new_folder else None
+    log(f"update: rendering into {out or 'a new _ENHANCED_ folder'} (clips already there are skipped)")
+    cmd_render(types.SimpleNamespace(project=a.project, source=None, out=str(out) if out else None, look=None, categories=None, workers=a.workers, limit=0, only=None))
+    save_json(adir(project) / "update_last.json", {"new_clips": new, "out": str(out) if out else None})
 
 def cmd_music(a):
     from music import analyse_tracks
@@ -519,10 +554,15 @@ def main():
     s = sub.add_parser("handoff"); s.add_argument("project"); s.add_argument("--title"); s.add_argument("--out"); s.set_defaults(f=lambda a: __import__("workcopy").cmd_handoff(a))
     s = sub.add_parser("scan"); s.add_argument("project"); s.add_argument("--footage"); s.add_argument("--music", nargs="*")
     s.add_argument("--dedupe", action="store_true", help="leave byte-identical duplicates out of the scan (reference-in-place jobs)"); s.set_defaults(f=cmd_scan)
-    s = sub.add_parser("cull"); s.add_argument("project"); s.add_argument("--workers", type=int, default=4); s.set_defaults(f=cmd_cull)
+    s = sub.add_parser("cull"); s.add_argument("project"); s.add_argument("--workers", type=int, default=4); s.add_argument("--remeasure", action="store_true", help="check every clip again instead of reusing cull.json"); s.set_defaults(f=cmd_cull)
     s = sub.add_parser("steady"); s.add_argument("project"); s.add_argument("--workers", type=int, default=4)
     s.add_argument("--gimbal", nargs="*", help="clips shot on a gimbal: card folders, clip names or globs (added to edit/assemble/gimbal.txt patterns); '*' = all Creative clips")
+    s.add_argument("--remeasure", action="store_true", help="judge every shaky clip again instead of reusing steady.json")
     s.set_defaults(f=cmd_steady)
+    s = sub.add_parser("update", help="new clips during the day: scan, then check/fix/render only what is new, into the newest _ENHANCED_ folder")
+    s.add_argument("project"); s.add_argument("--footage"); s.add_argument("--out", help="the _ENHANCED_ folder to add to (default: the newest one)")
+    s.add_argument("--new-folder", action="store_true", help="start a new _ENHANCED_ folder instead"); s.add_argument("--gimbal", nargs="*"); s.add_argument("--workers", type=int, default=3)
+    s.set_defaults(f=cmd_update)
     s = sub.add_parser("bycategory"); s.add_argument("project"); s.add_argument("--raw", help="the RAW_COPY folder (default: from edit/SOURCES.md)"); s.add_argument("--categories"); s.set_defaults(f=cmd_bycategory)
     s = sub.add_parser("exposure"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=6)
     s.add_argument("--look", default="warm", choices=["warm", "cool", "bw"]); s.add_argument("--remeasure", action="store_true", help="read the footage again instead of reusing exposure.json"); s.set_defaults(f=cmd_exposure)

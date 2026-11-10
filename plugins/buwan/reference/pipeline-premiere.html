@@ -132,7 +132,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
     <span class="tag">Only when you ask</span>
     <h2>Separate skills</h2>
     <ul>
-      <li><b>Interviews · vows · speeches</b> — <span class="spec">/buwan:multicam</span>: you list a moment's clips; the best audio is picked and cleaned (−17 LUFS), the angles synced to it, the dead air cut on every angle → <span class="spec">&lt;raw&gt;_SPEECH_…/INTERVIEWS · VOWS · SPEECHES</span>.</li>
+      <li><b>Interviews · vows · speeches</b> — <span class="spec">/buwan:multicam</span>: you give the clip names of one moment (<span class="spec">C0412 C0201 ZOOM0007</span>); the best audio is picked and cleaned (−17 LUFS), the angles synced to it, the dead air cut on every angle → <span class="spec">&lt;raw&gt;_SPEECH_…/INTERVIEWS · VOWS · SPEECHES</span>.</li>
       <li><b>Grade</b> — <span class="spec">/buwan:grade</span>: the studio look, built from the studio's own film, applied in Premiere.</li>
       <li><b>Story</b> — <span class="spec">/buwan:plot</span>. <b>Cut</b> — <span class="spec">/buwan:sde</span>.</li>
       <li><b>Couple's names</b> — <span class="spec">/buwan:title "Name and Name"</span>: “The Wedding of”, the names wide-tracked in Cinzel, Buwan Films, over the last wide shot (kit 07.09).</li>
@@ -163,7 +163,8 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
     <tr><td>0 · Once per computer</td><td><span class="spec">/plugin marketplace update buwan-films<br>/buwan:setup-kit<br>/buwan:check</span></td><td>The studio looks are added to Lumetri → Creative → Look; open <b>Window → Extensions → MCP Bridge</b>.</td></tr>
     <tr><td>1 · You</td><td>Raw footage on the SSD, one folder per shooter (1-Creative, 2-Main, 3-3rd Cam, 4-Drone, Audio). Start Claude Code in the Buwan workspace.</td><td>—</td></tr>
     <tr><td>2 · Basics</td><td><span class="spec">/buwan:basics 2026-11-15_Santos-Reyes --footage "&lt;raw folder&gt;"</span></td><td><b>File → Import</b> the <span class="spec">_ENHANCED_</span> folder: the camera and card folders become bins.</td></tr>
-    <tr><td>3 · Vows · interviews · speeches</td><td><span class="spec">/buwan:multicam 2026-11-15_Santos-Reyes --moment "Vows" --type vows --clips &lt;every angle&gt; &lt;lav/recorder&gt;</span></td><td>Import the <span class="spec">_SPEECH_…/VOWS/&lt;moment&gt;</span> folder → select the angles → <b>Create Multi-Camera Source Sequence → Timecode</b>.</td></tr>
+    <tr><td>2b · New cards during the day</td><td><span class="spec">/buwan:sync 2026-11-15_Santos-Reyes</span><br><span style="font-size:13px">only the new clips, into the same folder · or all day: <span class="spec">/loop 20m /buwan:sync 2026-11-15_Santos-Reyes</span></span></td><td><b>File → Import</b> the new files (listed in the report), or drag them from the Media Browser into their camera bin.</td></tr>
+    <tr><td>3 · Vows · interviews · speeches</td><td><span class="spec">/buwan:multicam 2026-11-15_Santos-Reyes --moment "Vows" --type vows --clips C0412 C0201 ZOOM0007</span></td><td>Import the <span class="spec">_SPEECH_…/VOWS/&lt;moment&gt;</span> folder → select the angles → <b>Create Multi-Camera Source Sequence → Timecode</b>.</td></tr>
     <tr><td>4 · Story</td><td><span class="spec">/buwan:plot 2026-11-15_Santos-Reyes SDE 4min</span></td><td>You approve the paper edit.</td></tr>
     <tr><td>5 · Cut</td><td><span class="spec">/buwan:rough-cut 2026-11-15_Santos-Reyes → /buwan:proof-gate</span></td><td>Built in the open project through the bridge as a new sequence. Or cut it yourself.</td></tr>
     <tr><td>6 · Audio</td><td><span class="spec">/buwan:audio</span></td><td>Essential Sound: Dialogue, Loudness to −17, Hard Limiter −6, music −20 dB.</td></tr>
@@ -179,7 +180,7 @@ footer{margin-top:18px;font-size:15px;color:var(--muted);line-height:1.6;text-al
 <div class="prompt">
   <span class="tag">The prompt</span>
   <code>/buwan-premiere:wedding-day 2026-11-15_Santos-Reyes --footage /Volumes/T7/Santos-Reyes</code>
-  <p style="margin:10px 0 0;font-size:14px;color:var(--muted)">New cards from the shooters later: run it again. A new enhanced folder is made; the raw is still untouched.</p>
+  <p style="margin:10px 0 0;font-size:14px;color:var(--muted)">New cards from the shooters during the day: <span class="spec">/buwan:sync 2026-11-15_Santos-Reyes</span> — only the new clips, into the same enhanced folder. The raw is still untouched.</p>
 </div>
 
 <div class="divider">
