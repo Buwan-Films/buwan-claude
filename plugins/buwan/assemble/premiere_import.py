@@ -20,6 +20,7 @@ from pathlib import Path
 from common import Clip, load_json, log, save_json
 
 MANGO, TEAL = 7, 10
+VIDEO_EXT = {".mov", ".mp4", ".mxf", ".m4v", ".avi", ".mts"}
 AERIAL = ("drone", "dji", "aerial", "mavic")
 
 
@@ -52,8 +53,9 @@ def build(project: Path, clips: dict[str, Clip], folder: Path) -> dict:
     root_bin = f"ENHANCED {stamp}"
     by_rel = {str(Path(c.rel).with_suffix("")): (p, c) for p, c in clips.items() if c.rel}
     out, seen = [], set()
-    for mov in sorted(folder.rglob("*.mov")):
-        if mov.name.endswith(".part.mov") or mov.name.startswith("._"):
+    vids = [f for f in folder.rglob("*") if f.is_file() and f.suffix.lower() in VIDEO_EXT]
+    for mov in sorted(vids):   # rendered .mov + the clips with no fix, copied with their own extension
+        if ".part." in mov.name or mov.name.startswith("._"):
             continue
         rel = mov.relative_to(folder)
         raw_p, c = by_rel.get(str(rel.with_suffix("")), (None, None))

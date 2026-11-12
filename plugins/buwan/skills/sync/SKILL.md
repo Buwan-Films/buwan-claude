@@ -1,12 +1,12 @@
 ---
 name: sync
-description: New clips during an ongoing wedding — the shooters keep dropping cards into the raw folders; Claude Code finds only the clips that are new since the last run, checks them (cull), fixes their exposure, cuts and smooths shaky Creative/Glider ones, renders them into the same <raw>_ENHANCED_<date-time>/ folder as before, then transcribes every clip with speech (local whisper) so /buwan:plot starts from text. Clips already there are skipped; the raw folder is only read. Use when an editor says "sync", "new clips", "new cards", "new footage came in", "process the new raws", "update the enhanced folder", or during the day after /buwan:basics. Not camera/audio sync — that is /buwan:multicam.
+description: New clips during an ongoing wedding — the shooters keep dropping cards into the raw folders; Claude Code finds only the clips that are new since the last run, checks them (cull), fixes their exposure and white balance, cuts and smooths shaky Creative/Glider ones, renders the ones with a fix and copies the rest as they are into the same <raw>_ENHANCED_<date-time>/ folder as before, then transcribes every clip with speech (local whisper) so /buwan:plot starts from text. Clips already there are skipped; the raw folder is only read. Use when an editor says "sync", "new clips", "new cards", "new footage came in", "process the new raws", "update the enhanced folder", or during the day after /buwan:basics. Not camera/audio sync — that is /buwan:multicam.
 argument-hint: "<YYYY-MM-DD>_<Couple> [--footage <raw folder>] [--out <_ENHANCED_ folder>]"
 ---
 
 # Sync — the new clips only
 
-Load `/buwan:house-rules`. Same rules as `/buwan:basics`: the raw folder is only read, no grade, no copying, no sorting. Arguments: $ARGUMENTS
+Load `/buwan:house-rules`. Same rules as `/buwan:basics`: the raw folder is only read, no grade, no working copy, no sorting. New clips with a fix are rendered, new clips with no fix are copied as they are, so the folder keeps every clip of the day. Arguments: $ARGUMENTS
 
 Run after `/buwan:basics` has made the first `_ENHANCED_` folder for the wedding. (On a project with no basics run yet, this is the basics: it makes the first folder.)
 

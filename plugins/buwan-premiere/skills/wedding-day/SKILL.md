@@ -1,6 +1,6 @@
 ---
 name: wedding-day
-description: The Buwan same-day run for Premiere Pro editors — Claude Code makes new ENHANCED clips from the raw footage into a new folder (exposure and white balance fixed on every clip; shaky Creative/Glider shots cut to their best part with a smooth glide; no grade), the raw files never touched, and stops. Interviews/vows/speeches (/buwan:multicam) and the grade (/buwan:grade) are separate skills the editor asks for. Use when a Premiere editor says "wedding day", "start the SDE", "run the basics", "enhance the clips", "new clips from the shooters", or drops a footage folder on the day.
+description: The Buwan same-day run for Premiere Pro editors — Claude Code makes a new ENHANCED folder from the raw footage with every clip of the day (exposure and white balance checked on every clip: the clips that need a fix rendered, shaky Creative/Glider shots cut to their best part with a smooth glide, the rest copied as they are; no grade), the raw files never touched, and stops. Interviews/vows/speeches (/buwan:multicam) and the grade (/buwan:grade) are separate skills the editor asks for. Use when a Premiere editor says "wedding day", "start the SDE", "run the basics", "enhance the clips", "new clips from the shooters", or drops a footage folder on the day.
 argument-hint: "<YYYY-MM-DD>_<Couple> --footage <raw folder on the SSD>"
 ---
 
@@ -8,7 +8,7 @@ argument-hint: "<YYYY-MM-DD>_<Couple> --footage <raw folder on the SSD>"
 
 Load `/buwan:house-rules` and `/buwan:basics`. `/buwan:basics` is the whole run; this skill adds the Premiere hand-off and the clock. Keep a running clock (ask for the screening time once) and report after every phase: done · time used · time left.
 
-**Scope is the basics, then stop:** enhanced clips (exposure and white balance fixed, shaky Creative/Glider best cut + glide, no grade) into `<raw>_ENHANCED_<date-time>/`. No copy, no dedupe, no file organizing, no speech work, no grade, no sync, no story, no cut, no music, no sequence to cut in.
+**Scope is the basics, then stop:** the `<raw>_ENHANCED_<date-time>/` folder with every clip of the day: the clips that need it rendered with their exposure / white balance fix or shaky Creative/Glider best cut + glide, every other clip copied as it is (instant clone on the same drive); no grade. No working copy, no dedupe, no file organizing, no speech work, no grade, no sync, no story, no cut, no music, no sequence to cut in.
 
 ## Phase 0 — check, don't do
 - The raw folder on the SSD, one subfolder per shooter (`1-Creative` / `Glider`, `2-Main`, `3-3rd Cam`, `4-Drone`, `Audio`). Read only.

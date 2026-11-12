@@ -1,8 +1,12 @@
 """Render: new enhanced clips from the raw footage, into a new folder on every run. The raw files are only read.
 
 Per clip (read from the raw folder, same relative path; written as <out>/<camera>/<card>/<clip>.mov):
-  every camera clip  exposure + white balance fix (exposure.json) -> HEVC 10-bit. No grade: the look is applied in the editing app
-                     (/buwan:grade). `--look <.cube>` bakes a look in, only when asked.
+  clip with a fix    exposure and/or white balance fix (exposure.json) -> HEVC 10-bit. No grade: the look is applied in the
+                     editing app (/buwan:grade). `--look <.cube>` bakes a look in, only when asked.
+  clip with no fix   copied as it is (the original file, same name and extension; an APFS clone when the folder is on the
+                     same drive, so it takes no time and no extra space) -> the folder holds every clip of the day and the
+                     editor imports one folder. Re-encoding an unchanged clip would only add a generation of compression.
+                     `--reencode-all` renders them to HEVC 10-bit instead (e.g. for smooth playback of 4:2:2 H.264).
   shaky Creative/Glider clips (steady.json: best-cut / warp) trimmed to the best cut, then a smooth glide with
                      vid.stab (two passes; needs the Buwan ffmpeg with libvidstab: ~/.buwan/ffmpeg-vidstab)
   everything else    the original audio, untouched (interviews and vows too: their angles, best audio and dead air
@@ -19,6 +23,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -142,6 +147,27 @@ def render_clip(ff: str, src: Path, out: Path, job: dict, cube: str | None, vids
     return "; ".join(what)
 
 
+def needs_render(job: dict, cube: str | None) -> bool:
+    return bool(cube or job.get("ev") or job.get("wb") or job.get("trim") or job.get("ranges"))
+
+
+def copy_clip(src: Path, dst: Path) -> str:
+    """The original, unchanged: an APFS clone (instant, no extra space) when possible, else a byte copy; size checked."""
+    tmp = dst.with_name(dst.stem + ".part" + dst.suffix)
+    tmp.unlink(missing_ok=True)
+    cloned = False
+    if sys.platform == "darwin":
+        cloned = subprocess.run(["cp", "-c", str(src), str(tmp)], capture_output=True).returncode == 0
+    if not cloned:
+        tmp.unlink(missing_ok=True)
+        shutil.copy2(src, tmp)
+    if tmp.stat().st_size != src.stat().st_size:
+        tmp.unlink(missing_ok=True)
+        raise RuntimeError("copy size mismatch")
+    tmp.rename(dst)
+    return "original copied, no fix needed" + (" (clone)" if cloned else "")
+
+
 def plan_jobs(project: Path, clips: dict[str, Clip], categories: dict) -> dict[str, dict]:
     adir = project / "edit" / "assemble"
     load = lambda n: json.loads((adir / n).read_text()) if (adir / n).exists() else {}
@@ -169,7 +195,8 @@ def plan_jobs(project: Path, clips: dict[str, Clip], categories: dict) -> dict[s
 
 
 def run(project: Path, clips: dict[str, Clip], categories: dict, raw_copy: Path, source: Path, out: Path | None,
-        cube: str | None, workers: int = 3, limit: int = 0, only: str | None = None, redo: bool = False) -> dict:
+        cube: str | None, workers: int = 3, limit: int = 0, only: str | None = None, redo: bool = False,
+        reencode_all: bool = False) -> dict:
     ff = ffmpeg_bin()
     vidstab = has_vidstab(ff)
     out = out or source.parent / f"{source.name}_ENHANCED_{_dt.datetime.now():%Y%m%d-%H%M}"
@@ -182,30 +209,41 @@ def run(project: Path, clips: dict[str, Clip], categories: dict, raw_copy: Path,
         if not src.exists():
             src = Path(p)   # fall back to the working copy (same bytes) if the raw folder moved
         kind = "shaky" if "trim" in j else "clip"
+        if not reencode_all and not needs_render(j, cube):
+            kind = "copy"
         if only == "wb":
             if not j.get("wb"):
                 continue
-        elif only == "fixed":   # every clip with an exposure or white-balance fix
-            if not (j.get("wb") or j["ev"]):
+        elif only == "fixed":   # every clip with a fix (exposure, white balance, shaky best cut); nothing copied
+            if kind == "copy":
+                continue
+        elif only == "copy":    # only the clips with no fix, copied as they are
+            if kind != "copy":
                 continue
         elif only and kind != only:
             continue
-        items.append((p, src, out / rel.with_suffix(".mov"), j, kind))
-    items.sort(key=lambda x: (x[4] != "shaky", str(x[2])))   # shaky first: the ones to check
+        dst = out / rel if kind == "copy" else out / rel.with_suffix(".mov")
+        items.append((p, src, dst, j, kind))
+    items.sort(key=lambda x: ({"shaky": 0, "clip": 1}.get(x[4], 2), str(x[2])))   # shaky first (the ones to check), copies last
     if limit:
         items = items[:limit]
-    log(f"render: {len(items)} clips -> {out} (ffmpeg {'with' if vidstab else 'WITHOUT'} vid.stab, look {Path(cube).name if cube else 'none'})")
+    n_copy = sum(1 for it in items if it[4] == "copy")
+    log(f"render: {len(items) - n_copy} clips to render + {n_copy} with no fix to copy as they are -> {out} (ffmpeg {'with' if vidstab else 'WITHOUT'} vid.stab, look {Path(cube).name if cube else 'none'})")
     rows, done = [], 0
 
     def one(it):
         p, src, dst, j, kind = it
         if dst.exists() and dst.stat().st_size > 0 and not redo:
-            return [str(src), str(dst), kind, "already rendered"]
+            return [str(src), str(dst), kind, "already there"]
+        if kind == "copy" and dst.with_suffix(".mov") != dst and dst.with_suffix(".mov").exists():
+            return [str(src), str(dst.with_suffix(".mov")), kind, "already rendered by an earlier run"]
         dst.parent.mkdir(parents=True, exist_ok=True)
         try:
+            if kind == "copy":
+                return [str(src), str(dst), kind, copy_clip(src, dst)]
             return [str(src), str(dst), kind, render_clip(ff, src, dst, j, cube, vidstab)]
         except Exception as e:
-            dst.with_name(dst.stem + ".part.mov").unlink(missing_ok=True)
+            dst.with_name(dst.stem + ".part" + dst.suffix).unlink(missing_ok=True)
             return [str(src), str(dst), kind, f"FAILED: {e}"]
 
     with cf.ThreadPoolExecutor(max_workers=workers) as ex:

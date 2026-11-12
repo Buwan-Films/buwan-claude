@@ -1,5 +1,13 @@
 # Changelog
 
+## buwan 1.16.0 · buwan-premiere 1.11.0 — 2026-11-13  (/plugin marketplace update buwan-films, update both plugins, /reload-plugins)
+**The enhanced folder holds every clip of the day.**
+- `render` renders only the clips that need something (an exposure or white-balance fix, a shaky best cut, or a baked look) and copies every other clip as it is into the same `_ENHANCED_` folder: same camera/card folders, same name and extension. On the same drive the copy is an APFS clone (instant, no extra space), otherwise a byte copy; sizes are checked. `render_log.csv` kind `copy`.
+- Why: re-encoding an unchanged clip only adds a generation of compression (8-bit sources gain nothing from a 10-bit re-encode) and most of the render time. The camera original is the best source for the grade (e.g. a film-emulation finish after the edit). On a 815-clip wedding: 151 clips rendered instead of 815.
+- `--only fixed` now also includes the shaky best cuts and copies nothing; `--only copy` only copies; `--reencode-all` brings back the old behaviour (every clip to HEVC 10-bit, e.g. for smooth playback of 4:2:2 10-bit H.264 — or use Premiere proxies for that camera).
+- `/buwan:sync` (`update`) does the same for new cards. `premiere-import` picks up the copied originals (.mp4/.mov/.mxf/.mts/.m4v/.avi) next to the rendered .mov.
+- `selftest` renders the synthetic wedding and checks the enhanced folder is complete and the copies match their sources.
+
 ## buwan 1.15.0 · buwan-premiere 1.10.0 — 2026-11-12  (/plugin marketplace update buwan-films, update both plugins, /reload-plugins)
 **Transcribe on arrival.**
 - `/buwan:sync` now transcribes after the render: every camera clip with sound (≥ 20 s, not culled, not aerial, loud enough) that has no transcript yet. On the first sync after the basics that includes the basics' clips.

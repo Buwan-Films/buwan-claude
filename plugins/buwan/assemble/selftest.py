@@ -159,6 +159,9 @@ def run_selftest(out: Path):
     run("selects", str(proj), "--selects", str(proj / "edit" / "assemble" / "selects.json"), "--multicam", "--event", "Selftest")
     run("build", str(proj), "--selects", str(proj / "edit" / "assemble" / "selects.json"), "--multicam", "--event", "Selftest", "--name", "SDE Cut",
         "--grade", "warm", "--fcp-lut", "--options", '{"title_at":"end","final_hold_s":26}')
+    enh_dir = out / "Videos_ENHANCED_selftest"
+    run("exposure", str(proj))
+    run("render", str(proj), "--out", str(enh_dir))
     # ---- checks ----
     ok = True
     cull = json.load(open(proj / "edit" / "assemble" / "cull.json"))
@@ -190,6 +193,14 @@ def run_selftest(out: Path):
     log(f"CHECK enhance: {len(enh)} speech clips measured, clean renders: {sum(1 for v in enh.values() if v.get('clean'))}")
     log(f"CHECK dead air: removed {sum(v['removed_s'] for v in sr.values()):.1f}s, kept {sum(v['kept_s'] for v in sr.values()):.1f}s over {len(sr)} clips")
     ok &= len(enh) >= 2 and len(sr) >= 2
+    import csv as _csv
+    rows = list(_csv.DictReader(open(enh_dir / "render_log.csv")))
+    kept = [m for m in cull if not m["reject"] and Path(m["path"]).suffix.lower() in (".mp4", ".mov")]
+    have = {Path(r["enhanced"]).relative_to(enh_dir).with_suffix("").as_posix() for r in rows if not r["what was done"].startswith("FAILED")}
+    copies = [r for r in rows if r["kind"] == "copy"]
+    same = all(Path(r["enhanced"]).stat().st_size == Path(r["source"]).stat().st_size for r in copies)
+    log(f"CHECK enhanced folder: {len(have)} clips for {len(kept)} kept clips ({len(copies)} copied as they are, sizes match: {same})")
+    ok &= len(have) >= len(kept) and same and len(copies) > 0
     plan = json.load(open(next((proj / "edit").glob("sde-cut_v1.plan.json"))))
     log(f"CHECK build: {plan['stats']}  notes={plan['notes']}")
     ok &= plan["stats"]["broll_shots"] > 10
