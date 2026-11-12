@@ -9,7 +9,7 @@ argument-hint: "[project folder] [highlights|SDE|full|corporate recap] [target l
 Follow the house rules (`/buwan:house-rules`). Arguments: $ARGUMENTS
 
 ## 1. Transcribe once
-- Use existing transcripts first: the app's transcript export (Premiere Text panel, Resolve transcription, FCP captions) or `edit/transcripts/*`.
+- Use existing transcripts first: `edit/transcripts_report.md` + `edit/assemble/transcripts.json` (made by `/buwan:sync`: every clip with speech, `edit/transcripts/<camera>/<card>/<clip>.srt`), the app's transcript export (Premiere Text panel, Resolve transcription, FCP captions) or `edit/transcripts/*`. Missing clips: `assemble.js transcribe <project> --clips <names>`.
 - If `edit/assemble/speech_ranges.json` exists, transcribe only those ranges (the dead air is already removed).
 - Otherwise transcribe the speech clips (local Whisper if installed) and save to `edit/transcripts/<clip>.srt` with source timecodes. Never write transcripts into `sources/`.
 - Expect **Taglish**. Keep the original wording. Never clean up, translate or "fix" vows or speeches. Mark unclear words `[?]`.

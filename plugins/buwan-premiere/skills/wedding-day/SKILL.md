@@ -18,7 +18,9 @@ Load `/buwan:house-rules` and `/buwan:basics`. `/buwan:basics` is the whole run;
 `scan --footage` → `cull` → `steady` → `exposure` → `render`.
 
 ## Phase 2 — hand-off to Premiere
-Tell the editor: **File → Import** (or Media Browser) the `<raw>_ENHANCED_<date-time>` folder into their project — the camera/card folders come in as bins. The exposure is already fixed and the shaky Creative clips already glide (no Warp Stabilizer needed). No look is on them yet. Importing through the bridge (`import_folder`) only when the editor asks.
+**One-command import** (the MCP Bridge panel open in the editor's project): `node <buwan>/scripts/assemble.js premiere-import <project>` → `edit/premiere/enhanced.json`, then the bridge step `enhanced` (`node <buwan-premiere>/scripts/premiere-snippet.js enhanced <project>/edit/premiere/enhanced.json` → `execute_extendscript`; repeat while `remaining > 0`). The clips land in **ENHANCED <date-time>/<camera>** bins; drone clips Teal, clips with speech Mango (once transcribed) with what they sound like and their first words in the **Description** column — type a word from the vows in the Project panel search to find the clip. No sequences are made.
+Without the bridge: **File → Import** (or Media Browser) the `<raw>_ENHANCED_<date-time>` folder — the camera/card folders come in as bins.
+The exposure is already fixed and the shaky Creative clips already glide (no Warp Stabilizer needed). No look is on them yet.
 
 Report a table (what · result · check by hand) and **stop**. Then remind the editor of the two skills they can call next:
 - **Interviews, vows, speeches** — `/buwan:multicam`: they list each moment's clips; the angles come back synced on the best clean audio with the dead air cut, in `<raw>_SPEECH_<date-time>/INTERVIEWS|VOWS|SPEECHES/`. Premiere: select the angles → **Create Multi-Camera Source Sequence** → Synchronize Point: Timecode.
@@ -29,7 +31,7 @@ Report a table (what · result · check by hand) and **stop**. Then remind the e
 - **Bins and labels in the project** — `/buwan-premiere:premiere-apply`.
 
 ## New clips from the shooters
-`/buwan:sync <project>` each time new cards land in the raw folders: only the new clips are checked, fixed and rendered, into the same `_ENHANCED_` folder. Then import just the new files (File → Import, or drag the new files from the Media Browser into their camera bin). Nothing already imported is touched.
+`/buwan:sync <project>` each time new cards land in the raw folders: only the new clips are checked, fixed and rendered, into the same `_ENHANCED_` folder, then **transcribes** every clip with speech not transcribed yet (local whisper, ~35× real time) into `edit/transcripts/`. Then `premiere-import` + bridge `enhanced` again: only the new files are imported, and clips whose transcript just arrived get their Mango label and Description. Nothing the editor moved, renamed or relabelled is touched.
 
 ## Rules on the day
 - Never write into the raw folder. Never create a sequence for the editor to cut in; never touch their sequences.

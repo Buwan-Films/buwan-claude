@@ -19,7 +19,7 @@ Organize → color → grade → sound → cull → dead air → sync → the SD
 ## Project setup
 - Project file lives in `edit/`: `<project>_v<N>.prproj`. Scratch disks and auto-save to `edit/`.
 - Sequence: 23.976 fps, 1920×1080 (or UHD), 48 kHz. Letterbox 2:1 / 2.39:1 with a kit letterbox clip on the top video track, not by changing the sequence frame size.
-- Speech clips: **Automatic transcription** on import (Language: Filipino if Tagalog dominates, else English). Export transcripts via **Text panel → … → Export to text/SRT** into `edit/transcripts/`.
+- Speech clips: transcripts come from `/buwan:sync` (`edit/transcripts/`, first words in the clip's Description after the bridge step `enhanced`). Or Premiere's **Automatic transcription** on import (Language: Filipino if Tagalog dominates, else English). Export transcripts via **Text panel → … → Export to text/SRT** into `edit/transcripts/`.
 
 ## Importing Story-Lock outputs (no bridge)
 - EDL: **File → Import** → `selects_vN.edl` → 23.976 → it creates a sequence; relink offline clips to `sources/` if prompted (Locate, don't copy).

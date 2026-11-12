@@ -30,7 +30,7 @@ Interviews, letters, speeches and vows go through like every other clip (exposur
 3. `exposure <project>` (exposure and white balance in one pass).
    - A run made before white balance existed: `exposure <project>` (reuses the exposure readings), then `render <project> --only fixed --redo --out <that _ENHANCED_ folder>` re-renders every clip with an exposure or white-balance fix, in place.
 4. `render <project>` for everything, straight away (a new folder; pass `--out` only to continue a run that stopped). Shaky clips come out first: spot-check one while the rest renders. A short test (`--only shaky|clip --limit 2 --out <folder>`) only after an engine update or with a new camera.
-5. Report a table: what · result · check by hand. **Stop.**
+5. Report a table: what · result · check by hand. **Stop.** Premiere editors with the bridge open can bring the folder in with one command: `premiere-import <project>` → bridge step `enhanced` (camera bins, drone Teal). Transcripts of the speech clips come with the first `/buwan:sync`.
 
 ## New clips from the shooters
 The wedding is still going and new cards keep coming: `/buwan:sync <project>` — only the new clips are checked, fixed and rendered, into the same `_ENHANCED_` folder (the clips already there are skipped). Run it as often as cards arrive.

@@ -1,5 +1,19 @@
 # Changelog
 
+## buwan 1.15.0 · buwan-premiere 1.10.0 — 2026-11-12  (/plugin marketplace update buwan-films, update both plugins, /reload-plugins)
+**Transcribe on arrival.**
+- `/buwan:sync` now transcribes after the render: every camera clip with sound (≥ 20 s, not culled, not aerial, loud enough) that has no transcript yet. On the first sync after the basics that includes the basics' clips.
+- Local whisper.cpp large-v3-turbo with the Silero voice detector; nothing leaves the computer. About 35× real time (68 min of ceremony and reception in ~2 min on Apple Silicon). Taglish kept as spoken.
+- Out: `edit/transcripts/<camera>/<card>/<clip>.srt` + `.txt`, `edit/assemble/transcripts.json`, `edit/transcripts_report.md` (clips with speech, what they sound like — vows · mass · speech/toast · interview/message · talk — and the first words). `/buwan:plot` starts from these.
+- On its own: `assemble.js transcribe <project> [--clips C0823] [--language auto|tl|en]`. `update --no-transcribe` skips it.
+- `/buwan:setup-kit` installs whisper.cpp and downloads the model (1.6 GB) and the voice detector.
+
+**One-command import into Premiere.**
+- `assemble.js premiere-import <project>` → `edit/premiere/enhanced.json`; bridge step `enhanced` imports the newest `_ENHANCED_` folder into `ENHANCED <date-time>/<camera>` bins (300 per call, repeat while `remaining > 0`).
+- Drone clips Teal (08 Drone); clips with speech Mango (01 Speech) with "<sounds like>: <first words>" in the Description column, so the Project panel search finds a clip by a word from the vows. Smoothed Creative clips say so.
+- Run it again after each `/buwan:sync`: only the new files are imported; clips whose transcript arrived later get their label and Description. Anything the editor moved, renamed or relabelled is kept. No sequences.
+- Fixed: the Description written on flagged clips by `organize` used the wrong Premiere call and was silently skipped.
+
 ## buwan 1.14.0 · buwan-premiere 1.9.3 — 2026-11-11  (/plugin marketplace update buwan-films, update both plugins, restart)
 **White balance in the basics.**
 - `exposure` now also reads each clip's colour cast from its neutral surfaces (whites, greys, walls) and sets a gentle per-channel fix, baked into the enhanced clip together with the exposure fix. No grade.

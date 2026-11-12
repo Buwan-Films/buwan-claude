@@ -400,7 +400,7 @@ var BUWAN = (function () {
       if (!parent || parent.nodeId !== target.nodeId) {
         try { it.moveBin(target); moved++; if (flagIt) flagged++; } catch (e) { log("move failed " + c.name + ": " + e); }
       } else if (flagIt) flagged++;
-      if (flagIt) { try { it.setProjectMetadata("Column.Intrinsic.Description", ["flagged: " + c.flag.join(", ") + " (was " + c.bin + ")"]); } catch (eD) {} }
+      if (flagIt) { setDescription(it, "flagged: " + c.flag.join(", ") + " (was " + c.bin + ")"); }
       if (c.label >= 0) {
         var cur = -1; try { cur = it.getColorLabel(); } catch (e2) {}
         if (cur !== c.label) { try { it.setColorLabel(c.label); labeled++; } catch (e3) { log("label failed " + c.name + ": " + e3); } }
@@ -863,6 +863,67 @@ var BUWAN = (function () {
              next: "Play it: the names should sit on a calm wide shot of the couple. Slide it (or the shot under it) if a cut lands mid-title." };
   }
 
+  // ---------- the basics' _ENHANCED_ folder (manifest from `assemble.js premiere-import`) ----------
+  var PRIV = "http://ns.adobe.com/premierePrivateProjectMetaData/1.0/", DESC = "Column.Intrinsic.Description";
+  function xmpOf(it) {
+    if (ExternalObject.AdobeXMPScript === undefined) ExternalObject.AdobeXMPScript = new ExternalObject("lib:AdobeXMPScript");
+    return new XMPMeta(it.getProjectMetadata());
+  }
+  function getDescription(it) {
+    try { var v = xmpOf(it).getProperty(PRIV, DESC); return v ? String(v.value) : ""; } catch (e) { return ""; }
+  }
+  function setDescription(it, text) {
+    try { var x = xmpOf(it); x.setProperty(PRIV, DESC, String(text)); it.setProjectMetadata(x.serialize(), [DESC]); return true; }
+    catch (e) { log("description failed " + it.name + ": " + e); return false; }
+  }
+  function stepEnhanced(opts) {
+    if (M.kind !== "enhanced") throw new Error("this step needs edit/premiere/enhanced.json (assemble.js premiere-import <project>)");
+    reindex();
+    var limit = opts.limit || 300, groups = {}, order = [], todo = 0, missingOnDisk = 0;
+    for (var i = 0; i < M.clips.length; i++) {
+      var c = M.clips[i];
+      if (itemFor(c.path)) continue;
+      var f = new File(c.path);
+      if (!f.exists) { missingOnDisk++; continue; }
+      if (!groups[c.bin]) { groups[c.bin] = []; order.push(c.bin); }
+      groups[c.bin].push(f.fsName); todo++;
+    }
+    var done = 0;
+    for (var g = 0; g < order.length && done < limit; g++) {
+      var paths = groups[order[g]], target = bin(order[g]);
+      while (paths.length && done < limit) {
+        var batch = paths.splice(0, Math.min(50, limit - done));
+        if (!app.project.importFiles(batch, true, target, false)) log("import returned false for " + batch.length + " files into " + order[g]);
+        done += batch.length;
+      }
+    }
+    reindex();
+    // labels + Description: on clips just imported, and on earlier ones whose transcript arrived since (Description still empty)
+    var labeled = 0, described = 0, srts = 0, speechNames = [];
+    for (var j = 0; j < M.clips.length; j++) {
+      var m = M.clips[j], it = itemFor(m.path);
+      if (!it) continue;
+      if (m.speech) speechNames.push(m.name);
+      if (!m.desc && m.label < 0) continue;
+      var cur = getDescription(it);
+      if (cur) continue;                                   // already ours, or the editor's: leave it
+      if (m.label >= 0) { try { if (it.getColorLabel() !== m.label) { it.setColorLabel(m.label); labeled++; } } catch (eL) { log("label failed " + m.name + ": " + eL); } }
+      if (m.desc && setDescription(it, m.desc)) described++;
+      if (!m.desc && m.label >= 0) setDescription(it, "drone");   // mark it done so a relabel by the editor is kept next run
+    }
+    if (opts.srt) {                                         // the transcripts as caption items, opt-in
+      var sb = bin(M.root_bin + "/Transcripts");
+      for (var k = 0; k < M.clips.length; k++) {
+        var s = M.clips[k].srt;
+        if (s && !itemFor(s) && new File(s).exists) { try { app.project.importFiles([new File(s).fsName], true, sb, false); srts++; } catch (eS) { log("srt failed " + s + ": " + eS); } }
+      }
+      reindex();
+    }
+    return { imported: done, remaining: todo - done, missing_on_disk: missingOnDisk, labeled: labeled, described: described, transcripts_imported: srts,
+             root_bin: M.root_bin, cameras: M.counts.cameras, speech_clips: speechNames.length, speech_names: speechNames.slice(0, 40),
+             hint: todo - done > 0 ? "run enhanced again (same call) for the rest" : (missingOnDisk ? missingOnDisk + " clips in the manifest are not on disk (still rendering?): run again later" : "") };
+  }
+
   function run(step, manifestPath, opts) {
     logs = [];
     var t0 = new Date().getTime();
@@ -886,6 +947,7 @@ var BUWAN = (function () {
         case "build": r = stepBuild(o); break;
         case "endcard": r = stepEndcard(o); break;
         case "title": r = stepTitle(o); break;
+        case "enhanced": r = stepEnhanced(o); break;
         case "basics":
           // the same-day scope: import, organize (bins + labels, rejects, flagged), dead air, A-Roll clean, steady. No sync, no sequences to cut in.
           r = { "import": stepImport({ limit: 100000 }), organize: stepOrganize(o, false), deadair: stepDeadair({ limit: 100000 }) };
@@ -912,7 +974,7 @@ var BUWAN = (function () {
             try { r.enhance = stepEnhance(so); } catch (e3) { r.enhance = { error: String(e3) }; }
           }
           break;
-        default: throw new Error("unknown step: " + step + " (status, import, organize, cull, relink, grade, enhance, deadair, aroll, steady, sync, skeleton, build, basics, all)");
+        default: throw new Error("unknown step: " + step + " (status, import, organize, cull, relink, grade, enhance, deadair, aroll, steady, sync, skeleton, build, endcard, title, enhanced, basics, all)");
       }
       r.ok = true; r.step = step; r.seconds = Math.round((new Date().getTime() - t0) / 100) / 10; r.log = logs;
       try { app.project.save(); r.saved = true; } catch (e4) { r.saved = false; }
@@ -922,5 +984,5 @@ var BUWAN = (function () {
     }
   }
 
-  return { run: run, version: "1.9.0", steps: ["status", "import", "organize", "cull", "relink", "grade", "enhance", "deadair", "aroll", "steady", "sync", "skeleton", "build", "endcard", "title", "basics", "all"] };
+  return { run: run, version: "1.10.0", steps: ["status", "import", "organize", "cull", "relink", "grade", "enhance", "deadair", "aroll", "steady", "sync", "skeleton", "build", "endcard", "title", "enhanced", "basics", "all"] };
 })();

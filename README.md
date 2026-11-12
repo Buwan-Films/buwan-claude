@@ -20,6 +20,8 @@ Claude Code makes **enhanced clips** from the raw footage and stops. The raw fol
 
 | Skill | What it makes |
 |---|---|
+| `/buwan:sync` — new cards + transcripts | only the new clips checked, fixed and rendered into the same `_ENHANCED_` folder, then every clip with speech transcribed on this computer (whisper large-v3-turbo, ~35× real time) → `edit/transcripts/` + `transcripts_report.md` (vows · mass · speech · talk, first words) |
+| One-command Premiere import | `assemble.js premiere-import <project>` → bridge step `enhanced`: the `_ENHANCED_` folder into `ENHANCED <date-time>/<camera>` bins, drone Teal, speech clips Mango with their first words in Description (searchable). No sequences |
 | `/buwan:multicam` — interviews, vows, speeches | the editor lists a moment's clips → the best audio picked, the angles synced to it by sound, cleaned to −17 LUFS / peaks −6, the dead air cut at the same points on every angle, each angle rendered with its exposure fixed → `<raw>_SPEECH_<date-time>/INTERVIEWS\|VOWS\|SPEECHES/<moment>/`, ready for a multicam |
 | `/buwan:grade` — the look | a LUT built from the studio's own film (`assemble.js look --reference <film>`, before/after sheet) or the stock studio LUTs, applied in the editing app |
 
@@ -37,7 +39,7 @@ Pipeline pages, one per app — the editor opens theirs before starting: [**Prem
 | **Cuts (on request)** | `/buwan:plot` Story-Lock, then the engine builds the timeline to the music — measured by the proof gate |
 
 ## Editor setup (once per computer)
-Requirements: Claude Code, Node.js 20.19+, Python 3.9+, ffmpeg (Windows `winget install Gyan.FFmpeg`, macOS `brew install ffmpeg`), and read access to this repository. For transcription: whisper.cpp (`brew install whisper-cpp`; Claude installs the model on first use).
+Requirements: Claude Code, Node.js 20.19+, Python 3.9+, ffmpeg (Windows `winget install Gyan.FFmpeg`, macOS `brew install ffmpeg`), and read access to this repository. For transcription: whisper.cpp (`brew install whisper-cpp`; `/buwan:setup-kit` installs it and downloads the large-v3-turbo model and the voice detector into `~/.buwan/models`).
 
 1. Start Claude Code in your Buwan workspace folder (it has `projects/`).
 2. Install:
@@ -70,7 +72,7 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 | 05 Graphics + captions | `/buwan:graphics` |
 | 06 SFX | `/buwan:sfx` |
 | 07 Review | `/buwan:review` |
-| New cards during the day | `/buwan:sync <project>` (only the new clips, checked, fixed and rendered into the same `_ENHANCED_` folder) |
+| New cards during the day | `/buwan:sync <project>` (only the new clips, checked, fixed and rendered into the same `_ENHANCED_` folder, then the speech clips transcribed) |
 | Couple's names | `/buwan:title "Mary Nhor and Jomar"` (kit 07.09: The Wedding of · the names wide-tracked · Buwan Films, over the last wide shot) |
 | Logo end card | `/buwan:end-card` (kit 06.08: two blades become one ring, the emblem lands, last shot of every film) |
 | 08 Export | `/buwan:export`, then `/buwan:clipper` for reels |

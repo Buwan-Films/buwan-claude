@@ -13,6 +13,8 @@
   assemble.py look      <project> --reference <film>  -> edit/grade/Buwan_Film.cube (a look LUT matched to the studio's film; used by /buwan:grade)
   assemble.py speech    <project> --moment <name> --type <interview|vows|speech> --clips <clip> ...  -> <raw>_SPEECH_<date-time>/<TYPE>/<moment>/ (angles synced, best audio cleaned, dead air out)
   assemble.py update    <project> [--footage <dir>] [--out <_ENHANCED_ folder>]  -> new clips only, into the newest _ENHANCED_ folder
+  assemble.py transcribe <project> [--clips C0823 ...] [--language auto|tl|en]  -> edit/transcripts/ + transcripts.json (speech clips, local whisper)
+  assemble.py premiere-import <project> [--folder <_ENHANCED_>]  -> edit/premiere/enhanced.json (bridge step `enhanced`: import into camera bins, labels)
   assemble.py render    <project> [--source <raw>]    -> <raw>_ENHANCED_<date-time>/ (exposure fixed, no grade; shaky Creative best cut + vid.stab; HEVC 10-bit)
   assemble.py organize  <project> --categories edit/assemble/categories.json  -> edit/organize_vN.fcpxml
   assemble.py selects   <project> --selects edit/assemble/selects.json      -> edit/selects_vN.fcpxml
@@ -263,6 +265,26 @@ def cmd_update(a):
     log(f"update: rendering into {out or 'a new _ENHANCED_ folder'} (clips already there are skipped)")
     cmd_render(types.SimpleNamespace(project=a.project, source=None, out=str(out) if out else None, look=None, categories=None, workers=a.workers, limit=0, only=None))
     save_json(adir(project) / "update_last.json", {"new_clips": new, "out": str(out) if out else None})
+    if not getattr(a, "no_transcribe", False):
+        # after the render, so the new clips are in the editor's hands first; anything not transcribed yet
+        # (the basics' clips on the first sync, then each new card) gets its transcript
+        cmd_transcribe(types.SimpleNamespace(project=a.project, clips=None, language=getattr(a, "language", "auto"), redo=False, limit=0))
+
+
+def cmd_transcribe(a):
+    import transcribe
+    project = Path(a.project)
+    clips = load_clips(project)
+    only = None
+    if a.clips:
+        want = [x.lower() for x in a.clips]
+        only = {p for p, c in clips.items() if any(w in p.lower() for w in want)}
+    transcribe.transcribe(project, clips, only=only, language=a.language, redo=a.redo, limit=a.limit)
+
+
+def cmd_premiere_import(a):
+    import premiere_import
+    premiere_import.cmd(a, load_clips(Path(a.project)))
 
 def cmd_music(a):
     from music import analyse_tracks
@@ -568,7 +590,15 @@ def main():
     s = sub.add_parser("update", help="new clips during the day: scan, then check/fix/render only what is new, into the newest _ENHANCED_ folder")
     s.add_argument("project"); s.add_argument("--footage"); s.add_argument("--out", help="the _ENHANCED_ folder to add to (default: the newest one)")
     s.add_argument("--new-folder", action="store_true", help="start a new _ENHANCED_ folder instead"); s.add_argument("--gimbal", nargs="*"); s.add_argument("--workers", type=int, default=3)
+    s.add_argument("--no-transcribe", action="store_true", help="skip the transcripts after the render"); s.add_argument("--language", default="auto")
     s.set_defaults(f=cmd_update)
+    s = sub.add_parser("transcribe", help="transcripts of every camera clip with speech (local whisper), clips already done skipped -> edit/transcripts/")
+    s.add_argument("project"); s.add_argument("--clips", nargs="+", help="only clips whose path contains one of these (e.g. C0823 2-Main/6)")
+    s.add_argument("--language", default="auto", help="auto | tl | en"); s.add_argument("--redo", action="store_true"); s.add_argument("--limit", type=int, default=0)
+    s.set_defaults(f=cmd_transcribe)
+    s = sub.add_parser("premiere-import", help="edit/premiere/enhanced.json: the _ENHANCED_ folder for the bridge step `enhanced` (bins per camera, speech clips Mango, drone Teal, transcript in Description)")
+    s.add_argument("project"); s.add_argument("--folder", help="the _ENHANCED_ folder (default: the newest)"); s.add_argument("--out")
+    s.set_defaults(f=cmd_premiere_import)
     s = sub.add_parser("bycategory"); s.add_argument("project"); s.add_argument("--raw", help="the RAW_COPY folder (default: from edit/SOURCES.md)"); s.add_argument("--categories"); s.set_defaults(f=cmd_bycategory)
     s = sub.add_parser("exposure"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=6)
     s.add_argument("--look", default="warm", choices=["warm", "cool", "bw"]); s.add_argument("--remeasure", action="store_true", help="read the footage again instead of reusing exposure.json"); s.set_defaults(f=cmd_exposure)

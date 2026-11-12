@@ -92,6 +92,25 @@ if (isMac) {
   else bad("ffmpeg with vid.stab", "build failed: see ~/.buwan/build/*.log (needs Homebrew). Without it shaky clips are cut to their best part but not stabilized.");
 }
 
+// local transcription (/buwan:sync transcribes the speech clips): whisper.cpp + large-v3-turbo + Silero voice detector
+if (!flag("skip-whisper")) {
+  const models = path.join(os.homedir(), ".buwan", "models");
+  fs.mkdirSync(models, { recursive: true });
+  if (isMac && !has("whisper-cli")) spawnSync("brew", ["install", "whisper-cpp"], { stdio: "inherit" });
+  const files = [["ggml-large-v3-turbo.bin", "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin"],
+                 ["ggml-silero-v5.1.2.bin", "https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v5.1.2.bin"]];
+  let fine = true;
+  for (const [name, url] of files) {
+    const dst = path.join(models, name);
+    if (fs.existsSync(dst) && fs.statSync(dst).size > 100000) continue;
+    const r = spawnSync("curl", ["-fL", "--retry", "3", "-o", dst + ".part", url], { stdio: "inherit" });
+    if (r.status === 0) fs.renameSync(dst + ".part", dst); else { fine = false; try { fs.unlinkSync(dst + ".part"); } catch (e) {} }
+  }
+  if (!has("whisper-cli")) bad("Transcription", isMac ? "brew install whisper-cpp failed" : "install whisper.cpp (whisper-cli on PATH)");
+  else if (!fine) bad("Transcription", "model download failed (1.6 GB) - run setup-kit again");
+  else ok("Transcription", "whisper.cpp large-v3-turbo + voice detector in " + models);
+}
+
 // 3 + 4. Renderer and pre-rendered clips
 if (!has("ffmpeg")) bad("ffmpeg", isWin ? "Install: winget install Gyan.FFmpeg  (then reopen the terminal)" : "Install: brew install ffmpeg");
 else ok("ffmpeg found");
