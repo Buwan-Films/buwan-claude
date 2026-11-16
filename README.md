@@ -7,6 +7,12 @@ One studio standard for every Buwan editor, in every editing app. Claude Code lo
 | `buwan` | Every editor | House rules, a skill per pipeline stage, shared clip colors and bins, studio LUTs + grade check, brand fonts and logo, kit graphics renderer, proof gate, source protection, app playbooks |
 | `buwan-premiere` | Premiere editors only | The Premiere Pro bridge (premiere-pro-mcp 1.11.5) + the apply layer: everything the engine decided, done inside the open Premiere project (`/buwan-premiere:premiere-apply`, `/buwan-premiere:wedding-day`) |
 
+## The studio flow — plan, shoot, edit, deliver
+Every job runs the same four phases, for **wedding, prenup and corporate** shoots: [**Studio flow**](https://claude.ai/artifact/XspJWQPLCpuhofjkyzse7d) (pick a shoot type and a role to see only your steps). Planning happens on the [**Storyboard**](https://claude.ai/artifact/LJpY3x7t19hgkKZuE1Ed9D) page: brief, music, beats, cards and the **shot list** the shooters tick on the day. Its bundle goes into the job at `edit/storyboard/`, and `/buwan:plot`, `/buwan:rough-cut`, `/buwan:graphics` and `/buwan:review` start from it.
+
+- Who does what (owner, lead shooter, shooters, audio, data wrangler, editor): [docs/ROLES.md](docs/ROLES.md)
+- The steps in order, per shoot type: [docs/STUDIO-WORKFLOW.md](docs/STUDIO-WORKFLOW.md)
+
 ## What happens on a new wedding project
 Claude Code makes **enhanced clips** from the raw footage and stops. The raw folder is only read; every run writes a new folder next to it, `<raw>_ENHANCED_<date-time>/`, with the same camera/card folders and clip names (HEVC 10-bit `.mov`). No copying, no dedupe, no file organizing, **no grade**.
 
@@ -61,6 +67,7 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 ## The pipeline, one skill per stage
 | Stage | Skill |
 |---|---|
+| 00 Plan — storyboard, shot list, music, client sign-off | [Storyboard page](https://claude.ai/artifact/LJpY3x7t19hgkKZuE1Ed9D) → bundle into `edit/storyboard/` |
 | New wedding project — **the basics** | `/buwan:basics` (Premiere: `/buwan-premiere:wedding-day`) |
 | Interviews / vows / speeches · on request | `/buwan:multicam` (angles synced on the best audio, dead air out → `<raw>_SPEECH_*/`) |
 | Grade · on request | `/buwan:grade` (the look, in the app) |
@@ -76,6 +83,7 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 | Couple's names | `/buwan:title "Mary Nhor and Jomar"` (kit 07.09: The Wedding of · the names wide-tracked · Buwan Films, over the last wide shot) |
 | Logo end card | `/buwan:end-card` (kit 06.08: two blades become one ring, the emblem lands, last shot of every film) |
 | 08 Export | `/buwan:export`, then `/buwan:clipper` for reels |
+| 09 Deliver — client link, revisions, music licence, backup, archive | `/buwan:deliver` |
 | Same-day edit, the full flow | `/buwan:sde` |
 | Engine reference | `/buwan:assemble` |
 

@@ -1,7 +1,7 @@
 ---
 name: intake
-description: Pipeline stage 01 — start a new Buwan project and bring footage in. Use when an editor says "new project", "new wedding/corporate project", "intake", "working copy", "copy the cards to the SSD", or points at card dumps / a footage folder.
-argument-hint: "<YYYY-MM-DD>_<client> <wedding|corporate> <footage path> [--work-copy | --copy | --in-place]"
+description: Pipeline stage 01 — start a new Buwan project and bring footage in. Use when an editor says "new project", "new wedding/prenup/corporate project", "intake", "working copy", "copy the cards to the SSD", or points at card dumps / a footage folder.
+argument-hint: "<YYYY-MM-DD>_<client> <wedding|prenup|corporate> <footage path> [--work-copy | --copy | --in-place]"
 ---
 
 # 01 Intake
@@ -19,7 +19,7 @@ Three ways in. Pick by what the editor said; if they said nothing, **working cop
 In every mode the originals are never written to again, and the editor keeps the cards or a backup until delivery — say so once in the report.
 
 ## 1. Project folder (all modes)
-Create `projects/<YYYY-MM-DD>_<client>_<wedding|corporate>/` with `edit/transcripts`, `captions`, `exports` (and `sources/footage`, `sources/audio` in copy mode). Ask for date, client or shoot type only if missing.
+Create `projects/<YYYY-MM-DD>_<client>_<wedding|prenup|corporate>/` with `edit/transcripts`, `edit/storyboard`, `captions`, `exports` (and `sources/footage`, `sources/audio` in copy mode). Ask for date, client or shoot type only if missing. If the editor has the Storyboard bundle (.zip from the Storyboard page), unzip it into `edit/storyboard/`; if not, say once that the later stages work without it.
 
 ## 2a. Working copy on the drive
 ```

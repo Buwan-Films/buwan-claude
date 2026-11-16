@@ -19,8 +19,11 @@ Follow the house rules and the editor's app playbook for the exact preset steps.
 |---|---|---|
 | Wedding | YouTube long-form master | H.264 or H.265, source frame rate (23.976), 1920×1080 or 3840×2160 with 2:1/2.39:1 letterbox baked in, AAC 320 kbps 48 kHz |
 | Wedding | Clipper 9:16 reels | 1080×1920, ≤ 90s each, hook in first 3s, burned-in captions (kit caption style), re-enter pipeline at 01 |
+| Prenup | Prenup film | as the wedding master; often plays at the reception, so the export date comes from the wedding date |
+| Prenup | Save-the-date | 1080×1920 and 1920×1080, ≤ 60s, the save-the-date card from the storyboard |
+| Prenup | Clipper 9:16 teasers | 1080×1920, hook in first 3s |
 | Corporate | 16:9 recap | 1920×1080, H.264, AAC 320 kbps |
 | Corporate | 1:1 LinkedIn cut | 1080×1080, H.264, captions burned in |
 | Corporate | Clipper 9:16 reels/stories | 1080×1920 |
 
-Name files `<YYYY-MM-DD>_<client>_<deliverable>_v<N>.mp4` in `exports/`. After export, list each file with duration, size, loudness and peak.
+Name files `<YYYY-MM-DD>_<client>_<deliverable>_v<N>.mp4` in `exports/`. After export, list each file with duration, size, loudness and peak. Then hand over with `/buwan:deliver` (client link, revisions, backup, archive).

@@ -17,6 +17,11 @@ The rules live in this repository. The claude.ai artifacts are the visual versio
 | Copy by category, exposure fix | `plugins/buwan/assemble/bycategory.py` (folder layout, trims), `assemble/exposure.py` (`MARGIN`, `MAX_EV`, `LOW_KEY_HIGH`, `GAIN`; the band comes from `kit/grade/targets.json`); Premiere side in `buwan.jsx` (`stepRelink`, exposure in `stepGrade`) |
 | Shaky creative footage (which cameras count, steady thresholds) | `plugins/buwan/assemble/steady.py` (`CREATIVE_CAMERAS`, `GIMBAL_CAMERAS`, `STEADY_MAX`, `WARP_MAX_MEAN`, `MIN_STEADY_S`, `BEST_CUT_S`; per job: `edit/assemble/gimbal.txt` or `steady --gimbal`); Premiere side in `buwan.jsx` (`stepSteady`) |
 | The basics scope (what runs on a new project) | `plugins/buwan/skills/basics/SKILL.md`, `buwan-premiere/skills/wedding-day/SKILL.md`, bridge step `basics` in `buwan.jsx` |
+| Studio flow (plan → shoot → edit → deliver, per shoot type and role) | the Studio flow artifact, then save its page as `plugins/buwan/reference/studio-flow.html`; the text version is `docs/STUDIO-WORKFLOW.md` |
+| Roles | `docs/ROLES.md` (keep in step with the Studio flow's role filter) |
+| Storyboard and shot list | the Storyboard artifact, then save its page as `plugins/buwan/reference/storyboard.html`. Its export (`storyboard.json`: beats, `kind`, `pace`, `cam`, `must`, `got`, `clips`, card `slots`) is read by `skills/plot`, `rough-cut`, `graphics`, `review` — change those when the fields change |
+| Shoot types (wedding, prenup, corporate) | `house-rules/SKILL.md` (beats, pacing, deliverables), `scripts/proof-gate.js` (prenup targets in the `type === "prenup"` branch) |
+| Delivery, revisions, backup, archive | `skills/deliver/SKILL.md` |
 | Per-app pipeline pages | `plugins/buwan/reference/pipeline-premiere.html`, `pipeline-final-cut.html` — edit the artifact, save the page here |
 | Rule card every session starts with | `plugins/buwan/scripts/session-start.js` |
 | Clip categories, bins, colors | `house-rules/SKILL.md` → "Clip categories, bins and colors" (and `skills/organize`); allowed sub-bins in `assemble/premiere.py` (`SUB_BINS`) — keep both in sync |

@@ -11,11 +11,12 @@ Prerequisites: an approved `edit/paper-edit_vN.md` and `edit/selects_vN.edl` fro
 ## Rules (from the Edit Pipeline)
 - The speech spine is locked. Don't reorder or trim lines without the editor's OK.
 - **B-roll last, serving the story**: every shot matches or elevates the line under it — never decoration.
-- Pacing: bursts ~1–2s/shot at the energy peak (up to ~30 cuts/30s), **15–20s unbroken holds** on vows and first looks, average ~2.5–3s. Corporate: steady 1.5–2.5s, holds on speakers.
+- Pacing: bursts ~1–2s/shot at the energy peak (up to ~30 cuts/30s), **15–20s unbroken holds** on vows and first looks, average ~2.5–3s. Prenup: 2.5–3s average, a burst on the playful beat, 6s+ holds on intimate and golden-hour shots, 2–5 min. Corporate: steady 1.5–2.5s, holds on speakers.
+- Where the storyboard marks a beat `hold` or `burst`, cut it that way unless the footage can't carry it; say which beats changed.
 - Cuts land on beat and on key words.
 
 ## Steps
-1. **Shot plan** — for each line in the paper edit, choose b-roll from the clip log by category:
+1. **Shot plan** — if `edit/storyboard/storyboard.json` exists, start from it: each `broll`/`montage` beat says what we see (`shot`), the `shotType`, the camera (`cam` = the card folder: Creative / Glider, Main, 3rd Cam, Drone) and `pace` (hold/burst); the shot list's `clips` names the clips the shooters ticked for that shot — try those first. Then fill the rest from the clip log by category:
    - speech about a person → that person's Portraits/Prep shots
    - emotional peak → Reactions & BTS (burst bank)
    - between parts and after big lines → Establishing (breathing room)

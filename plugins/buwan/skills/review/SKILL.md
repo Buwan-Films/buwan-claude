@@ -9,6 +9,9 @@ argument-hint: "[project folder] [client notes file]"
 ## 1. Confirm the gates
 Before the watch-down, confirm and list: proof gate PASS (or override), audio specs PASS, grade check PASS, graphics converge done. If any is missing, run it first — review is not the place to find measurable problems.
 
+## 1b. Against the plan
+If `edit/storyboard/storyboard.json` exists: list the planned beats that are not in the cut, the must-have shots (`must`) that are missing or unticked, and the cards whose text changed since sign-off. These go to the editor, not automatically into the film.
+
 ## 2. Watch-down sheet
 Create `edit/review_vN.md` for the editor to fill while watching the full film once without stopping:
 | TC | Beat | Feel (works / drags / rushed / flat) | Note |

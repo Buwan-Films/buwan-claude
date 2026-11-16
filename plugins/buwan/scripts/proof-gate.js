@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 // Buwan proof gate: measures an EDL against the house pacing targets.
-// Usage: node proof-gate.js <file.edl> [--type wedding|corporate] [--mode speech|cut|sde] [--fps 23.976]
+// Usage: node proof-gate.js <file.edl> [--type wedding|prenup|corporate] [--mode speech|cut|sde] [--fps 23.976]
 //   sde = the picture cut of a same-day edit, measured against the SDE reference (two peaks, vow 3-4s shots, final hold 25-30s, title last)
 // Exit code: 0 = all PASS, 1 = at least one FAIL, 2 = could not read the EDL.
 const fs = require("fs");
 
 const args = process.argv.slice(2);
-const file = args.find((a) => !a.startsWith("--") && !/^(wedding|corporate|speech|cut|[\d.]+)$/.test(a));
+const file = args.find((a) => !a.startsWith("--") && !/^(wedding|prenup|corporate|speech|cut|sde|[\d.]+)$/.test(a));
 const opt = (name, def) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 && args[i + 1] ? args[i + 1] : def;
 };
-const type = opt("type", /_corporate([\\/]|$)/i.test(file || "") ? "corporate" : "wedding");
+const type = opt("type", /_corporate([\\/]|$)/i.test(file || "") ? "corporate" : /_prenup([\\/]|$)/i.test(file || "") ? "prenup" : "wedding");
 const mode = opt("mode", "cut");
 const fpsArg = parseFloat(opt("fps", "23.976"));
 const tcBase = Math.round(fpsArg); // timecode counts frames at the rounded rate (NDF)
@@ -143,6 +143,20 @@ if (mode === "speech") {
   const burstShare = durs.filter((d) => d <= 2).length / durs.length;
   add("Share of 1-2s burst shots", "-", `${Math.round(burstShare * 100)}%`, "INFO");
   add("Film length (highlights)", "6-10 min", `${(total / 60).toFixed(1)} min`, total >= 360 && total <= 600 ? "PASS" : "WARN");
+} else if (type === "prenup") {
+  // Prenup: no ceremony, one music track. Bursts on the playful beat against long holds on the moments that land.
+  add("Average shot length", "2.5-3.0s (+/-15%)", fmt(avg), avg >= 2.1 && avg <= 3.5 ? "PASS" : "FAIL");
+  const holds = shots.filter((e, i) => durs[i] >= 6);
+  add("Holds (intimate / golden hour)", ">= 1 shot of 6s+", `${holds.length}`, holds.length ? "PASS" : "WARN", holds.slice(0, 8).map((e) => `#${e.num}@${tcOf(e.recIn)}`).join(" "));
+  let best = 0, bestAt = 0;
+  for (let i = 0; i < shots.length; i++) {
+    const limit = shots[i].recIn + 30 * realFps;
+    let n = 0;
+    for (let j = i; j < shots.length && shots[j].recIn < limit; j++) n++;
+    if (n > best) (best = n), (bestAt = shots[i].recIn);
+  }
+  add("Playful burst (cuts in 30s)", ">= 12", String(best), best >= 12 ? "PASS" : "WARN", `from ${tcOf(bestAt)}`);
+  add("Film length (prenup)", "2-5 min", `${(total / 60).toFixed(1)} min`, total >= 120 && total <= 300 ? "PASS" : "WARN");
 } else {
   add("Average shot length", "1.5-2.5s (+/-10%)", fmt(avg), avg >= 1.35 && avg <= 2.75 ? "PASS" : "FAIL");
   const steady = durs.filter((d) => d >= 1.5 && d <= 2.5).length / durs.length;

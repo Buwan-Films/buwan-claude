@@ -1,5 +1,14 @@
 # Changelog
 
+## buwan 1.17.0 — 2026-11-17  (/plugin marketplace update buwan-films, /reload-plugins)
+**Plan → shoot → edit → deliver, for wedding, prenup and corporate.**
+- **00 Plan:** the Storyboard page is now the first step of every job. Its bundle goes into `edit/storyboard/` (`/buwan:intake` makes the folder). `/buwan:plot` uses `storyboard.json` as the skeleton and puts the real transcript lines into the planned beats. Planned words never go on screen unless someone said them. Beats with no matching line are listed as "Planned, not found". `/buwan:rough-cut` starts from the planned shots, cameras, hold/burst and the clip names the shooters ticked. `/buwan:graphics` takes the card text the client signed off. `/buwan:review` lists planned beats, must-have shots and changed cards that are missing from the cut.
+- **Shot list:** the Storyboard page has a Shot list view, grouped by camera. The camera names now match the card folders: Creative / Glider, Main, 3rd Cam, Drone, Audio. It has must-haves, a captured tick and clip names, and saves live so the crew can use it on the day. The page also gains wedding and corporate starter flows and a `shot-list.md` in the bundle.
+- **Prenup is a shoot type:** projects end in `_prenup`. It has its own beats (the shot flow), a Shot-Lock in place of the speech lock, and its own deliverables (prenup film, save-the-date, teasers). The proof gate has a prenup branch: 2.5–3 s average, a burst of ≥12 cuts in 30 s, a 6 s+ hold, 2–5 min.
+- **09 Deliver:** new `/buwan:deliver`. It writes `exports/DELIVERY.md` (files, link, client message), records the music licence (a track with no licence record blocks delivery), counts revision rounds against the contract, and runs a backup check (two copies of the originals, project and masters). It then writes `edit/CLOSED.md`. Claude never sends, uploads or deletes anything; the owner says when the cards may be formatted.
+- **Roles:** new `docs/ROLES.md` covers the owner, lead shooter, shooters, audio, data wrangler and editor. New `docs/STUDIO-WORKFLOW.md` has the steps per shoot type. The Studio flow page (`reference/studio-flow.html`) can light up just one role's steps.
+- The session rule card asks for the shoot type as wedding, prenup or corporate, and names the storyboard and `/buwan:deliver`.
+
 ## buwan 1.16.0 · buwan-premiere 1.11.0 — 2026-11-13  (/plugin marketplace update buwan-films, update both plugins, /reload-plugins)
 **The enhanced folder holds every clip of the day.**
 - `render` renders only the clips that need something (an exposure or white-balance fix, a shaky best cut, or a baked look) and copies every other clip as it is into the same `_ENHANCED_` folder: same camera/card folders, same name and extension. On the same drive the copy is an APFS clone (instant, no extra space), otherwise a byte copy; sizes are checked. `render_log.csv` kind `copy`.

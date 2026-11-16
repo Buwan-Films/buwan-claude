@@ -1,0 +1,359 @@
+<title>Buwan Films Workflow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Cinzel:wght@400;500&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: a shoot-type switch, then three phases left to right (stacked on phones), each a column of numbered steps; gates, shot-list and storyboard links marked in the flow. Single dark look, the studio's ink and gold. */
+:root{
+  --ink:#0D0C0A; --ink2:#15120E; --ink3:#1E1A14; --ink4:#2A251C; --gold:#C9A24B; --champagne:#E6CE8C;
+  --ivory:#F2EBDD; --stone:#9A9485; --line:rgba(201,162,75,.22); --line2:rgba(242,235,221,.1);
+  --plan:#C9A24B; --shoot:#7FA9B0; --edit:#C77F6E; --deliver:#B39DDB; --gate:#8FBF7A; --warn:#E0A458;
+  --display:'Cormorant Garamond',Georgia,serif; --caps:Cinzel,Georgia,serif; --ui:Figtree,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--ink);color:var(--ivory);font:15px/1.5 var(--ui);margin:0;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+h1,h2,h3{margin:0;font-weight:500;text-wrap:balance}
+.caps{font-family:var(--caps);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold)}
+.top{display:flex;flex-direction:column;gap:8px}
+.brand{display:flex;align-items:center;gap:10px}
+h1{font-family:var(--display);font-size:clamp(30px,5vw,46px);line-height:1.08}
+.lede{color:var(--stone);max-width:72ch;margin:0}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--stone);font:500 14px var(--ui);padding:8px 16px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--gold);color:#17120a;font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--champagne);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--stone)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.sw{width:14px;height:14px;border-radius:3px;border:1px solid var(--line2);background:var(--ink3)}
+.sw.sb{border:1px dashed var(--gold);background:rgba(201,162,75,.12)}
+.sw.gt{background:var(--gate);border-color:var(--gate);transform:rotate(45deg) scale(.75)}
+.sw.req{border:1px dashed var(--stone);background:transparent}
+.typeline{margin:0;font-size:14px;color:var(--ivory);max-width:80ch}
+.typeline b{color:var(--champagne);font-weight:600}
+
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;align-items:start}
+.phase{--pc:var(--plan);background:var(--ink2);border:1px solid var(--line2);border-top:3px solid var(--pc);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0;position:relative}
+.phase.shoot{--pc:var(--shoot)} .phase.edit{--pc:var(--edit)} .phase.deliver{--pc:var(--deliver)}
+.phase>.ph{display:flex;flex-direction:column;gap:2px;margin-bottom:4px}
+.phase h2{font-family:var(--display);font-size:28px;line-height:1.1}
+.phase .when{font-size:13px;color:var(--stone)}
+.phase:not(:last-child)::after{content:"";position:absolute;right:-15px;top:34px;width:12px;height:12px;border-top:2px solid var(--gold);border-right:2px solid var(--gold);transform:rotate(45deg)}
+
+.step{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:10px 10px 10px 8px;border:1px solid var(--line2);border-radius:8px;background:var(--ink3);position:relative}
+.step .n{font-family:var(--display);font-size:22px;line-height:1;color:var(--pc);font-variant-numeric:tabular-nums;text-align:right;padding-top:2px}
+.step h3{font-size:15px;font-weight:600;font-family:var(--ui)}
+.step p{margin:2px 0 0;font-size:13px;color:var(--stone);overflow-wrap:anywhere}
+.step code,.loop code{font:12px/1.4 var(--mono);color:var(--champagne);background:rgba(201,162,75,.08);border-radius:4px;padding:1px 5px}
+.step.req{border-style:dashed;background:transparent}
+.step.sb{border:1px dashed var(--gold);background:rgba(201,162,75,.07)}
+.step.shot{border:1px solid var(--gold);background:linear-gradient(rgba(201,162,75,.12),rgba(201,162,75,.04))}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tag{font-size:11px;font-weight:600;letter-spacing:.03em;color:var(--gold);border:1px solid var(--line);border-radius:99px;padding:1px 8px}
+.tag.req{color:var(--stone);border-color:var(--line2)}
+.tag.new{color:#17120a;background:var(--gold);border-color:var(--gold)}
+.tag.gap{color:var(--warn);border-color:rgba(224,164,88,.45)}
+.gate{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gate);padding:2px 4px 2px 14px}
+.gate i{flex:none;width:12px;height:12px;background:var(--gate);transform:rotate(45deg);border-radius:2px}
+.gate b{font-weight:600}
+.loop{font-size:13px;color:var(--stone);border-top:1px solid var(--line2);padding-top:10px;margin:2px 0 0}
+.loop b{color:var(--ivory);font-weight:500}
+
+.panel{background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.panel h2{font-family:var(--display);font-size:26px}
+.panel .sub{margin:0;color:var(--stone);font-size:14px;max-width:75ch}
+
+/* shot list mock */
+.sl{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:start}
+.cams{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px}
+.cam{border:1px solid var(--line2);border-radius:8px;padding:10px 12px;background:var(--ink3);min-width:0}
+.cam h3{font-family:var(--caps);font-size:11px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.cam ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.cam li{display:grid;grid-template-columns:16px minmax(0,1fr);gap:7px;align-items:start}
+.cam li i{width:14px;height:14px;border:1px solid var(--stone);border-radius:3px;margin-top:2px;font-style:normal;font-size:10px;line-height:12px;text-align:center}
+.cam li.ok i{background:var(--gate);border-color:var(--gate);color:#0D0C0A}
+.cam li.ok{color:var(--stone)}
+.cam li em{font-style:normal;color:var(--warn);font-size:11px;margin-left:4px}
+.cam small{color:var(--stone);font-family:var(--mono);font-size:11px}
+.how{display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--stone);margin:0;padding:0;list-style:none}
+.how li{border-left:2px solid var(--gold);padding-left:12px}
+.how b{color:var(--ivory);font-weight:600;display:block}
+
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line2);vertical-align:top}
+th{font-family:var(--caps);font-size:11px;letter-spacing:.2em;font-weight:500;color:var(--gold);text-transform:uppercase}
+td:first-child{color:var(--ivory);font-weight:600}
+td{color:var(--stone)}
+td .save{color:var(--gate);font-weight:600;white-space:nowrap}
+
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px}
+.rules div{border-left:2px solid var(--gold);padding:2px 0 2px 12px;font-size:14px;color:var(--stone)}
+.rules b{color:var(--ivory);font-weight:600;display:block}
+.rules div.gap{border-left-color:var(--warn)}
+
+.who{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.who span{font-size:11px;color:var(--ivory);background:var(--ink4);border-radius:4px;padding:1px 6px}
+.flow.role .step,.flow.role .gate{opacity:.28}
+.flow.role .step.mine,.flow.role .gate.mine{opacity:1}
+.flow.role .step.mine{box-shadow:0 0 0 1px var(--champagne)}
+.roleline{margin:0;font-size:14px;color:var(--stone);max-width:80ch;min-height:1.5em}
+.roleline b{color:var(--ivory)}
+.roleline a{color:var(--champagne)}
+.seg{flex-wrap:wrap}
+@media (max-width:1100px){.flow{grid-template-columns:repeat(2,minmax(0,1fr))} .phase:nth-child(2)::after{display:none}}
+@media (max-width:900px){
+  .flow,.sl{grid-template-columns:1fr}
+  .phase:not(:last-child)::after{right:auto;left:50%;top:auto;bottom:-15px;transform:translateX(-50%) rotate(135deg)}
+}
+@media (prefers-reduced-motion:no-preference){.flow{transition:opacity .15s}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="none" stroke="#C9A24B" stroke-width="2"/><path fill="#C9A24B" d="M63 9A42 42 0 1 0 63 91A39.5 39.5 0 0 1 63 9Z"/></svg>
+      <span class="caps">Buwan Films · Studio flow</span>
+    </div>
+    <h1>Plan, shoot, edit, deliver</h1>
+    <p class="lede">Every Buwan film, from the client brief to the reels. The storyboard is the plan, and its shot list goes to the shooters. What happens on the day decides the story, and the gates still apply. Pick a shoot type, then a role to see only that person’s steps.</p>
+  </div>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Shoot type">
+      <button type="button" id="t-wedding" data-t="wedding" aria-pressed="true">Wedding</button>
+      <button type="button" id="t-prenup" data-t="prenup" aria-pressed="false">Prenup</button>
+      <button type="button" id="t-corporate" data-t="corporate" aria-pressed="false">Corporate</button>
+    </div>
+    <div class="legend">
+      <span><i class="sw"></i>Standard step</span>
+      <span><i class="sw req"></i>On request</span>
+      <span><i class="sw sb"></i>Reads the storyboard (proposed)</span>
+      <span><i class="sw gt"></i>Gate</span>
+    </div>
+  </div>
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Show the steps for">
+      <button type="button" id="r-all" data-r="" aria-pressed="true">Everyone</button>
+      <button type="button" id="r-owner" data-r="owner" aria-pressed="false">Owner</button>
+      <button type="button" id="r-lead" data-r="lead" aria-pressed="false">Lead shooter</button>
+      <button type="button" id="r-shoot" data-r="shoot" aria-pressed="false">Shooters</button>
+      <button type="button" id="r-data" data-r="data" aria-pressed="false">Data wrangler</button>
+      <button type="button" id="r-editor" data-r="editor" aria-pressed="false">Editor</button>
+    </div>
+  </div>
+  <p class="roleline" id="roleline"></p>
+  <p class="typeline" id="typeline"></p>
+
+  <div class="flow" id="flow"></div>
+
+  <section class="panel" aria-label="Shot list">
+    <h2>The shot list</h2>
+    <p class="sub">Built from the storyboard, so nobody types it twice. One list per camera, must-haves first, opened on the shooters' phones. Each tick records the clip name, so the rough cut knows where every planned shot lives. Example below: a wedding.</p>
+    <div class="sl">
+      <div class="cams">
+        <div class="cam"><h3>Main cam</h3><ul>
+          <li class="ok"><i>✓</i><span>Groom reading his letter by the window <small>A001_C014</small></span></li>
+          <li class="ok"><i>✓</i><span>Vows, tight on each speaker <small>A002_C003</small></span></li>
+          <li><i></i><span>The kiss, wide from the aisle<em>must-have</em></span></li>
+        </ul></div>
+        <div class="cam"><h3>Creative / glider</h3><ul>
+          <li class="ok"><i>✓</i><span>Empty aisle, gown by the window <small>C001_C002</small></span></li>
+          <li><i></i><span>Rings on the invitation</span></li>
+        </ul></div>
+        <div class="cam"><h3>Roving / reaction</h3><ul>
+          <li class="ok"><i>✓</i><span>Guests arriving, hugs at the doors <small>R001_C021</small></span></li>
+          <li><i></i><span>His face when the doors open<em>must-have</em></span></li>
+        </ul></div>
+        <div class="cam"><h3>Drone</h3><ul>
+          <li><i></i><span>Church facade, lift away at the exit</span></li>
+        </ul></div>
+      </div>
+      <ul class="how">
+        <li><b>A third view on the storyboard page</b>Edit, Board, and now Shot list. Same beats, grouped by camera. The Board view stays as the visual preview for the client.</li>
+        <li><b>Ticks shared on the day</b>Saved to the page, so every shooter and the editor see the same list live.</li>
+        <li><b>Checked against the footage</b>After each sync, Claude Code matches new clips to shots and lists what is still missing while the shooters can still get it.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Faster edit">
+    <h2>Faster edit, same quality</h2>
+    <p class="sub">Most edit time goes to waiting and to work that could happen earlier. Move everything that does not depend on the footage into planning, and keep every gate.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Change</th><th>What moves</th><th>Why it is safe</th></tr></thead>
+      <tbody>
+        <tr><td>Render cards before the day</td><td>Couple title, end card, chapter and date cards are rendered from the storyboard in Plan. <span class="save">Graphics is mostly done before the shoot.</span></td><td>Names, dates and venue are known weeks ahead. The name check happens at sign-off, not at midnight.</td></tr>
+        <tr><td>Timeline skeleton before the day</td><td>The project opens with the music placed, beat markers on the timeline and cards in position. <span class="save">The editor fills slots instead of building.</span></td><td>The skeleton is only markers. Story-Lock still decides the lines.</td></tr>
+        <tr><td>Shot list ticks name the clips</td><td>The rough cut pulls b-roll by shot, not by scrubbing bins. <span class="save">Less hunting for b-roll.</span></td><td>The editor still picks the best take; the list only narrows the search.</td></tr>
+        <tr><td>Transcribe as cards land</td><td>Already in <code style="font:12px var(--mono);color:var(--champagne)">/buwan:sync</code>. Story-Lock starts from text, matched to the planned beats.</td><td>Vows and speeches stay verbatim, Taglish kept.</td></tr>
+        <tr><td>Pick the look in Plan</td><td>The grade is chosen per client in Plan and applied in one pass after the proof gate.</td><td>Basics stay neutral; the grade check still measures it.</td></tr>
+        <tr><td>Run independent steps side by side</td><td>Audio and graphics placement can run together after the proof gate; SFX follows the graphics.</td><td>Neither changes the cut, so the proof gate result stands.</td></tr>
+        <tr><td>One template per shoot type</td><td>New storyboards start from a wedding, prenup or corporate flow, not a blank page.</td><td>The house beats are built in, so nothing gets missed.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="rules" aria-label="Rules and open items">
+    <div><b>The storyboard is a plan</b>What people actually say on the day wins. Planned lines never go on screen unless someone said them.</div>
+    <div><b>Raw stays untouched</b>Two copies of every card. Claude Code only reads the raw folders and never deletes anything.</div>
+    <div><b>Gates do not move</b>Sign-off, Story-Lock or Shot-Lock, the proof gate, review and the backup check apply in same-day mode too.</div>
+    <div><b>Brand from the kit</b>Cards, titles and the end card come from the Buwan Video Component Kit only.</div>
+    <div class="gap"><b>Open: corporate basics</b>The basics are written for weddings. The engine has to accept the corporate type.</div>
+    <div class="gap"><b>Open: CRM</b>Clients, bookings, contracts and payments come next, once this flow is settled.</div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* step: [kind, title, text, tags, roles]  kind s step · r on request · b reads storyboard · x shot list · g gate · l note
+   roles: owner · lead · shoot · data · editor */
+var ROLE={owner:"Owner",lead:"Lead shooter",shoot:"Shooters",data:"Data wrangler",editor:"Editor"};
+var RDESC={owner:"<b>Owner / producer:</b> owns the client, the plan, the music licence, the review and the delivery.",
+ lead:"<b>Lead shooter:</b> makes sure the plan gets shot: assigns cameras, runs the shot list, reports missing must-haves.",
+ shoot:"<b>Shooters</b> (Creative / Glider, Main, 3rd Cam, Drone, Audio): get your camera's shots, tick them, note the clip names, hand cards over labeled.",
+ data:"<b>Data wrangler / on-site editor:</b> two copies of every card, then the basics and sync, and the coverage report back to the lead shooter.",
+ editor:"<b>Editor:</b> turns the plan and the day into the film with Claude Code; you make the calls at every gate."};
+var T={
+wedding:{line:"<b>Wedding.</b> Speech drives the story: vows, letters and speeches. Two music tracks. The SDE plays at the reception the same night.",
+ plan:{when:"Weeks before · Storyboard page",steps:[
+  ["s","Brief and team","Couple, films promised (SDE, highlight, full feature), date, church and reception, team, deadlines, revision rounds.",0,"owner"],
+  ["s","Music","Two Artlist tracks: track 1 intro, track 2 story to the end, BPM and the switch beat. Licence ID kept.",0,"owner editor"],
+  ["b","Story beats","From the wedding template: the 8 audio layers in the SDE shape. Speech stays empty until Story-Lock.",["template"],"owner editor"],
+  ["x","Shot list","Per camera: Creative / Glider, Main, 3rd Cam, Drone, Audio. Letter reading, first look, vows and kiss are must-haves.",["shot list"],"owner editor lead"],
+  ["s","Cards and look","Couple title, date and venue, end card rendered with the real names. Look picked for the grade.",["/buwan:title","/buwan:graphics"],"editor"],
+  ["g","Client sign-off","beats, music, names and spellings",0,"owner"],
+  ["s","Export the bundle","Into the job at <code>edit/storyboard/</code>. Shot list shared with the shooters.",0,"owner editor"]]},
+ shoot:{when:"The wedding day · cards land in the raw folders",steps:[
+  ["s","Brief the crew","Cameras assigned, S-Cinetone 10-bit, white balance in Kelvin, lav on the groom, recorder at the officiant.",0,"lead shoot"],
+  ["x","Shoot the list","Must-haves first; tick each shot and note the clip name.",["shot list"],"lead shoot"],
+  ["s","Two copies of every card","Into its camera folder, then a second drive. Cards are never formatted on the day.",0,"data"],
+  ["s","Basics","<code>_ENHANCED_</code>: exposure and white balance fixed, shaky glider shots smoothed, the rest copied. No grade.",["/buwan:basics"],"data"],
+  ["s","New cards","Only new clips; speech transcribed on arrival.",["/buwan:sync"],"data"],
+  ["x","Coverage report","Must-haves still unticked go back to the lead shooter while they can still be shot.",["shot list"],"data lead"],
+  ["r","Vows and speeches","Angles synced on the best audio, dead air out.",["/buwan:multicam"],"editor"]]},
+ edit:{when:"Same night for the SDE · later for the highlight",steps:[
+  ["s","Set up and import","Music placed, storyboard bundle in <code>edit/storyboard/</code>, enhanced folder imported.",["premiere-import"],"editor"],
+  ["b","Story-Lock","Real lines poured into the planned beats, verbatim, Taglish kept.",["/buwan:plot"],"editor"],
+  ["g","Editor approves","the paper edit",0,"editor"],
+  ["b","Rough cut","B-roll by shot from the list, holds and bursts as planned, kiss on the music peak.",["/buwan:rough-cut"],"editor"],
+  ["g","Proof gate","bursts 1–2 s against 15–20 s holds; SDE: two peaks, final hold",0,"editor"],
+  ["s","Audio + graphics","Side by side: −17 LUFS, peaks −6, bed −20 dB; pre-rendered cards placed.",["/buwan:audio","/buwan:graphics"],"editor"],
+  ["r","Grade","The look picked in Plan, one pass, measured.",["/buwan:grade"],"editor"],
+  ["s","SFX","Under the dialogue, following the graphics.",["/buwan:sfx"],"editor"],
+  ["b","Review","Taste, against the storyboard and the must-haves.",["/buwan:review"],"owner editor"],
+  ["g","Owner signs off","the watch-down",0,"owner"],
+  ["l","<b>SDE mode</b> runs Story-Lock to export compressed for the reception: <code>/buwan:sde</code>. The gates still apply."]]},
+ deliver:{when:"SDE that night · highlight in weeks",steps:[
+  ["s","Export","YouTube master; SDE for the venue screen plus a USB backup.",["/buwan:export"],"editor"],
+  ["s","Reels","9:16 reels, hook in the first 3 s.",["/buwan:clipper"],"editor"],
+  ["s","Delivery note","Files, link, client message, music licence record.",["/buwan:deliver"],"editor owner"],
+  ["s","Send and revisions","Owner sends; notes become a numbered list; rounds counted against the contract.",["/buwan:review"],"owner editor"],
+  ["g","Backup check","originals, project, masters on two drives",0,"data editor"],
+  ["s","Archive and close","<code>edit/CLOSED.md</code>. The owner says when the cards may be formatted.",0,"owner"]]}},
+
+prenup:{line:"<b>Prenup.</b> No ceremony and no transcript: the film is built from looks, locations and prompts, cut to one music track. The storyboard is the shot list.",
+ plan:{when:"Weeks before · Storyboard page",steps:[
+  ["s","Brief and mood","The couple's story, references, outfits (look 1, look 2), locations, permits, the light at each spot.",0,"owner"],
+  ["s","Music","One Artlist track. Optional voice-over or short interview.",0,"owner editor"],
+  ["b","Shot flow","Teaser open, her, him, together, playful, details, intimate, golden hour, closing.",["template"],"owner editor"],
+  ["x","Shot list by look","Grouped by look and location, then camera, with the prompts for real reactions. Times set to the sun.",["shot list"],"owner editor lead"],
+  ["s","Cards and look","Save-the-date, title, end card. The look carries a prenup, so it is picked now.",["/buwan:graphics"],"editor"],
+  ["g","Client sign-off","looks, locations, music, date",0,"owner"],
+  ["s","Export the bundle","Into the job at <code>edit/storyboard/</code>.",0,"owner editor"]]},
+ shoot:{when:"Shoot day · no same-night deadline",steps:[
+  ["x","Shoot by the list","Look by look; tick each shot and prompt, note the clip name.",["shot list"],"lead shoot"],
+  ["r","Voice-over","Recorded if planned; lav or recorder file in the Audio folder.",0,"shoot"],
+  ["s","Two copies of every card","Camera folders, second drive.",0,"data"],
+  ["s","Enhance after the shoot","All cards at once into <code>_ENHANCED_</code>.",["/buwan:basics"],"data"],
+  ["x","Coverage report","Missing shots per look listed for a pickup.",["shot list"],"data lead"]]},
+ edit:{when:"Days after the shoot",steps:[
+  ["s","Set up and import","Bins per look and camera; storyboard bundle in place.",["premiere-import"],"editor"],
+  ["b","Shot-Lock","Best take per planned shot, in storyboard order.",["/buwan:plot"],"editor"],
+  ["g","Editor approves","the shot order",0,"editor"],
+  ["b","Cut to the music","Holds on intimate and golden-hour shots, burst on the playful beat.",["/buwan:rough-cut"],"editor"],
+  ["g","Proof gate","prenup: 2.5–3 s average, burst ≥12 in 30 s, a 6 s+ hold, 2–5 min",0,"editor"],
+  ["s","Grade","Before graphics here, since the look carries the film.",["/buwan:grade"],"editor"],
+  ["s","Audio, graphics, SFX","Music and voice-over levels; pre-rendered save-the-date and title.",["/buwan:audio","/buwan:graphics","/buwan:sfx"],"editor"],
+  ["b","Review","Against the shot flow and client notes.",["/buwan:review"],"owner editor"],
+  ["g","Owner signs off","the watch-down",0,"owner"]]},
+ deliver:{when:"Before the wedding",steps:[
+  ["s","Export","Prenup film, save-the-date in 9:16 and 16:9.",["/buwan:export"],"editor"],
+  ["s","Teasers","9:16 teasers for the couple to post.",["/buwan:clipper"],"editor"],
+  ["s","Delivery note","Files, link, message, music licence.",["/buwan:deliver"],"editor owner"],
+  ["s","Send and revisions","Rounds counted against the contract.",0,"owner editor"],
+  ["g","Backup check","two copies",0,"data editor"],
+  ["s","Archive and close","Kept for the wedding: the film often opens the reception.",0,"owner"]]}},
+
+corporate:{line:"<b>Corporate.</b> Run of show, keynotes and exec soundbites; steady cutting; names, titles and partner logos must be exact.",
+ plan:{when:"Before the event · Storyboard page",steps:[
+  ["s","Brief and run of show","Client contact, agenda with times, speakers with correct titles, sponsor list, brand guide.",0,"owner"],
+  ["s","Music","Brand-safe track or the client's own.",0,"owner editor"],
+  ["b","Story beats","Welcome, keynote, exec quotes, panel, crowd, awards, partners, closing CTA.",["template"],"owner editor"],
+  ["x","Shot list by agenda","Per session and camera: speakers wide and tight, crowd, booths, every sponsor logo.",["shot list"],"owner editor lead"],
+  ["s","Lower thirds","Rendered from the speaker list, checked by the client.",["/buwan:graphics"],"editor"],
+  ["g","Client sign-off","speaker names, titles, logos",0,"owner"],
+  ["s","Export the bundle","Into the job at <code>edit/storyboard/</code>.",0,"owner editor"]]},
+ shoot:{when:"Event day",steps:[
+  ["s","Brief the crew","Board feed or lav for every talk; cameras per session.",0,"lead shoot"],
+  ["x","Shoot the list","Sessions and sponsors ticked as they happen.",["shot list"],"lead shoot"],
+  ["s","Two copies of every card","Camera folders, second drive.",0,"data"],
+  ["s","Enhance","Same engine as the basics.",["/buwan:basics","plugin gap"],"data"],
+  ["s","New cards","Keynotes and panels transcribed as they land.",["/buwan:sync"],"data"],
+  ["x","Coverage report","Missing logos or speakers flagged during the event.",["shot list"],"data lead"],
+  ["r","Keynotes and panels","Angles synced on the board feed or lav.",["/buwan:multicam"],"editor"]]},
+ edit:{when:"Same day for an event close · days for the recap",steps:[
+  ["s","Set up and import","Bins per session and camera.",["premiere-import"],"editor"],
+  ["b","Story-Lock","Soundbites tagged to the corporate beats, exactly as said.",["/buwan:plot"],"editor"],
+  ["g","Client approves","the soundbites and speakers",0,"owner"],
+  ["b","Rough cut","Steady cutting, b-roll by session from the list.",["/buwan:rough-cut"],"editor"],
+  ["g","Proof gate","steady 1.5–2.5 s, holds on speakers",0,"editor"],
+  ["s","Audio + graphics","−17 LUFS; lower thirds and logos placed.",["/buwan:audio","/buwan:graphics"],"editor"],
+  ["r","Grade","Clean and on-brand.",["/buwan:grade"],"editor"],
+  ["b","Review","Names, titles and every partner mention checked.",["/buwan:review"],"owner editor"],
+  ["l","<b>Event close sizzle</b> runs the edit compressed for the closing session: <code>/buwan:sde</code>."]]},
+ deliver:{when:"Within the agreed turnaround",steps:[
+  ["s","Export","16:9 recap, 1:1 LinkedIn with captions.",["/buwan:export"],"editor"],
+  ["s","Reels","9:16 stories.",["/buwan:clipper"],"editor"],
+  ["s","Delivery note","Formal register; music licence record.",["/buwan:deliver"],"editor owner"],
+  ["s","Send and revisions","Client notes, rounds counted.",0,"owner editor"],
+  ["g","Backup check","two copies",0,"data editor"],
+  ["s","Archive and close","<code>edit/CLOSED.md</code>.",0,"owner"]]}}
+};
+var CLS={s:"",r:" req",b:" sb",x:" shot"};
+var role="",type="wedding";
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function tags(a){if(!a||!a.length)return "";return '<div class="tags">'+a.map(function(t){
+  var c=t==="shot list"?"tag new":t==="plugin gap"?"tag gap":"tag";return '<span class="'+c+'">'+esc(t)+'</span>';}).join("")+'</div>';}
+function who(r){if(!r)return "";return '<div class="who">'+r.split(" ").map(function(x){return '<span>'+ROLE[x]+'</span>';}).join("")+'</div>';}
+function mine(r){return role&&r&&r.split(" ").indexOf(role)>=0?" mine":"";}
+function phase(key,title,label,d,start){
+  var n=start,h='<section class="phase '+key+'" aria-label="'+title+'"><div class="ph"><span class="caps">'+label+'</span><h2>'+title+'</h2><span class="when">'+esc(d.when)+'</span></div>';
+  d.steps.forEach(function(s){
+    if(s[0]==="g"){h+='<div class="gate'+mine(s[4])+'"><i></i><span><b>'+esc(s[1])+'</b> · '+esc(s[2])+'</span></div>';return;}
+    if(s[0]==="l"){h+='<p class="loop">'+s[1]+'</p>';return;}
+    n++; h+='<div class="step'+CLS[s[0]]+mine(s[4])+'"><span class="n">'+n+'</span><div><h3>'+esc(s[1])+'</h3><p>'+s[2]+'</p>'+tags(s[3])+who(s[4])+'</div></div>';
+  });
+  return {h:h+'</section>',n:n};
+}
+function render(){
+  var d=T[type];
+  var a=phase("plan","Plan","Phase 1",d.plan,0),b=phase("shoot","Shoot","Phase 2",d.shoot,a.n),c=phase("edit","Edit","Phase 3",d.edit,b.n),e=phase("deliver","Deliver","Phase 4",d.deliver,c.n);
+  var f=document.getElementById("flow"); f.innerHTML=a.h+b.h+c.h+e.h; f.className="flow"+(role?" role":"");
+  document.getElementById("typeline").innerHTML=d.line;
+  document.getElementById("roleline").innerHTML=role?RDESC[role]+' Full checklist: <a href="https://github.com/Buwan-Films/buwan-claude/blob/main/docs/ROLES.md" target="_blank" rel="noopener">ROLES.md</a>.':"Pick a role to light up only that person's steps.";
+  document.querySelectorAll("[data-t]").forEach(function(x){x.setAttribute("aria-pressed",x.dataset.t===type?"true":"false");});
+  document.querySelectorAll("[data-r]").forEach(function(x){x.setAttribute("aria-pressed",x.dataset.r===role?"true":"false");});
+}
+function fromHash(){var h=(location.hash||"").slice(1); if(T[h]) type=h; render();}
+document.querySelectorAll("[data-t]").forEach(function(x){x.addEventListener("click",function(){type=x.dataset.t;try{location.hash=type;}catch(e){} render();});});
+document.querySelectorAll("[data-r]").forEach(function(x){x.addEventListener("click",function(){role=x.dataset.r;render();});});
+window.addEventListener("hashchange",fromHash);
+fromHash();
+})();
+
+</script>

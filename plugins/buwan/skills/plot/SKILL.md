@@ -8,6 +8,14 @@ argument-hint: "[project folder] [highlights|SDE|full|corporate recap] [target l
 
 Follow the house rules (`/buwan:house-rules`). Arguments: $ARGUMENTS
 
+## 0. Start from the storyboard (when there is one)
+If `edit/storyboard/storyboard.json` exists (the Storyboard page's export, unzipped into `edit/storyboard/`), it is the plan the client signed off: beat order, the kind of each beat (`aroll` speaker on screen · `broll` line under footage · `card` · `montage` music only), hold/burst, the music switch (`track` 1/2) and the card text. Use it as the skeleton:
+- Put the real transcript lines into the planned beats. Planned `words` are placeholders unless they match the transcript — never put a line on screen that nobody said.
+- A planned beat with no matching line: say so in the paper edit (**Planned, not found**) and suggest a montage or a cut; don't invent.
+- A strong line that fits no planned beat: still offer it, marked **Not in the storyboard**. The day wins over the plan.
+- Keep the storyboard's beat ids in the paper edit (`beat` column) so the rough cut, graphics and review can match them.
+- **Prenup:** there is usually no speech. The storyboard's shot flow is the story; Story-Lock becomes **Shot-Lock**: the best take per planned shot (from the shot list's `clips`), in storyboard order, written as the paper edit with `line` = the shot. Voice-over lines, if recorded, follow the speech rules.
+
 ## 1. Transcribe once
 - Use existing transcripts first: `edit/transcripts_report.md` + `edit/assemble/transcripts.json` (made by `/buwan:sync`: every clip with speech, `edit/transcripts/<camera>/<card>/<clip>.srt`), the app's transcript export (Premiere Text panel, Resolve transcription, FCP captions) or `edit/transcripts/*`. Missing clips: `assemble.js transcribe <project> --clips <names>`.
 - If `edit/assemble/speech_ranges.json` exists, transcribe only those ranges (the dead air is already removed).
@@ -15,7 +23,7 @@ Follow the house rules (`/buwan:house-rules`). Arguments: $ARGUMENTS
 - Expect **Taglish**. Keep the original wording. Never clean up, translate or "fix" vows or speeches. Mark unclear words `[?]`.
 
 ## 2. Tag
-Tag every usable line with one beat: wedding = the 8 audio layers; corporate = the 8 corporate beats. Note the speaker (camera + voice; confirm names with the editor — "Speaker 3 = Tito Terry").
+Tag every usable line with one beat: wedding = the 8 audio layers; corporate = the 8 corporate beats; prenup = the storyboard's shot flow (teaser open · her · him · together · playful · details · intimate · golden hour · closing). Note the speaker (camera + voice; confirm names with the editor — "Speaker 3 = Tito Terry").
 
 **Controls the editor can set (ask once; defaults in brackets):** speakers to include [couple + family + best friends; MC/host excluded]; story focus [personal vows & journey, family, friends' stories, ceremony moments]; content to exclude [legal formalities, MC talking, vendor/supplier mentions, "thank you for coming" speeches]; film length [SDE 4–7 min, highlights 6–10]; dialogue density [medium]. SDE: the letters outrank the ceremony audio — a letter opens the spine; "do you take / I do" is punctuation between letter lines.
 

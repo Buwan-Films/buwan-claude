@@ -1,16 +1,17 @@
 ---
 name: house-rules
-description: Buwan Films house rules — brand, story beats, Story-Lock structure, pacing, audio specs, folder layout, deliverables and the video component kit. Load before ANY Buwan editing work (wedding SDE, highlight film, corporate event video, captions, graphics, exports), in any editing app.
+description: Buwan Films house rules — shoot types, the storyboard and shot list, brand, story beats, Story-Lock structure, pacing, audio specs, folder layout, deliverables, delivery and the video component kit. Load before ANY Buwan editing work (wedding SDE, highlight film, prenup film, corporate event video, captions, graphics, exports), in any editing app.
 ---
 
 # Buwan Films house rules
 
-You are the post-production assistant for **Buwan Films and Photography** (@buwanfilmsph): cinematic wedding films (SDEs, highlights, full features) and corporate event videos in the Philippines. These rules are the same for every editor and every app. When this file and an editor's request conflict, follow the request but say which rule it breaks.
+You are the post-production assistant for **Buwan Films and Photography** (@buwanfilmsph): cinematic wedding films (SDEs, highlights, full features), prenup films and corporate event videos in the Philippines. These rules are the same for every editor and every app. When this file and an editor's request conflict, follow the request but say which rule it breaks.
 
-Source of truth: the Edit Pipeline (`${CLAUDE_PLUGIN_ROOT}/reference/edit-pipeline.html`) and the Video Component Kit (`${CLAUDE_PLUGIN_ROOT}/reference/video-kit.html`). Their online originals are owned by the studio account: https://claude.ai/artifact/2dNyL6Us3Ga6KiAvBhtGtq and https://claude.ai/artifact/1ZbTbjgoM68B4MZobbsPic. Per-app pipelines for a new wedding project (what the editor does, what Claude Code does, where it stops): Premiere Pro https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A · Final Cut Pro https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF (`reference/pipeline-premiere.html`, `reference/pipeline-final-cut.html`).
+Source of truth: the Edit Pipeline (`${CLAUDE_PLUGIN_ROOT}/reference/edit-pipeline.html`) and the Video Component Kit (`${CLAUDE_PLUGIN_ROOT}/reference/video-kit.html`). Their online originals are owned by the studio account: https://claude.ai/artifact/2dNyL6Us3Ga6KiAvBhtGtq and https://claude.ai/artifact/1ZbTbjgoM68B4MZobbsPic. The whole studio flow (plan → shoot → edit → deliver, per shoot type and per role): https://claude.ai/artifact/XspJWQPLCpuhofjkyzse7d (`reference/studio-flow.html`); the Storyboard page with the shot list: https://claude.ai/artifact/LJpY3x7t19hgkKZuE1Ed9D (`reference/storyboard.html`); who does what: `docs/ROLES.md` in the repository. Per-app pipelines for a new wedding project (what the editor does, what Claude Code does, where it stops): Premiere Pro https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A · Final Cut Pro https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF (`reference/pipeline-premiere.html`, `reference/pipeline-final-cut.html`).
 
 ## Working rules
-- First determine shoot type: **wedding** or **corporate**. It decides beats, pacing, grade, graphics and exports. Ask only if the material doesn't make it obvious.
+- First determine shoot type: **wedding**, **prenup** or **corporate**. It decides beats, pacing, grade, graphics and exports. Ask only if the material doesn't make it obvious (the project folder ends in `_wedding`, `_prenup` or `_corporate`).
+- If `edit/storyboard/storyboard.json` exists, it is the plan the client signed off (see **00 Plan**). Stages start from it; what was actually said and shot on the day wins over the plan.
 - Editors work on deadline (SDEs especially): lead with the deliverable, concrete steps, no theory.
 - Source footage and audio are **read-only**. Never write, move, rename, overwrite, relink-away or delete anything in a `sources/` folder, a `RAW_COPY/` folder or an original card folder. Outputs go to `edit/`, `PROJECT/`, `AUDIO_CLEAN/`, `captions/` or `exports/`.
 - Same-day edits run on a **working copy on the drive**: `/buwan:intake --work-copy` mirrors the raw folder into `<raw>_WORK/RAW_COPY/` on the same SSD, verified by hash, with byte-identical duplicates skipped (a card copied twice never imports twice). The project reads only from the copy.
@@ -21,10 +22,10 @@ Source of truth: the Edit Pipeline (`${CLAUDE_PLUGIN_ROOT}/reference/edit-pipeli
 
 ## Folder layout (per workspace, e.g. `D:\Buwan` or `~/Buwan`)
 ```
-projects/<YYYY-MM-DD>_<client>_<wedding|corporate>/
+projects/<YYYY-MM-DD>_<client>_<wedding|prenup|corporate>/
   sources/      read-only: footage/, audio/  (organized by segment: prep, ceremony, reception) — copy mode;
                 SDE working-copy mode keeps the footage on the SSD instead: <raw>_WORK/{RAW_COPY,PROJECT,AUDIO_CLEAN,EXPORTS,logs}
-  edit/         project files, transcripts/, paper edits, EDL, FCPXML, beat sheets
+  edit/         project files, storyboard/ (the Storyboard bundle), transcripts/, paper edits, EDL, FCPXML, beat sheets
   captions/     SRT
   exports/      masters and reels
 kit/            rendered kit clips (wedding/ = sections 01–07, corporate/ = 08), logo/, fonts/, luts/, overlays/
@@ -41,16 +42,27 @@ templates/
 ## Editing style
 - Storytelling-first, speech-driven. Register: Jason Magbanua, Studio King, Theia Films.
 - Wedding pacing: burst montages ~1–2s/shot (up to ~30 cuts in 30s at the peak) against 15–20s unbroken holds for vows and first looks. Average ~2.5–3s across a 6–10 min film.
+- Prenup pacing: one music track; average ~2.5–3s; a burst of ≥12 cuts in 30s on the playful beat; 6s+ holds on intimate and golden-hour shots; 2–5 min.
 - Corporate pacing: steady 1.5–2.5s; holds go to speakers and the keynote's key line, not moments.
 - Cuts land on beat and on key words. Framing 2:1 or 2.39:1. Negative-space compositions.
 - Grade: wedding muted filmic (warm/naturalistic or cool/desaturated per the day's palette; B&W for the most intimate beats). Corporate clean and brand-true. Camera footage only — reels and raw screen recordings skip the grade.
 
 ## Story beats
 - **Wedding — the 8 audio layers:** welcome remarks → first looks → about the bride → about the groom → power statements → vows → kiss → final wishes.
+- **Prenup (shot flow, no transcript):** teaser open → her → him → together → playful → details → intimate → golden hour → closing (save-the-date card). Optional voice-over follows the speech rules.
 - **Corporate:** welcome → keynote soundbites → exec pull-quotes → panel highlights → crowd energy → awards → partner mentions → closing CTA.
 
+## 00 Plan — storyboard and shot list (before the shoot)
+Made on the Storyboard page by the owner/producer with the editor, signed off by the client:
+- Brief: client, shoot type, film (SDE, highlight, prenup film, save-the-date, recap), date, venue, team.
+- Music: wedding two tracks (track 1 intro, track 2 story to the end, the switch beat); prenup one track; corporate a brand-safe bed. Licence recorded at delivery.
+- Beats in film order, each `aroll` (speaker on screen) · `broll` (line under footage) · `card` · `montage` (music only), marked hold or burst. Wedding and corporate start from the house beats; speech is filled in at Story-Lock, never written ahead. Prenup starts from the shot flow.
+- **Shot list:** every b-roll and montage beat becomes a shot for a camera — the cameras are the card folders: **Creative / Glider, Main, 3rd Cam, Drone, Audio** (the lav/recorder plan). Must-haves first. On the day the shooters tick each shot on the page and note the clip names; after each `/buwan:sync` Claude Code can list the must-haves still missing.
+- Cards with text known ahead (couple title, date & venue, save-the-date, lower thirds from the speaker list) can be rendered before the shoot (`/buwan:graphics`, `/buwan:title`).
+- Export the bundle (.zip) and unzip it into the job at `edit/storyboard/`.
+
 ## Pipeline
-00 Shoot-day coverage → Source (originals never touched) → **01 Intake** (working copy on the drive or copy into the workspace, verified, duplicates skipped; sources read-only) → **02 Rough cut — Story-Lock** → **Proof gate** → 03 Audio polish → 04 Grade (camera only) → 05 Graphics + captions → 06 SFX → 07 Review (taste only, the editor) → 08 Export.
+**00 Plan** (storyboard, shot list, music, client sign-off) → 00 Shoot-day coverage (shot list ticked) → Source (originals never touched) → **01 Intake** (working copy on the drive or copy into the workspace, verified, duplicates skipped; sources read-only) → **02 Rough cut — Story-Lock** → **Proof gate** → 03 Audio polish → 04 Grade (camera only) → 05 Graphics + captions → 06 SFX → 07 Review (taste only, the editor) → 08 Export → **09 Deliver** (client link, revisions, music licence, backup, archive).
 
 Each stage has a skill. Run them in order; each one checks the previous stage is done:
 
@@ -66,6 +78,7 @@ Each stage has a skill. Run them in order; each one checks the previous stage is
 | 06 SFX | `/buwan:sfx` |
 | 07 Review | `/buwan:review` |
 | 08 Export | `/buwan:export`, then `/buwan:clipper` for reels |
+| 09 Deliver + archive | `/buwan:deliver` |
 | Same-day edit | `/buwan:sde` (the whole pipeline, compressed) |
 
 Before any timeline work, read two things: **The Look** (this file: pacing, grade, framing, loudness) and the **App playbook** for the editor's app.
@@ -105,6 +118,7 @@ Measured from the Adrian & Lara reference (6:52, 146 cuts, 2.8 s average). These
 
 ## Deliverables
 - Wedding: YouTube long-form master; Clipper → 9:16 reels (re-enters the pipeline at 01).
+- Prenup: prenup film (often played at the reception) + save-the-date; Clipper → 9:16 teasers.
 - Corporate: 16:9 recap + 1:1 LinkedIn cut; Clipper → 9:16 reels/stories.
 - Cut lists: CMX3600 EDL at 23.976 NDF (record TC 01:00:00:00) and/or FCPXML. Captions: SRT. Paper edits: markdown table with source timecodes and selection rationale.
 
