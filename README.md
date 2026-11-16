@@ -13,6 +13,7 @@ Every job runs the same four phases, for **wedding, prenup, corporate and commer
 - **BTS on every shoot** for Facebook, Instagram, TikTok and YouTube Shorts: clips go into the `5-BTS` camera folder and are copied as shot (no fixes); `/buwan:bts` plans, picks and drafts the posts, a person posts after the earliest post date.
 - Who does what (owner, lead shooter, shooters, audio, BTS, data wrangler, editor): [docs/ROLES.md](docs/ROLES.md)
 - The steps in order, per shoot type: [docs/STUDIO-WORKFLOW.md](docs/STUDIO-WORKFLOW.md)
+- Every studio page (workflow, storyboard, pipelines, video kit, SDE reference): [docs/ARTIFACTS.md](docs/ARTIFACTS.md)
 
 ## What happens on a new project
 The same for every shoot type: Claude Code makes **enhanced clips** from the raw footage and stops. Only the white balance policy follows the type (weddings and prenups keep natural warmth; corporate and commercial jobs are brand-true). The raw folder is only read; every run writes a new folder next to it, `<raw>_ENHANCED_<date-time>/`, with the same camera/card folders and clip names (HEVC 10-bit `.mov`). No copying, no dedupe, no file organizing, **no grade**.

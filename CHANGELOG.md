@@ -1,5 +1,8 @@
 # Changelog
 
+## Docs — 2026-11-17
+- `docs/ARTIFACTS.md`: one index of the studio pages (workflow, storyboard, edit pipeline, Premiere and Final Cut pipelines, video kit, SDE reference) with what each is for, who uses it and its copy in `reference/`. Linked from the README. No plugin change; no update needed.
+
 ## buwan 1.19.0 — 2026-11-17  (/plugin marketplace update buwan-films, /reload-plugins)
 **BTS for social on every shoot.**
 - New role, BTS, in `docs/ROLES.md` and on the Studio flow page's role filter. There is a BTS shooter on every shoot, filming vertical clips of the crew at work for Facebook, Instagram, TikTok and YouTube Shorts.
