@@ -27,7 +27,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from common import Clip, log
+from common import Clip, is_bts, log
 
 BUWAN_FFMPEG = Path.home() / ".buwan" / "ffmpeg-vidstab" / "bin" / "ffmpeg"
 CREATIVE = ("creative", "glider", "gimbal", "ronin", "steadi")
@@ -177,6 +177,9 @@ def plan_jobs(project: Path, clips: dict[str, Clip], categories: dict) -> dict[s
     for p, c in clips.items():
         if c.kind != "video" or c.camera == "music":
             continue
+        if is_bts(c):   # BTS for social: always in the folder, as shot (short and vertical clips are normal there)
+            jobs[p] = {"ev": 0.0, "wb": None, "bts": True}
+            continue
         if (cull.get(p) or {}).get("reject"):
             continue
         e = expo.get(p) or {}
@@ -209,7 +212,7 @@ def run(project: Path, clips: dict[str, Clip], categories: dict, raw_copy: Path,
         if not src.exists():
             src = Path(p)   # fall back to the working copy (same bytes) if the raw folder moved
         kind = "shaky" if "trim" in j else "clip"
-        if not reencode_all and not needs_render(j, cube):
+        if j.get("bts") or (not reencode_all and not needs_render(j, cube)):
             kind = "copy"
         if only == "wb":
             if not j.get("wb"):

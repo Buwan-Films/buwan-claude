@@ -13,6 +13,7 @@ One person can hold more than one role. On a small wedding the lead shooter is o
 |---|---|---|
 | Booking | Brief: shoot type (wedding, prenup, corporate, commercial / reels), films promised, date, venue, team, deadlines, revision rounds in the contract | Storyboard page → Brief and team |
 | Weeks before | Build the storyboard with the editor: beats, music, cards, shot list. Get the client's sign-off on beats, music, names and spellings | [Storyboard](https://claude.ai/artifact/LJpY3x7t19hgkKZuE1Ed9D) |
+| Weeks before | Fill the storyboard's Social panel with the client: which platforms, the earliest post date, their OK to post, their handle | Storyboard → Social |
 | Weeks before | Licence the music (Artlist) and keep the licence ID. Commercials: a licence that covers paid ads, the usage the client bought, talent and location releases, and the client's sign-off on the script | Storyboard → Music |
 | Before the day | Export the storyboard bundle (.zip) and send it to the editor; share the Shot list view with the shooters | Storyboard → Export |
 | After the edit | Taste review with the editor; decide on client requests that break house rules | `/buwan:review` |
@@ -57,10 +58,27 @@ One person can hold more than one role. On a small wedding the lead shooter is o
 
 ---
 
+## BTS (behind the scenes, every shoot)
+**You make the studio's social posts possible.** BTS is for Facebook, Instagram, TikTok and YouTube Shorts, never for the film.
+
+| When | What you do | Where |
+|---|---|---|
+| Before | Read the storyboard's BTS shots and the Social panel: platforms, earliest post date, client OK, tags, posting plan | Storyboard → Shot list (camera BTS) and Social |
+| On the day | Shoot vertical 9:16, steady, 3–10 s a clip, sound on. The crew at work, the setups, the reactions from behind the cameras. Tick your shots | Shot list on your phone |
+| On the day | Hand your phone exports or card to the data wrangler for the **`5-BTS`** folder. They are copied as shot, no fixes | — |
+| After | Pick the best clips, cut the story and the BTS reel with the kit's 05 Social graphics. Claude drafts the captions and hashtags | `/buwan:bts` → `edit/social/posts.md` |
+| Before posting | Check the earliest post date and the client's OK, the "never post" list, names and handles, and the music. Then post and add the link to `posts.md` | `/buwan:bts` step 5 |
+
+**Never post:** before the earliest post date (wedding: no bride reveal before the ceremony, no SDE before it is screened; commercial: nothing before the client's launch), anything the client asked to keep private, confidential screens or unreleased products, or the film's music before delivery.
+
+**Done when:** the planned posts are up on time, each with its link in `posts.md`.
+
+---
+
 ## Data wrangler / on-site editor
 **You keep the footage safe and moving.**
 
-- Copy every card to the SSD into its camera folder (`1-Creative/Glider`, `2-Main`, `3-3rd Cam`, `4-Drone`, `Audio`), then make a second copy on a different drive. Keep the cards until the owner says they may be formatted.
+- Copy every card to the SSD into its camera folder (`1-Creative/Glider`, `2-Main`, `3-3rd Cam`, `4-Drone`, `Audio`, `5-BTS`), then make a second copy on a different drive. Keep the cards until the owner says they may be formatted.
 - First cards: `/buwan:basics` (Premiere: `/buwan-premiere:wedding-day`). Later cards: `/buwan:sync` (new clips only, transcripts made on this computer).
 - Tell the lead shooter which must-haves are still missing.
 

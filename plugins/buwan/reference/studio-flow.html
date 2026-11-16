@@ -142,6 +142,7 @@ td .save{color:var(--gate);font-weight:600;white-space:nowrap}
       <button type="button" id="r-owner" data-r="owner" aria-pressed="false">Owner</button>
       <button type="button" id="r-lead" data-r="lead" aria-pressed="false">Lead shooter</button>
       <button type="button" id="r-shoot" data-r="shoot" aria-pressed="false">Shooters</button>
+      <button type="button" id="r-bts" data-r="bts" aria-pressed="false">BTS</button>
       <button type="button" id="r-data" data-r="data" aria-pressed="false">Data wrangler</button>
       <button type="button" id="r-editor" data-r="editor" aria-pressed="false">Editor</button>
     </div>
@@ -213,10 +214,11 @@ td .save{color:var(--gate);font-weight:600;white-space:nowrap}
 "use strict";
 /* step: [kind, title, text, tags, roles]  kind s step · r on request · b reads storyboard · x shot list · g gate · l note
    roles: owner · lead · shoot · data · editor */
-var ROLE={owner:"Owner",lead:"Lead shooter",shoot:"Shooters",data:"Data wrangler",editor:"Editor"};
+var ROLE={owner:"Owner",lead:"Lead shooter",shoot:"Shooters",bts:"BTS",data:"Data wrangler",editor:"Editor"};
 var RDESC={owner:"<b>Owner / producer:</b> owns the client, the plan, the music licence, the review and the delivery.",
  lead:"<b>Lead shooter:</b> makes sure the plan gets shot: assigns cameras, runs the shot list, reports missing must-haves.",
  shoot:"<b>Shooters</b> (Creative / Glider, Main, 3rd Cam, Drone, Audio): get your camera's shots, tick them, note the clip names, hand cards over labeled.",
+bts:"<b>BTS</b> (every shoot): plans the social posts with the owner, films the crew at work in 9:16 for FB, IG and TikTok, and posts only after the earliest post date.",
  data:"<b>Data wrangler / on-site editor:</b> two copies of every card, then the basics and sync, and the coverage report back to the lead shooter.",
  editor:"<b>Editor:</b> turns the plan and the day into the film with Claude Code; you make the calls at every gate."};
 var T={
@@ -358,6 +360,20 @@ corporate:{line:"<b>Corporate.</b> Run of show, keynotes and exec soundbites; st
   ["g","Backup check","two copies",0,"data editor"],
   ["s","Archive and close","<code>edit/CLOSED.md</code>.",0,"owner"]]}}
 };
+/* BTS on every shoot: added to each type's plan, shoot and deliver */
+(function(){
+  var WHEN={wedding:"after the SDE screening; no bride reveal before the ceremony",prenup:"after the couple's OK",corporate:"after the client's OK; nothing confidential",commercial:"after the client's launch date; check the NDA"};
+  Object.keys(T).forEach(function(k){
+    var t=T[k];
+    var gi=t.plan.steps.findIndex(function(s){return s[0]==="g";});
+    t.plan.steps.splice(gi,0,["s","Social plan","Platforms (FB, IG, TikTok, Shorts), earliest post: "+WHEN[k]+". Client OK, tags, posting plan; BTS shots in the shot list.",0,"owner bts"]);
+    var xi=t.shoot.steps.findIndex(function(s){return s[0]==="x";});
+    t.shoot.steps.splice(xi+1,0,["x","BTS for social","Vertical 9:16, the crew at work, 3–10 s a clip; into the <code>5-BTS</code> folder, copied as shot.",["shot list"],"bts"]);
+    var di=t.deliver.steps.findIndex(function(s){return s[0]==="g";});
+    t.deliver.steps.splice(di,0,["s","BTS posts","Picks, captions, hashtags, kit 05 Social labels. Posted by a person, "+WHEN[k].split(";")[0]+".",["/buwan:bts"],"bts owner"]);
+  });
+})();
+
 var CLS={s:"",r:" req",b:" sb",x:" shot"};
 var role="",type="wedding";
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}

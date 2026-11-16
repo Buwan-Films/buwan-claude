@@ -166,6 +166,16 @@ def tc(seconds: float, fps: Fraction = SEQ_FPS, base: float = 3600.0) -> str:
     return f"{s // 3600:02d}:{(s // 60) % 60:02d}:{s % 60:02d}:{ff:02d}"
 
 
+# ---------- BTS ----------
+# Behind-the-scenes footage for social (phone or small camera, often vertical, often HDR) lives in its own camera
+# folder, e.g. "5-BTS". The basics copy it as it is: no exposure or white balance fix, no cull, no grade, no transcript.
+BTS_CAMERAS = re.compile(r"(^|[^a-z])bts([^a-z]|$)|behind[ _-]?the[ _-]?scenes", re.I)
+
+
+def is_bts(clip) -> bool:
+    return bool(BTS_CAMERAS.search(getattr(clip, "camera", "") or "") or BTS_CAMERAS.search(getattr(clip, "rel", "") or ""))
+
+
 # ---------- shoot type ----------
 SHOOT_TYPES = ("wedding", "prenup", "corporate", "commercial")
 SHOOT_ALIASES = {"commercials": "commercial", "reel": "commercial", "reels": "commercial", "ads": "commercial",

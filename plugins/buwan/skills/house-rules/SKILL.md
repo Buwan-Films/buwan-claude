@@ -59,9 +59,15 @@ Made on the Storyboard page by the owner/producer with the editor, signed off by
 - Brief: client, shoot type, film (SDE, highlight, prenup film, save-the-date, recap), date, venue, team.
 - Music: wedding two tracks (track 1 intro, track 2 story to the end, the switch beat); prenup one track; corporate a brand-safe bed. Licence recorded at delivery.
 - Beats in film order, each `aroll` (speaker on screen) · `broll` (line under footage) · `card` · `montage` (music only), marked hold or burst. Wedding and corporate start from the house beats; speech is filled in at Story-Lock, never written ahead. Prenup starts from the shot flow.
-- **Shot list:** every b-roll and montage beat becomes a shot for a camera — the cameras are the card folders: **Creative / Glider, Main, 3rd Cam, Drone, Audio** (the lav/recorder plan). Must-haves first. On the day the shooters tick each shot on the page and note the clip names; after each `/buwan:sync` Claude Code can list the must-haves still missing.
+- **Shot list:** every b-roll and montage beat becomes a shot for a camera — the cameras are the card folders: **Creative / Glider, Main, 3rd Cam, Drone, Audio** (the lav/recorder plan) and **BTS** (`5-BTS`, social only). Must-haves first. On the day the shooters tick each shot on the page and note the clip names; after each `/buwan:sync` Claude Code can list the must-haves still missing.
 - Cards with text known ahead (couple title, date & venue, save-the-date, lower thirds from the speaker list) can be rendered before the shoot (`/buwan:graphics`, `/buwan:title`).
 - Export the bundle (.zip) and unzip it into the job at `edit/storyboard/`.
+
+## BTS for social (every shoot)
+Every shoot has a BTS shooter for the studio's Facebook, Instagram, TikTok and YouTube Shorts. BTS is planned in the storyboard (beats with camera BTS, the Social panel: platforms, earliest post date, client OK, tags, posting plan), shot vertical, and dropped into the raw folder's **`5-BTS`** camera folder. The engine copies it as shot (no fix, no cull, no transcript) and Premiere bins it as `5-BTS`, label Rose. It is never cut into the film unless the editor decides to.
+- **Never post** before the earliest post date (wedding: no bride reveal before the ceremony, no SDE before it is screened; commercial: nothing before the client's launch; corporate: after the client's OK), or anything the client asked to keep private, confidential screens, or unreleased products.
+- Posts use kit 05 Social components only, 9:16 with text out of the platform UI zones, captions on, @buwanfilmsph tagged, music the platform's licensed sounds or a track licensed for social — never the film's track before delivery.
+- `/buwan:bts` plans, picks and drafts the posts; a person posts.
 
 ## Pipeline
 **00 Plan** (storyboard, shot list, music, client sign-off) → 00 Shoot-day coverage (shot list ticked) → Source (originals never touched) → **01 Intake** (working copy on the drive or copy into the workspace, verified, duplicates skipped; sources read-only) → **02 Rough cut — Story-Lock** → **Proof gate** → 03 Audio polish → 04 Grade (camera only) → 05 Graphics + captions → 06 SFX → 07 Review (taste only, the editor) → 08 Export → **09 Deliver** (client link, revisions, music licence, backup, archive).
@@ -81,6 +87,7 @@ Each stage has a skill. Run them in order; each one checks the previous stage is
 | 07 Review | `/buwan:review` |
 | 08 Export | `/buwan:export`, then `/buwan:clipper` for reels |
 | 09 Deliver + archive | `/buwan:deliver` |
+| BTS for social (every shoot, alongside) | `/buwan:bts` |
 | Same-day edit | `/buwan:sde` (the whole pipeline, compressed) |
 
 Before any timeline work, read two things: **The Look** (this file: pacing, grade, framing, loudness) and the **App playbook** for the editor's app.

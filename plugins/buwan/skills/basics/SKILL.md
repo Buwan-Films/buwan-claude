@@ -12,6 +12,8 @@ Load `/buwan:house-rules`. The engine does the work (`node "${CLAUDE_PLUGIN_ROOT
 
 **Shoot type:** the engine reads it from the project folder's suffix (`_wedding`, `_prenup`, `_corporate`, `_commercial`; `_reels` counts as commercial) or from `--shoot <type>` (remembered in `edit/assemble/shoot.json`). It changes one thing in the basics: the white balance. Weddings and prenups keep the natural warmth; corporate and commercial jobs are made clean and brand-true (less warmth kept), so products and brand colours read true. Everything else is the same for every shoot type.
 
+**BTS:** the `5-BTS` camera folder (any folder named BTS or behind-the-scenes) is copied into the enhanced folder exactly as shot — no exposure or white balance fix, no cull, no transcript — because it is phone or social footage for `/buwan:bts`, not film footage.
+
 **Scope — two things, then stop:**
 
 | # | What | Engine | What the editor gets |

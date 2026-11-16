@@ -17,7 +17,7 @@ import concurrent.futures as cf
 import math
 import re
 
-from common import Clip, log, run
+from common import Clip, is_bts, log, run
 import whitebalance
 
 BAND = (55.0, 150.0)     # fallback; the look's targets.json "bright" band wins
@@ -76,7 +76,8 @@ def decide(m: dict, band: tuple[float, float] = BAND) -> dict:
 def exposure(clips: list[Clip], categories: dict, rejected: set, workers: int = 6, look: str = "warm", previous: dict | None = None,
              shoot: str = "wedding") -> dict:
     band = load_band(look)
-    todo = [c for c in clips if c.kind == "video" and c.path not in rejected and categories.get(c.path) not in NO_FIX]
+    todo = [c for c in clips if c.kind == "video" and c.path not in rejected and categories.get(c.path) not in NO_FIX
+            and not is_bts(c)]   # BTS for social is copied as it is
     prev = {p: v for p, v in (previous or {}).items() if v.get("yavg") is not None and v.get("frames")}
     res = {}
     for c in todo:   # measured before: decide again, don't re-read the footage

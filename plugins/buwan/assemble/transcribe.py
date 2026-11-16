@@ -27,7 +27,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from common import Clip, load_json, log, save_json
+from common import Clip, is_bts, load_json, log, save_json
 
 MODELS = Path(os.environ.get("BUWAN_MODELS", Path.home() / ".buwan" / "models"))
 MODEL = Path(os.environ.get("BUWAN_WHISPER_MODEL", MODELS / "ggml-large-v3-turbo.bin"))
@@ -97,6 +97,8 @@ def candidates(clips: dict[str, Clip], cull: dict[str, dict], done: dict, only: 
             why = "no sound"
         elif any(k in (c.camera or "").lower() for k in AERIAL):
             why = "aerial"
+        elif is_bts(c):
+            why = "BTS (social only)"
         elif c.duration < MIN_SECONDS:
             why = f"shorter than {MIN_SECONDS} s"
         else:

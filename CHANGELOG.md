@@ -1,5 +1,16 @@
 # Changelog
 
+## buwan 1.19.0 — 2026-11-17  (/plugin marketplace update buwan-films, /reload-plugins)
+**BTS for social on every shoot.**
+- New role, BTS, in `docs/ROLES.md` and on the Studio flow page's role filter. There is a BTS shooter on every shoot, filming vertical clips of the crew at work for Facebook, Instagram, TikTok and YouTube Shorts.
+- New `/buwan:bts`:
+  - plans the BTS shots and the posting rules from the storyboard: platforms, earliest post date, client OK, tags, posting plan
+  - picks the best clips and drafts the posts (specs, captions, hashtags, kit 05 Social labels) in `edit/social/`
+  - checks the "never post" list before a person posts. Claude never posts.
+- Engine: a camera folder named BTS (`5-BTS`, or behind-the-scenes) is copied into the `_ENHANCED_` folder exactly as shot. It gets no exposure or white balance fix (phone HDR stays as it is), no cull and no transcript. `premiere-import` bins it as `5-BTS` with the Rose label and the Description "BTS for social".
+- The house rules have a "BTS for social" section: never post before the earliest post date (wedding: after the SDE screening, no bride reveal before the ceremony; commercial: after the client's launch; corporate: after the client's OK); music licensed for social; never the film's track before delivery.
+- The Storyboard page has a BTS camera in the shot list, a BTS beat in every starter flow, a Social panel, and `social/bts-plan.md` in the bundle.
+
 ## buwan 1.18.0 · buwan-premiere 1.12.0 — 2026-11-17  (/plugin marketplace update buwan-films, update both plugins, /reload-plugins)
 **Corporate in the basics, and a new shoot type: commercial / reels.**
 - The engine knows the shoot type: the project folder suffix (`_wedding`, `_prenup`, `_corporate`, `_commercial`; `_reels` and `_ads` count as commercial) or `--shoot <type>` on `exposure`, `update` and `transcribe`. The type is remembered in `edit/assemble/shoot.json`. Default: wedding.

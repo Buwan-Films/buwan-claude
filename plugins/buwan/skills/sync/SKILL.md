@@ -8,7 +8,7 @@ argument-hint: "<YYYY-MM-DD>_<Couple> [--footage <raw folder>] [--out <_ENHANCED
 
 Load `/buwan:house-rules`. Same rules as `/buwan:basics`: the raw folder is only read, no grade, no working copy, no sorting. New clips with a fix are rendered, new clips with no fix are copied as they are, so the folder keeps every clip of the day. Arguments: $ARGUMENTS
 
-Run after `/buwan:basics` has made the first `_ENHANCED_` folder for the shoot. The shoot type comes from the project folder suffix or `--shoot <type>` (see `/buwan:basics`); it also picks the transcript labels: weddings vows · mass · speech/toast · interview/message, corporate keynote/talk · panel/Q&A · awards, commercial testimonial · script/voice-over. (On a project with no basics run yet, this is the basics: it makes the first folder.)
+Run after `/buwan:basics` has made the first `_ENHANCED_` folder for the shoot. The shoot type comes from the project folder suffix or `--shoot <type>` (see `/buwan:basics`); it also picks the transcript labels: weddings vows · mass · speech/toast · interview/message, corporate keynote/talk · panel/Q&A · awards, commercial testimonial · script/voice-over. New BTS clips in `5-BTS` are copied as shot, never fixed or transcribed. (On a project with no basics run yet, this is the basics: it makes the first folder.)
 
 ## Run
 ```

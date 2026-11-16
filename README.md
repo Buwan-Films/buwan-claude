@@ -10,7 +10,8 @@ One studio standard for every Buwan editor, in every editing app. Claude Code lo
 ## The studio flow — plan, shoot, edit, deliver
 Every job runs the same four phases, for **wedding, prenup, corporate and commercial / reels** shoots (the project folder ends in the type: `_wedding`, `_prenup`, `_corporate`, `_commercial`): [**Studio flow**](https://claude.ai/artifact/XspJWQPLCpuhofjkyzse7d) (pick a shoot type and a role to see only your steps). Planning happens on the [**Storyboard**](https://claude.ai/artifact/LJpY3x7t19hgkKZuE1Ed9D) page: brief, music, beats, cards and the **shot list** the shooters tick on the day. Its bundle goes into the job at `edit/storyboard/`, and `/buwan:plot`, `/buwan:rough-cut`, `/buwan:graphics` and `/buwan:review` start from it.
 
-- Who does what (owner, lead shooter, shooters, audio, data wrangler, editor): [docs/ROLES.md](docs/ROLES.md)
+- **BTS on every shoot** for Facebook, Instagram, TikTok and YouTube Shorts: clips go into the `5-BTS` camera folder and are copied as shot (no fixes); `/buwan:bts` plans, picks and drafts the posts, a person posts after the earliest post date.
+- Who does what (owner, lead shooter, shooters, audio, BTS, data wrangler, editor): [docs/ROLES.md](docs/ROLES.md)
 - The steps in order, per shoot type: [docs/STUDIO-WORKFLOW.md](docs/STUDIO-WORKFLOW.md)
 
 ## What happens on a new project
@@ -84,6 +85,7 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 | Logo end card | `/buwan:end-card` (kit 06.08: two blades become one ring, the emblem lands, last shot of every film) |
 | 08 Export | `/buwan:export`, then `/buwan:clipper` for reels |
 | 09 Deliver — client link, revisions, music licence, backup, archive | `/buwan:deliver` |
+| BTS for social, every shoot (alongside) | `/buwan:bts` |
 | Same-day edit, the full flow | `/buwan:sde` |
 | Engine reference | `/buwan:assemble` |
 

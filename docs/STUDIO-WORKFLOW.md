@@ -6,10 +6,11 @@ Plan → Shoot → Edit → Deliver, for wedding, prenup, corporate and commerci
 1. **Brief:** client, shoot type, films promised, date, venue, team, deadlines.
 2. **Music:** wedding two tracks (intro, then story to the end, with the switch beat); prenup one track; corporate a brand-safe bed.
 3. **Beats:** start from the template for the shoot type. Wedding: the 8 audio layers in the SDE shape. Prenup: the shot flow. Corporate: welcome → keynote → exec quotes → panel → crowd → awards → partners → CTA. Commercial: hook → problem → product hero → details → people using it → testimonial → offer → CTA → logo, from the client-approved script (Script-Lock). Speech beats stay empty until Story-Lock.
-4. **Shot list:** made from the beats, per camera (Creative / Glider, Main, 3rd Cam, Drone, Audio), must-haves first.
-5. **Cards:** couple title, date and venue, save-the-date, lower thirds. Their text is known now, so they can be rendered before the day.
-6. **Client sign-off** on beats, music, names and spellings. *Gate.*
-7. **Export the bundle** → the job's `edit/storyboard/`.
+4. **Shot list:** made from the beats, per camera (Creative / Glider, Main, 3rd Cam, Drone, Audio, BTS), must-haves first.
+5. **Social:** platforms, earliest post date, client OK, tags, posting plan; the BTS shots go into the shot list (camera BTS).
+6. **Cards:** couple title, date and venue, save-the-date, lower thirds. Their text is known now, so they can be rendered before the day.
+7. **Client sign-off** on beats, music, names and spellings, and the social plan. *Gate.*
+8. **Export the bundle** → the job's `edit/storyboard/`.
 
 ## 2. Shoot
 | | Wedding | Prenup | Corporate | Commercial / reels |
@@ -19,6 +20,8 @@ Plan → Shoot → Edit → Deliver, for wedding, prenup, corporate and commerci
 | Footage | `/buwan:basics`, then `/buwan:sync` per new card (transcripts on arrival) | `/buwan:basics` after the shoot, all cards at once | `/buwan:basics` + `/buwan:sync`, brand-true white balance | `/buwan:basics`, brand-true white balance |
 | Speech | `/buwan:multicam` for vows, letters, speeches | voice-over only if planned | `/buwan:multicam` for keynotes and panels | `/buwan:multicam` for testimonials and voice-over |
 | Coverage | must-haves still missing go back to the lead shooter during the day | missing shots → pickup | missing logos and speakers flagged during the event | missing shots before talent and product leave |
+
+**BTS on every shoot:** the BTS shooter films vertical for social; the clips go into `5-BTS` and are copied as shot. `/buwan:bts` picks the clips and drafts the posts; a person posts them after the earliest post date (wedding: after the SDE screening; commercial: after the client's launch; corporate: after the client's OK).
 
 Every card: two copies on two drives before anything else. Cards are never formatted until delivery is closed.
 

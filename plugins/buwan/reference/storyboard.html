@@ -123,6 +123,10 @@ details.intake>summary{cursor:pointer;list-style:none;display:flex;align-items:c
 details.intake>summary::-webkit-details-marker{display:none}
 details.intake>summary::after{content:"+";margin-left:auto;color:var(--gold);font-size:20px;line-height:1}
 details.intake[open]>summary::after{content:"\2212"}
+.social .sopf{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px}
+.social .sopf .check{color:var(--ivory);font-size:14px}
+.soc{font-size:11px;font-weight:600;letter-spacing:.03em;color:#14110b;background:var(--k-broll);border-radius:99px;padding:2px 9px;white-space:nowrap}
+.beat.social{border-left-style:dotted}
 .intake h2{font-family:var(--display);font-size:22px}
 .intake textarea{min-height:170px;margin-top:12px}
 .intake .acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
@@ -338,6 +342,24 @@ Timecodes and speaker names are optional. An SRT file's text also works." aria-l
     <p class="hint">Splitting keeps every word exactly as pasted. Plotting tags each line with a story beat, picks the strongest lines, suggests a shot for the lines that play under footage, and marks the rest as left out. It never rewrites a line.</p>
   </details>
 
+  <details class="panel intake social" id="social">
+    <summary><h2>Social</h2><span class="muted" style="font-size:13px">the BTS shooter's posts on Facebook, Instagram and TikTok</span></summary>
+    <div class="sopf" role="group" aria-label="Platforms">
+      <label class="check"><input type="checkbox" id="so_facebook" data-pf="facebook"> Facebook</label>
+      <label class="check"><input type="checkbox" id="so_instagram" data-pf="instagram"> Instagram</label>
+      <label class="check"><input type="checkbox" id="so_tiktok" data-pf="tiktok"> TikTok</label>
+      <label class="check"><input type="checkbox" id="so_youtube" data-pf="youtube"> YouTube Shorts</label>
+    </div>
+    <div class="grid">
+      <label class="f"><span>Earliest post</span><input class="i" id="so_earliest" data-so="earliest"></label>
+      <label class="f"><span>Client OK to post</span><select class="i" id="so_ok" data-so="ok"><option value="yes">Yes</option><option value="ask">Ask first</option><option value="no">No</option></select></label>
+      <label class="f"><span>Tags and handles</span><input class="i" id="so_tags" data-so="tags"></label>
+    </div>
+    <label class="f" style="margin-top:12px"><span>Posting plan</span><textarea class="i" id="so_plan" data-so="plan" rows="3" placeholder="Day of: 1 story · +1 day: BTS reel · +1 week: teaser"></textarea></label>
+    <p class="hint" id="so_warn"></p>
+    <p class="hint">Posts are 9:16 at 1080×1920, hook in the first 2 s, captions on, text and logo clear of the top and bottom UI. Music is the platform's licensed sounds or our licensed track, never the film's track before delivery.</p>
+  </details>
+
   <section aria-label="Beats">
     <div class="tools">
       <h2 id="beatsH">Beats</h2>
@@ -397,7 +419,7 @@ function filmOpts(){var sel=$("p_film"),com=P.type==="commercial";
   if(!com&&/^(Commercial 60|Brand reel)/.test(P.film||"")) P.film=FILM_DEFAULT[P.type]||"SDE";
   if(com&&["SDE","Highlight film","Full feature","Prenup film","Save-the-date"].indexOf(P.film)>=0) P.film=FILM_DEFAULT.commercial;
   sel.value=P.film||""; $("p_brief").placeholder=BRIEF_PH[P.type]||BRIEF_PH.wedding;}
-var CAMS=["Creative / Glider","Main","3rd Cam","Drone","Audio"];
+var CAMS=["Creative / Glider","Main","3rd Cam","Drone","Audio","BTS"];
 /* Older storyboards used other camera names; they map onto the studio card folders the engine reads. */
 var CAM_MAP={"Main cam":"Main","B-cam":"3rd Cam","Creative / glider":"Creative / Glider","Roving / reaction":"3rd Cam"};
 var GORDER=CAMS.concat(["Speaker coverage","Any camera"]);
@@ -431,8 +453,10 @@ function tcFrames(str){
 }
 function framesTC(f){f=Math.max(0,Math.round(f));var ff=f%FPS,s=Math.floor(f/FPS);return pad(Math.floor(s/3600))+":"+pad(Math.floor(s/60)%60)+":"+pad(s%60)+":"+pad(ff);}
 function srtT(sec){var ms=Math.round(sec*1000);return pad(Math.floor(ms/3600000))+":"+pad(Math.floor(ms/60000)%60)+":"+pad(Math.floor(ms/1000)%60)+","+pad(ms%1000,3);}
+/* Social-only beats (BTS for Facebook, Instagram, TikTok) are planned and shot, but never count toward the film. */
+function inFilm(b){return !b.out&&!b.social;}
 function estSec(b){
-  if(b.out) return 0;
+  if(b.out||b.social) return 0;
   if(+b.dur>0) return +b.dur;
   if(b.kind==="card") return (TPL[b.tpl]||TPL.title).hold;
   if(b.kind==="montage") return 8;
@@ -456,17 +480,23 @@ function confirmBox(title,text,buttons){
 var P=null, view="edit", showOut=true, undoBeats=null;
 var cap={db:null,dl:null,sample:null,assets:null}, boards=[], dbState="wait", readOnly=false, saveT=null, saving=false, queued=null, wseq=0, synced=false, dirty=false;
 
-function normMusic(p){p.music=p.music||{};["t1","t2"].forEach(function(t){p.music[t]=p.music[t]||{};});p.music.switchAt=p.music.switchAt||"";return p;}
+var SOC_PF=[["facebook","Facebook"],["instagram","Instagram"],["tiktok","TikTok"],["youtube","YouTube Shorts"]];
+var SOC_EARLY={wedding:"After the SDE screening; no bride reveal before the ceremony",prenup:"After the couple approves",corporate:"After the client approves",commercial:"After the client's launch date"};
+var SOC_OK={yes:"Yes",ask:"Ask first",no:"No"};
+function normSocial(p){var s=p.social&&typeof p.social==="object"?p.social:{};
+  var pf=s.platforms&&typeof s.platforms==="object"?s.platforms:{facebook:true,instagram:true,tiktok:true,youtube:false};
+  p.social={platforms:{facebook:!!pf.facebook,instagram:!!pf.instagram,tiktok:!!pf.tiktok,youtube:!!pf.youtube},earliest:String(s.earliest||""),ok:SOC_OK[s.ok]?s.ok:"ask",tags:String(s.tags||""),plan:String(s.plan||"")};return p;}
+function normMusic(p){normSocial(p);p.music=p.music||{};["t1","t2"].forEach(function(t){p.music[t]=p.music[t]||{};});p.music.switchAt=p.music.switchAt||"";return p;}
 function lenSec(v){v=String(v||"").trim(); if(!v) return 0; var m=v.match(/^(\d+):(\d{1,2})$/); if(m) return +m[1]*60+ +m[2]; var n=parseFloat(v); return n>0?n:0;}
 /* Where the film changes from track 1 to track 2, and how long each track has to carry. */
 function oneTrack(){return P.type==="prenup"||P.type==="commercial";}
 function musicSplit(){
-  var F=P.beats.filter(function(b){return !b.out;}),i=-1,sw=oneTrack()?"":P.music.switchAt,k;
+  var F=P.beats.filter(inFilm),i=-1,sw=oneTrack()?"":P.music.switchAt,k;
   if(sw) for(k=0;k<F.length;k++) if(F[k].id===sw){i=k;break;}
   var a=i<0?F:F.slice(0,i),b=i<0?[]:F.slice(i),sum=function(x){return x.reduce(function(t,q){return t+estSec(q);},0);};
   return {F:F,i:i,a:a,b:b,da:sum(a),db:sum(b)};
 }
-function newBeat(o){var b={id:uid(),kind:"aroll",words:"",speaker:"",tc:"",tcOut:"",story:"",shot:"",shotType:"",cam:"",tpl:"title",slots:{},pace:"",dur:"",note:"",look:"",img:"",imgAi:false,ok:false,out:false,must:false,got:false,clips:""};
+function newBeat(o){var b={id:uid(),kind:"aroll",words:"",speaker:"",tc:"",tcOut:"",story:"",shot:"",shotType:"",cam:"",tpl:"title",slots:{},pace:"",dur:"",note:"",look:"",img:"",imgAi:false,ok:false,out:false,must:false,got:false,clips:"",social:false};
   if(o) for(var k in o) b[k]=o[k]; if(CAM_MAP[b.cam]) b.cam=CAM_MAP[b.cam]; return b;}
 function newProject(){var ed="";try{ed=localStorage.getItem("buwan.sb.editor")||"";}catch(e){}
   return {id:uid("sb"),title:"",client:"",type:"wedding",film:"SDE",date:"",venue:"",clip:"",editor:ed,brief:"",script:"",beats:[],updatedAt:Date.now()};}
@@ -573,7 +603,13 @@ function commercialFlow(){
     newBeat({kind:"card",tpl:"end",story:"Logo end",slots:{main:P.client||"Brand logo",label:""},note:"The client's logo or packshot from the brand guide"})
   ];
 }
-function flowFor(t){return t==="prenup"?prenupFlow():t==="corporate"?corporateFlow():t==="commercial"?commercialFlow():weddingFlow();}
+/* Every shoot has a BTS shooter posting to Facebook, Instagram and TikTok. The BTS beat is a must-have on the shot list but never part of the film. */
+var BTS_SHOT={wedding:"Crew at work: the glider move at the aisle, the drone launch, the SDE being edited at the reception, a reaction to the couple's first look (shot from behind the crew).",
+  prenup:"Directing the prompts, the golden-hour setup, the couple laughing between takes.",
+  corporate:"Crew setup before doors open, the run of show from behind the cameras, the event-close sizzle being cut.",
+  commercial:"Set and lighting build, the product hero setup, the talent between takes. Nothing posted before the client's launch date."};
+function btsBeat(t){return newBeat({kind:"montage",cam:"BTS",shotType:"BTS",must:true,social:true,dur:"",shot:BTS_SHOT[t]||BTS_SHOT.wedding,note:"Social only: Facebook, Instagram, TikTok. Not in the film; posted after the earliest post date"});}
+function flowFor(t){var f=t==="prenup"?prenupFlow():t==="corporate"?corporateFlow():t==="commercial"?commercialFlow():weddingFlow(); f.push(btsBeat(t)); return f;}
 
 /* ---------- saving ----------
    Each save carries a revision number. A device only overwrites the page's copy with edits made here,
@@ -685,17 +721,17 @@ function frameHtml(b){
 function inp(b,f,label,ph,cls,val){return '<label class="f '+(cls||"")+'"><span>'+esc(label)+'</span><input class="i" data-f="'+f+'" value="'+esc(val!=null?val:b[f])+'" placeholder="'+esc(ph||"")+'"></label>';}
 function rowHtml(b,n){
   var k=b.kind,speech=k==="aroll"||k==="broll",h="";
-  h+='<article class="beat k-'+k+(b.out?" out":"")+'" data-id="'+b.id+'">';
-  h+='<div class="rail"><span class="num">'+(b.out?"–":pad(n))+'</span>'+
+  h+='<article class="beat k-'+k+(b.out?" out":"")+(b.social?" social":"")+'" data-id="'+b.id+'">';
+  h+='<div class="rail"><span class="num">'+(b.out?"–":b.social?"S":pad(n))+'</span>'+
      '<button type="button" class="okb" data-act="ok" aria-pressed="'+(b.ok?"true":"false")+'" title="Approved" aria-label="Approved">✓</button>'+
      '<button type="button" class="btn sm ghost" data-act="up" aria-label="Move up">↑</button><button type="button" class="btn sm ghost" data-act="down" aria-label="Move down">↓</button></div>';
   h+='<div class="frame" data-frame>'+frameHtml(b)+'</div>';
-  h+='<p class="cap"><small>'+esc(KINDS[k]+(b.story?" · "+b.story:"")+(b.speaker&&speech?" · "+b.speaker:"")+(b.must?" · must-have":""))+'</small>'+esc(k==="card"?(TPL[b.tpl]||TPL.title).n:(b.words||b.shot||""))+'</p>';
+  h+='<p class="cap"><small>'+esc(KINDS[k]+(b.story?" · "+b.story:"")+(b.speaker&&speech?" · "+b.speaker:"")+(b.must?" · must-have":"")+(b.social?" · social only":""))+'</small>'+esc(k==="card"?(TPL[b.tpl]||TPL.title).n:(b.words||b.shot||""))+'</p>';
   h+='<div class="body"><div class="row1"><div class="seg kinds" role="group" aria-label="Beat kind">';
   Object.keys(KINDS).forEach(function(x){h+='<button type="button" data-act="kind" data-k="'+x+'" aria-pressed="'+(x===k?"true":"false")+'" title="'+esc(KDESC[x])+'">'+KINDS[x]+'</button>';});
   h+='</div><select class="i" data-f="story" aria-label="Story beat">'+opt(stories(),b.story,"Story beat")+'</select>';
   h+='<select class="i" data-f="pace" aria-label="Pacing"><option value="">Pacing</option><option value="hold"'+(b.pace==="hold"?" selected":"")+'>Hold (15–20 s unbroken)</option><option value="burst"'+(b.pace==="burst"?" selected":"")+'>Burst (1–2 s cuts)</option></select>';
-  h+='<span class="est" data-est>'+esc(b.out?"left out":"≈ "+fmt(estSec(b)))+'</span></div>';
+  h+=(b.social?'<span class="soc" title="Shot for Facebook, Instagram and TikTok; not in the film">Social only</span>':"")+'<span class="est" data-est>'+esc(estLabel(b))+'</span></div>';
   if(speech) h+='<textarea class="i words" data-f="words" placeholder="The words, exactly as said" aria-label="Spoken words">'+esc(b.words)+'</textarea>';
   h+='<div class="fields">';
   if(speech){h+=inp(b,"speaker","Speaker","Bride, groom, father")+inp(b,"tc","Source in","00:12:03")+inp(b,"tcOut","Source out","00:12:09");}
@@ -705,6 +741,7 @@ function rowHtml(b,n){
     h+='<label class="f"><span>Shot type</span><select class="i" data-f="shotType">'+opt(shots(),b.shotType,"Any")+'</select></label>';
     h+='<label class="f"><span>Camera</span><select class="i" data-f="cam">'+opt(CAMS,b.cam,"Any")+'</select></label>';
     h+='<label class="f fchk"><input type="checkbox" data-f="must"'+(b.must?" checked":"")+'><span>Must-have shot</span></label>';
+    h+='<label class="f fchk"><input type="checkbox" data-f="social"'+(b.social?" checked":"")+'><span>Social only (not in the film)</span></label>';
   }
   if(k==="card"){
     var t=TPL[b.tpl]?b.tpl:"title";
@@ -729,7 +766,7 @@ function rowHtml(b,n){
   h+='</div></div></article>';
   return h;
 }
-function numbers(){var n=0,m={};P.beats.forEach(function(b){if(!b.out){n++;m[b.id]=n;}});return m;}
+function numbers(){var n=0,m={};P.beats.forEach(function(b){if(inFilm(b)){n++;m[b.id]=n;}});return m;}
 function renderBeats(){
   $("beatsH").textContent=view==="shots"?"Shot list":"Beats";
   if(view==="shots"&&P.beats.length){$("beats").className="beats shots";$("beats").innerHTML=shotListHtml();return;}
@@ -740,20 +777,21 @@ function renderBeats(){
   el.className="beats"+(view==="board"?" board":""); el.innerHTML=h;
 }
 /* ---------- shot list ---------- */
-function shotItems(){var nm=numbers();return film().filter(function(b){return b.kind!=="card";}).map(function(b){return {b:b,n:nm[b.id]};});}
+function shotItems(){var nm=numbers();return P.beats.filter(function(b){return !b.out&&b.kind!=="card";}).map(function(b){return {b:b,n:nm[b.id]||0};});}
+function numLabel(it){return it.n?pad(it.n):"S";}
 function camOf(b){return b.cam||(b.kind==="aroll"?"Speaker coverage":"Any camera");}
 function lookOf(b){return String(b.look||"").trim()||"No look or location set";}
 function groupBy(items,keyf,order){var g={},keys=[];
   items.forEach(function(it){var k=keyf(it.b);if(!g[k]){g[k]=[];keys.push(k);}g[k].push(it);});
   if(order) keys.sort(function(a,b){var ia=order.indexOf(a),ib=order.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
-  keys.forEach(function(k){g[k].sort(function(x,y){return (y.b.must?1:0)-(x.b.must?1:0)||x.n-y.n;});});
+  keys.forEach(function(k){g[k].sort(function(x,y){return (y.b.must?1:0)-(x.b.must?1:0)||(x.n||999)-(y.n||999);});});
   return keys.map(function(k){return {k:k,items:g[k]};});}
 function shotDesc(b){return b.kind==="aroll"?(b.speaker||"Speaker")+" on screen"+(b.words?": "+b.words:", words come from the transcript"):(b.shot||"Describe the shot in Edit view");}
-function shotMeta(b){return [b.story,b.shotType,b.pace==="hold"?"Hold":b.pace==="burst"?"Burst":"",b.kind==="broll"?"under "+(b.speaker||"a line"):""].filter(Boolean).join(" · ");}
+function shotMeta(b){return [b.social?"Social only":"",b.story,b.shotType,b.pace==="hold"?"Hold":b.pace==="burst"?"Burst":"",b.kind==="broll"?"under "+(b.speaker||"a line"):""].filter(Boolean).join(" · ");}
 function shotRow(it){var b=it.b,m=shotMeta(b);
   return '<div class="srow'+(b.got?" got":"")+(b.must?" must":"")+'" data-id="'+b.id+'">'+
     '<label class="sgot"><input type="checkbox" data-f="got"'+(b.got?" checked":"")+' aria-label="Captured"></label>'+
-    '<span class="snum">'+pad(it.n)+'</span>'+
+    '<span class="snum">'+numLabel(it)+'</span>'+
     '<div class="sdesc">'+(okId(b.img)?'<img class="sthumb" src="'+esc(imgSrc(b.img))+'" alt="" loading="lazy">':"")+'<p>'+esc(shotDesc(b))+'</p>'+(m?'<small>'+esc(m)+'</small>':"")+'</div>'+
     '<button type="button" class="smust" data-act="must" aria-pressed="'+(b.must?"true":"false")+'">Must-have</button>'+
     '<input class="i sclips" data-f="clips" value="'+esc(b.clips)+'" placeholder="Clip names, e.g. C0823" aria-label="Clip names">'+
@@ -772,7 +810,8 @@ function shotListHtml(){
 function renderRow(b){var el=$("beats").querySelector('[data-id="'+b.id+'"]'); if(!el){renderBeats();return;}
   var t=document.createElement("div"); t.innerHTML=rowHtml(b,numbers()[b.id]); el.replaceWith(t.firstChild);}
 function refreshFrame(b){var el=$("beats").querySelector('[data-id="'+b.id+'"]'); if(!el||!el.querySelector("[data-frame]")) return;
-  el.querySelector("[data-frame]").innerHTML=frameHtml(b); el.querySelector("[data-est]").textContent=b.out?"left out":"≈ "+fmt(estSec(b));}
+  el.querySelector("[data-frame]").innerHTML=frameHtml(b); el.querySelector("[data-est]").textContent=estLabel(b);}
+function estLabel(b){return b.out?"left out":b.social?"not in the runtime":"≈ "+fmt(estSec(b));}
 function properNouns(){
   var seen={},out=[];
   P.beats.forEach(function(b){ if(b.out||!b.words) return;
@@ -785,14 +824,15 @@ function properNouns(){
 }
 function renderSummary(){
   var tot=0,by={aroll:0,broll:0,card:0,montage:0},cnt={aroll:0,broll:0,card:0,montage:0},st={},outN=0,holds=0,bursts=0,okN=0,inN=0;
-  P.beats.forEach(function(b){ if(b.out){outN++;return;} var s=estSec(b); tot+=s; by[b.kind]+=s; cnt[b.kind]++; inN++; if(b.ok)okN++;
+  var socN=0;
+  P.beats.forEach(function(b){ if(b.out){outN++;return;} if(b.social){socN++;return;} var s=estSec(b); tot+=s; by[b.kind]+=s; cnt[b.kind]++; inN++; if(b.ok)okN++;
     if(b.story) st[b.story]=(st[b.story]||0)+1; if(b.pace==="hold")holds++; if(b.pace==="burst")bursts++; });
   $("s_run").textContent=fmt(tot);
   var rg="";
   if(P.type==="wedding"&&(P.film==="SDE"||P.film==="Highlight film")){
     rg="House range is 6 to 10 minutes. "+(tot<360?"About "+fmt(360-tot)+" short of it.":tot>600?"About "+fmt(tot-600)+" over it.":"Inside it.");
   }
-  rg+=(rg?" ":"")+inN+" beats, "+okN+" approved"+(outN?", "+outN+(outN===1?" line":" lines")+" left out":"")+". Holds "+holds+", bursts "+bursts+".";
+  rg+=(rg?" ":"")+inN+" beats, "+okN+" approved"+(outN?", "+outN+(outN===1?" line":" lines")+" left out":"")+(socN?", "+socN+" social only":"")+". Holds "+holds+", bursts "+bursts+".";
   $("s_range").textContent=rg;
   var mix="",lg="";
   Object.keys(KINDS).forEach(function(k){var pc=tot?by[k]/tot*100:0;
@@ -831,9 +871,15 @@ function renderMusicInfo(){
 function renderMeta(){
   ["title","client","type","film","date","venue","clip","editor","brief"].forEach(function(f){$("p_"+f).value=P[f]||"";});
   ["t1","t2"].forEach(function(t){["name","url","bpm","len"].forEach(function(k){$("m_"+t+"_"+k).value=P.music[t][k]||"";});});
-  filmOpts(); $("script").value=P.script||""; $("exBanner").hidden=!P.example;
+  filmOpts(); renderSocial(); $("script").value=P.script||""; $("exBanner").hidden=!P.example;
   $("vEdit").setAttribute("aria-pressed",view==="edit"); $("vBoard").setAttribute("aria-pressed",view==="board"); $("vShots").setAttribute("aria-pressed",view==="shots");
 }
+function renderSocial(){var s=P.social;
+  SOC_PF.forEach(function(x){$("so_"+x[0]).checked=!!s.platforms[x[0]];});
+  $("so_earliest").value=s.earliest; $("so_earliest").placeholder=SOC_EARLY[P.type]||SOC_EARLY.wedding;
+  $("so_ok").value=s.ok; $("so_tags").value=s.tags; $("so_tags").placeholder="@buwanfilmsph, "+(P.type==="wedding"||P.type==="prenup"?"the couple's handles":"the client's handle");
+  $("so_plan").value=s.plan; socWarn();}
+function socWarn(){var s=P.social; $("so_warn").textContent=s.ok==="no"?"The client said no: nothing from this shoot is posted.":s.ok==="ask"?"Ask the client before anything is posted.":"";}
 function renderAll(){renderMeta();renderSummary();renderBeats();setSave();}
 
 /* ---------- transcript intake ---------- */
@@ -913,19 +959,19 @@ function mergeKeep(kept,others){ if(!others.length) return kept; var idx={}; P.b
   var res=kept.slice(); others.forEach(function(o){var at=Math.min(res.length,Math.round(idx[o.id]/Math.max(1,P.beats.length-1)*res.length)); res.splice(at,0,o);}); return res; }
 
 /* ---------- exports ---------- */
-function film(){return P.beats.filter(function(b){return !b.out;});}
+function film(){return P.beats.filter(inFilm);}
 function beatLine(b){var s=KINDS[b.kind].toLowerCase(); return s;}
 function expJSON(){
   var pos=0,rec=0,ms=musicSplit(),n2=ms.i>=0?ms.i:Infinity,fi=0,beats=P.beats.map(function(b,i){var o={id:b.id,kind:b.kind,words:b.words||""};
-    if(!b.out){o.rec=Math.round(rec*100)/100;o.len=Math.round(estSec(b)*100)/100;rec+=estSec(b);o.track=fi>=n2?2:1;fi++;}
+    if(inFilm(b)){o.rec=Math.round(rec*100)/100;o.len=Math.round(estSec(b)*100)/100;rec+=estSec(b);o.track=fi>=n2?2:1;fi++;}
     if(b.words){o.s=pos;o.e=pos+b.words.length-1;pos+=b.words.length+1;}
     ["speaker","tc","tcOut","story","look","shot","shotType","cam","pace","note","clips"].forEach(function(f){if(b[f])o[f]=b[f];});
-    if(b.must)o.must=true; if(b.got)o.got=true;
+    if(b.must)o.must=true; if(b.got)o.got=true; if(b.social)o.social=true;
     if(b.kind!=="card"&&okId(b.img)){o.img=b.img; if(b.imgAi)o.imgAi=true;}
     if(+b.dur>0)o.dur=+b.dur; if(b.kind==="card"){o.tpl=b.tpl;o.slots=b.slots||{};}
     if(b.ok)o.ok={by:P.editor||"editor"}; if(b.out)o.deleted={by:P.editor||"editor",why:b.note||""}; return o;});
   return JSON.stringify({v:1,src:"buwan-storyboard",by:P.editor||"",at:new Date().toISOString(),
-    project:{id:P.id,title:P.title,client:P.client,type:P.type,film:P.film,date:P.date,venue:P.venue,clip:P.clip,brief:P.brief||"",music:P.music},beats:beats},null,1);
+    project:{id:P.id,title:P.title,client:P.client,type:P.type,film:P.film,date:P.date,venue:P.venue,clip:P.clip,brief:P.brief||"",music:P.music,social:P.social},beats:beats},null,1);
 }
 function expMD(){
   var h="# Storyboard · "+(P.title||"Untitled")+"\n\n"+(P.editor?"Assigned by "+P.editor+" · ":"")+new Date().toISOString()+"\n",n=0;
@@ -988,15 +1034,26 @@ function expShots(){
   if(!items.length) return h+"\nNo shots yet.\n";
   var must=items.filter(function(x){return x.b.must;}),miss=must.filter(function(x){return !x.b.got;});
   h+="\n"+items.length+" shots · "+must.length+" must-haves · "+items.filter(function(x){return x.b.got;}).length+" captured · "+miss.length+" must-haves missing\n";
-  var line=function(it){var b=it.b,m=shotMeta(b);return "- ["+(b.got?"x":" ")+"] "+pad(it.n)+" · "+(b.must?"**MUST** · ":"")+shotDesc(b)+(m?" ("+m+")":"")+(b.clips?" · clips: "+b.clips:"")+"\n";};
+  var line=function(it){var b=it.b,m=shotMeta(b);return "- ["+(b.got?"x":" ")+"] "+numLabel(it)+" · "+(b.social?"social only · ":"")+(b.must?"**MUST** · ":"")+shotDesc(b)+(m?" ("+m+")":"")+(b.clips?" · clips: "+b.clips:"")+"\n";};
   var cams=function(list,lvl){groupBy(list,camOf,GORDER).forEach(function(g){h+="\n"+lvl+" "+g.k+"\n\n";g.items.forEach(function(it){h+=line(it);});});};
   if(P.type==="prenup") groupBy(items,lookOf,null).forEach(function(g){h+="\n## "+g.k+"\n";cams(g.items,"###");});
   else cams(items,"##");
   return h;
 }
+function socEarliest(){return P.social.earliest||(SOC_EARLY[P.type]||SOC_EARLY.wedding)+" (studio default)";}
+function expSocial(){var s=P.social,pf=SOC_PF.filter(function(x){return s.platforms[x[0]];}).map(function(x){return x[1];});
+  var bts=P.beats.filter(function(b){return !b.out&&(b.social||b.cam==="BTS");});
+  var h="# BTS and social plan · "+(P.title||"Untitled")+"\n\n"+[P.client,P.type,P.date,P.venue].filter(Boolean).join(" · ")+"\n\n## Posting\n\n- Platforms: "+(pf.join(", ")||"none chosen")+"\n- Earliest post: "+socEarliest()+"\n- Client OK to post: "+SOC_OK[s.ok]+"\n- Tags and handles: "+(s.tags||"@buwanfilmsph")+"\n";
+  if(s.ok==="no") h+="\n**The client said no: nothing from this shoot is posted.**\n";
+  if(s.ok==="ask") h+="\nAsk the client before anything is posted.\n";
+  h+="\n## Posting plan\n\n"+(s.plan||"Not set yet.")+"\n\n## BTS shots\n\n";
+  h+=bts.length?bts.map(function(b){return "- ["+(b.got?"x":" ")+"] "+(b.must?"**MUST** · ":"")+(b.shot||"(describe the shot)")+(b.clips?" · clips: "+b.clips:"")+"\n";}).join(""):"No BTS shots planned yet.\n";
+  h+="\n## Platform specs\n\n- 9:16, 1080×1920.\n- Hook in the first 2 s.\n- Keep text and the logo out of the top and bottom UI zones.\n- Captions on.\n- Graphics from kit 05 Social: 05.04 BTS label, 05.03 location tag.\n- Music: only the platform's licensed sounds or our licensed track. Never the film's track before delivery.\n";
+  h+="\n## Rules\n\n- BTS is shot for social only. It is never cut into the film without the editor's call.\n- Nothing is posted before the earliest post date.\n";
+  return h;}
 function expScript(){return "# "+(P.title||"Untitled")+"\n\n"+(P.script||P.beats.filter(function(b){return b.words;}).map(function(b){return (b.tc?b.tc+" ":"")+(b.speaker?b.speaker+": ":"")+b.words;}).join("\n"))+"\n";}
 function expRules(){
-  return "# Editing rules · Buwan Films\n\n- Story first, driven by speech. Never clean up vows, letters or speeches: keep the wording exactly as said, Taglish included.\n- Audio: dialogue −17 LUFS, peaks −6 dBFS, music bed −20 dB.\n- Timeline 23.976 fps, record start 01:00:00:00. Framing 2:1 or 2.39:1.\n"+(P.type==="commercial"?"- Copy, offers and testimonials come from the approved script or the interview, word for word. Never write copy in the edit.\n":"")+"- Pacing ("+P.type+"): "+(P.type==="commercial"?"fast: about 1–2 s a shot, the hook in the first 2–3 s, the product hero held, lengths cut to 60/30/15/6 s.":P.type==="wedding"?"bursts at 1–2 s a shot against 15–20 s unbroken holds for vows and first looks; about 2.5–3 s a shot on average across 6–10 minutes.":P.type==="prenup"?"bursts at 1–2 s a shot against long unbroken holds for the lines that land; about 2.5–3 s a shot on average.":"steady 1.5–2.5 s a shot; holds go to speakers and the keynote's key line.")+"\n- Music: "+(P.type==="commercial"?"one track with a commercial licence that covers paid-ad use.":P.type==="prenup"?"one track for the whole film.":"two tracks a film, track 1 for the intro and track 2 from the story to the end.")+(P.type==="commercial"?"\n- 9:16 first for reels, with the platform UI safe zones kept clear of supers, captions and the logo; then 1:1 and 16:9.":"")+"\n- Cuts land on the beat and on key words.\n- Story beats: "+stories().join(" → ")+".\n- Graphics follow the brand kit: gold on ink, Cormorant Garamond for names and headings, Cinzel for letterspaced labels"+(!brandWork()?", Italiana for one accent word at a time":"; no script face on corporate or commercial work")+", film grain 5–6%.\n- Spot-check every proper noun before captions ship.\n- Sources are read-only. Deliver real, trimmable clips, never a flat render.\n";
+  return "# Editing rules · Buwan Films\n\n- Story first, driven by speech. Never clean up vows, letters or speeches: keep the wording exactly as said, Taglish included.\n- Audio: dialogue −17 LUFS, peaks −6 dBFS, music bed −20 dB.\n- Timeline 23.976 fps, record start 01:00:00:00. Framing 2:1 or 2.39:1.\n"+(P.type==="commercial"?"- Copy, offers and testimonials come from the approved script or the interview, word for word. Never write copy in the edit.\n":"")+"- Pacing ("+P.type+"): "+(P.type==="commercial"?"fast: about 1–2 s a shot, the hook in the first 2–3 s, the product hero held, lengths cut to 60/30/15/6 s.":P.type==="wedding"?"bursts at 1–2 s a shot against 15–20 s unbroken holds for vows and first looks; about 2.5–3 s a shot on average across 6–10 minutes.":P.type==="prenup"?"bursts at 1–2 s a shot against long unbroken holds for the lines that land; about 2.5–3 s a shot on average.":"steady 1.5–2.5 s a shot; holds go to speakers and the keynote's key line.")+"\n- Music: "+(P.type==="commercial"?"one track with a commercial licence that covers paid-ad use.":P.type==="prenup"?"one track for the whole film.":"two tracks a film, track 1 for the intro and track 2 from the story to the end.")+(P.type==="commercial"?"\n- 9:16 first for reels, with the platform UI safe zones kept clear of supers, captions and the logo; then 1:1 and 16:9.":"")+"\n- Cuts land on the beat and on key words.\n- Story beats: "+stories().join(" → ")+".\n- Graphics follow the brand kit: gold on ink, Cormorant Garamond for names and headings, Cinzel for letterspaced labels"+(!brandWork()?", Italiana for one accent word at a time":"; no script face on corporate or commercial work")+", film grain 5–6%.\n- BTS is shot for social only. It is never cut into the film without the editor's call, and never posted before the earliest post date: "+socEarliest()+".\n- Spot-check every proper noun before captions ship.\n- Sources are read-only. Deliver real, trimmable clips, never a flat render.\n";
 }
 function cardDoc(b){
   return '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>'+esc(TPL[b.tpl].n)+'</title>\n<!-- Buwan Films card. 1920×1080. Change the words below; keep the .stage size. -->\n<link rel="preconnect" href="https://fonts.googleapis.com">\n<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Cinzel:wght@400;500&family=Italiana&display=swap" rel="stylesheet">\n<style>\nhtml,body{margin:0;background:#000}\n.stage{width:1920px;height:1080px;position:relative;overflow:hidden}\n@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}\n.cd .in>*{animation:up .9s cubic-bezier(.2,.7,.2,1) both}\n.cd .in>*:nth-child(2){animation-delay:.25s}.cd .in>*:nth-child(3){animation-delay:.5s}.cd .in>*:nth-child(4){animation-delay:.7s}\n'+$("cardcss").textContent.trim()+'\n</style>\n</head>\n<body>\n<div class="stage">'+cardFace(b)+'</div>\n</body>\n</html>\n';
@@ -1011,10 +1068,10 @@ function bundleFiles(){
       if(okId(b.img)) files.push({name:"stills/"+pad(n)+"-"+slug(b.shot||b.shotType||b.speaker||b.kind)+"/"+(b.imgAi?"ai-preview":"photo")+".jpg",img:b.img,text:""});
       files.push({name:"stills/"+pad(n)+"-"+slug(b.shot||b.shotType||b.speaker||b.kind)+"/still.md",text:"# Shot "+n+" · "+(b.shot||(b.kind==="aroll"?(b.speaker||"Speaker")+" on screen":"(describe the shot)"))+"\n\n- Beat: "+b.id+"\n- Kind: "+b.kind+"\n"+(b.look?"- Look and location: "+b.look+"\n":"")+(b.shotType?"- Shot type: "+b.shotType+"\n":"")+(b.cam?"- Camera: "+b.cam+"\n":"")+(b.pace?"- Pacing: "+b.pace+"\n":"")+"- Length: about "+Math.round(estSec(b))+" s\n- Status: "+(b.ok?"approved":"pending")+"\n\n## Spoken over it\n\n"+(b.words||"[Music only]")+"\n\n"+(okId(b.img)?(b.imgAi?"ai-preview.jpg in this folder is an AI preview of the idea, not a real reference.":"photo.jpg in this folder is the "+pegName()+" for this beat."):"Put the chosen frame or clip in this folder beside this file.")+"\n"});}
   });
-  var readme="# Storyboard bundle · "+(P.title||"Untitled")+"\n\nClient: "+(P.client||"")+"\nFilm: "+P.film+" ("+P.type+")\nEvent: "+[P.date,P.venue].filter(Boolean).join(" · ")+"\nBundled: "+new Date().toISOString()+(P.editor?" by "+P.editor:"")+"\nEstimated runtime: "+tot+"\n\n## What is in it\n\n- video.md — the film's details.\n- script.md — the transcript as pasted.\n- storyboard.md / storyboard.json — the beats in film order: what is on screen while each line is spoken. storyboard.json imports back into the Buwan Storyboard page.\n- paper-edit.md — the paper edit table: source timecodes, why each line was picked, what was left out, names to spot-check.\n- selects.srt — the kept lines as captions, timed to the estimated cut.\n- selects.edl — CMX3600, 23.976 non-drop, record start 01:00:00:00. "+edl.count+" events"+(edl.skipped?"; "+edl.skipped+" spoken beats have no source in and out yet and are left as gaps":"")+". Source times are measured from the start of the source clip, so offset them if the clip carries camera timecode.\n- cards/ — one folder per card beat ("+cards+"): card.html is the card at 1920×1080, card.md its words and hold time.\n- stills/ — one folder per B-roll or montage beat, and per beat with a photo ("+stills+"): still.md holds the shot, the camera and the words spoken over it, with the beat's photo beside it when it has one. A file named ai-preview.jpg is an AI preview, not a real reference.\n- rules/editing-rules.md — the house rules this storyboard follows.\n- music-brief.md — what each of the two tracks has to carry, ready to paste into a Claude chat with the Artlist connector.\n- shot-list.md — the shots per camera, must-haves first, with ticks and clip names for the shoot day.\n- handoff/claude-code-premiere.md — a prompt for Claude Code that lays the storyboard into Premiere as sequence markers.\n\n## What to do\n\n1. Unzip this bundle into the job folder at edit/storyboard/. /buwan:plot, /buwan:rough-cut, /buwan:graphics and /buwan:review read edit/storyboard/storyboard.json (plugin buwan 1.17.0).\n2. Read rules/editing-rules.md before changing anything.\n3. Import selects.edl into the edit and relink it to the source clip.\n4. Lay B-roll over the lines marked broll, using each stills/ folder as the brief.\n5. Time every card to the cut, then place it on the track above.\n";
+  var readme="# Storyboard bundle · "+(P.title||"Untitled")+"\n\nClient: "+(P.client||"")+"\nFilm: "+P.film+" ("+P.type+")\nEvent: "+[P.date,P.venue].filter(Boolean).join(" · ")+"\nBundled: "+new Date().toISOString()+(P.editor?" by "+P.editor:"")+"\nEstimated runtime: "+tot+"\n\n## What is in it\n\n- video.md — the film's details.\n- script.md — the transcript as pasted.\n- storyboard.md / storyboard.json — the beats in film order: what is on screen while each line is spoken. storyboard.json imports back into the Buwan Storyboard page.\n- paper-edit.md — the paper edit table: source timecodes, why each line was picked, what was left out, names to spot-check.\n- selects.srt — the kept lines as captions, timed to the estimated cut.\n- selects.edl — CMX3600, 23.976 non-drop, record start 01:00:00:00. "+edl.count+" events"+(edl.skipped?"; "+edl.skipped+" spoken beats have no source in and out yet and are left as gaps":"")+". Source times are measured from the start of the source clip, so offset them if the clip carries camera timecode.\n- cards/ — one folder per card beat ("+cards+"): card.html is the card at 1920×1080, card.md its words and hold time.\n- stills/ — one folder per B-roll or montage beat, and per beat with a photo ("+stills+"): still.md holds the shot, the camera and the words spoken over it, with the beat's photo beside it when it has one. A file named ai-preview.jpg is an AI preview, not a real reference.\n- rules/editing-rules.md — the house rules this storyboard follows.\n- music-brief.md — what each of the two tracks has to carry, ready to paste into a Claude chat with the Artlist connector.\n- shot-list.md — the shots per camera, must-haves first, with ticks and clip names for the shoot day.\n- social/bts-plan.md — the BTS shooter's plan: platforms, earliest post date, client OK, tags, posting plan, the BTS shots and the platform specs.\n- handoff/claude-code-premiere.md — a prompt for Claude Code that lays the storyboard into Premiere as sequence markers.\n\n## What to do\n\n1. Unzip this bundle into the job folder at edit/storyboard/. /buwan:plot, /buwan:rough-cut, /buwan:graphics and /buwan:review read edit/storyboard/storyboard.json (plugin buwan 1.17.0).\n2. Read rules/editing-rules.md before changing anything.\n3. Import selects.edl into the edit and relink it to the source clip.\n4. Lay B-roll over the lines marked broll, using each stills/ folder as the brief.\n5. Time every card to the cut, then place it on the track above.\n";
   return [{name:"README.md",text:readme},
     {name:"video.md",text:"# "+(P.title||"Untitled")+"\n\n- Client: "+(P.client||"")+"\n- Shoot type: "+P.type+"\n- Format: "+P.film+"\n- Date: "+(P.date||"")+"\n- Venue: "+(P.venue||"")+"\n- Source clip: "+(P.clip||"")+"\n"+(oneTrack()?["t1"]:["t1","t2"]).map(function(t,k){var x=P.music[t];return x.name||x.url?"- Music track"+(oneTrack()?"":" "+(k+1))+": "+[x.name,x.bpm?x.bpm+" BPM":"",x.len,x.url].filter(Boolean).join(" · ")+"\n":"";}).join("")+(P.brief?"\n## Brief and team\n\n"+P.brief+"\n":"")},
-    {name:"script.md",text:expScript()},{name:"storyboard.md",text:expMD()},{name:"storyboard.json",text:expJSON()},{name:"shot-list.md",text:expShots()},
+    {name:"script.md",text:expScript()},{name:"storyboard.md",text:expMD()},{name:"storyboard.json",text:expJSON()},{name:"shot-list.md",text:expShots()},{name:"social/bts-plan.md",text:expSocial()},
     {name:"paper-edit.md",text:expPaper()},{name:"selects.srt",text:expSRT()||"\n"},{name:"selects.edl",text:edl.text,zipOnly:true},
     {name:"rules/editing-rules.md",text:expRules()},
     {name:"music-brief.md",text:expBrief()},{name:"handoff/claude-code-premiere.md",text:expHandoff(edl)}].concat(files);
@@ -1043,7 +1100,7 @@ function openExport(){
   exFiles=bundleFiles(); var base=slug(P.title||P.client||"storyboard"),h="";
   exFiles.forEach(function(f,i){ if(f.name.indexOf("cards/")===0||f.name.indexOf("stills/")===0) return;
     if(f.img) return;
-    h+='<div class="item"><div class="t"><b>'+esc(f.name)+'</b><span>'+esc(f.zipOnly?"In the bundle only (.edl cannot be saved on its own). Copy it into a text file named selects.edl.":({"storyboard.json":"Re-imports into this page","paper-edit.md":"Paper edit table with picks, reasons and left-out lines","selects.srt":"Captions of the kept lines","storyboard.md":"Beats in film order","README.md":"What the bundle holds and what to do with it","music-brief.md":"What each track has to carry, for an Artlist search","shot-list.md":"Shots per camera, must-haves first, for the shooters on the day","handoff/claude-code-premiere.md":"Prompt that lays the storyboard into Premiere as markers"}[f.name]||""))+'</span></div>'+
+    h+='<div class="item"><div class="t"><b>'+esc(f.name)+'</b><span>'+esc(f.zipOnly?"In the bundle only (.edl cannot be saved on its own). Copy it into a text file named selects.edl.":({"storyboard.json":"Re-imports into this page","paper-edit.md":"Paper edit table with picks, reasons and left-out lines","selects.srt":"Captions of the kept lines","storyboard.md":"Beats in film order","README.md":"What the bundle holds and what to do with it","music-brief.md":"What each track has to carry, for an Artlist search","shot-list.md":"Shots per camera, must-haves first, for the shooters on the day","social/bts-plan.md":"The BTS shooter's posting plan and platform specs","handoff/claude-code-premiere.md":"Prompt that lays the storyboard into Premiere as markers"}[f.name]||""))+'</span></div>'+
       '<button type="button" class="btn sm" data-view="'+i+'">Preview</button><button type="button" class="btn sm" data-copy="'+i+'">Copy</button>'+(cap.dl&&!f.zipOnly?'<button type="button" class="btn sm" data-dl="'+i+'">Download</button>':"")+'</div>';});
   var nc=exFiles.filter(function(f){return /card\.html$/.test(f.name);}).length,ns=exFiles.filter(function(f){return /still\.md$/.test(f.name);}).length;
   $("fileList").innerHTML=h; $("zipRow").hidden=!cap.dl;
@@ -1060,7 +1117,8 @@ function importJSON(text){
     if(b.slots&&typeof b.slots==="object"){var vals=Object.keys(b.slots).map(function(x){return String(b.slots[x]||"");}).filter(Boolean);
       s={script:String(b.slots.script||""),main:String(b.slots.main||vals[0]||""),label:String(b.slots.label||(b.slots.main?"":vals[1])||"")};}
     return newBeat({kind:k,words:String(b.words||"").replace(/^\[.*\]$/,""),speaker:String(b.speaker||""),tc:String(b.tc||""),tcOut:String(b.tcOut||""),story:String(b.story||""),look:String(b.look||""),img:okId(b.img)?b.img:"",imgAi:!!b.imgAi,shot:String(b.shot||""),shotType:String(b.shotType||""),cam:String(b.cam||""),
-      tpl:TPL[b.tpl]?b.tpl:"title",slots:s,pace:b.pace==="hold"||b.pace==="burst"?b.pace:"",dur:+b.dur>0?+b.dur:"",note:String(b.note||(b.deleted&&b.deleted.why)||""),ok:!!b.ok,out:!!b.deleted,must:!!b.must,got:!!b.got,clips:String(b.clips||"")});});
+      tpl:TPL[b.tpl]?b.tpl:"title",slots:s,pace:b.pace==="hold"||b.pace==="burst"?b.pace:"",dur:+b.dur>0?+b.dur:"",note:String(b.note||(b.deleted&&b.deleted.why)||""),ok:!!b.ok,out:!!b.deleted,must:!!b.must,got:!!b.got,clips:String(b.clips||""),social:!!b.social});});
+  if(m.social&&typeof m.social==="object") p.social=clone(m.social);
   if(m.music&&typeof m.music==="object"){p.music={switchAt:""};["t1","t2"].forEach(function(t){var x=m.music[t]||{};p.music[t]={name:String(x.name||""),url:String(x.url||""),bpm:String(x.bpm||""),len:String(x.len||"")};});
     var si=d.beats.findIndex(function(b){return b.id===m.music.switchAt;}); if(si>=0&&p.beats[si]) p.music.switchAt=p.beats[si].id;}
   if(!p.title)p.title="Imported storyboard"; openProject(p); touch(); $("ovBoards").hidden=true; toast("Imported "+p.beats.length+" beats.");
@@ -1118,7 +1176,7 @@ $("beats").addEventListener("change",function(e){
     return;}
   var f=e.target.dataset.f; if(!f) return;
   if(e.target.type==="checkbox"){var r=e.target.closest("[data-id]"),j=r?find(r.dataset.id):-1; if(j<0) return; P.beats[j][f]=e.target.checked;
-    if(view==="shots") renderBeats(); else if(f==="must") renderRow(P.beats[j]); touch(); return;}
+    if(view==="shots"||f==="social"){renderBeats();renderSummary();} else if(f==="must") renderRow(P.beats[j]); touch(); return;}
   if(e.target.tagName!=="SELECT") return; var row=e.target.closest(".beat"),i=find(row.dataset.id); if(i<0) return; var b=P.beats[i];
   b[f]=e.target.value; if(f==="tpl"){
     if(b.tpl==="end"&&!(b.slots&&b.slots.main)) b.slots={main:"Buwan Films",label:"@buwanfilmsph"};
@@ -1153,9 +1211,11 @@ $("beats").addEventListener("click",function(e){
 ["title","client","type","film","date","venue","clip","editor","brief"].forEach(function(f){
   $("p_"+f).addEventListener(f==="type"||f==="film"||f==="date"?"change":"input",function(e){P[f]=e.target.value;
     if(f==="editor"){try{localStorage.setItem("buwan.sb.editor",P.editor);}catch(x){}}
-    if(f==="type") filmOpts();
+    if(f==="type"){filmOpts();renderSocial();}
     renderSummary(); if(f==="type"){renderBeats();} touch();});
 });
+function readSocial(e){var t=e.target,s=P.social; if(t.dataset.pf) s.platforms[t.dataset.pf]=t.checked; else if(t.dataset.so) s[t.dataset.so]=t.value; else return; socWarn(); touch();}
+$("social").addEventListener("input",readSocial); $("social").addEventListener("change",function(e){ if(e.target.tagName==="SELECT"||e.target.type==="checkbox") readSocial(e); });
 $("script").addEventListener("input",function(e){ if(!P.example){P.script=e.target.value;touch();} });
 $("music").addEventListener("input",function(e){var m=e.target.dataset.m; if(!m) return; var k=m.split("."); P.music[k[0]][k[1]]=e.target.value; renderMusicInfo(); touch();});
 $("m_switch").addEventListener("change",function(e){P.music.switchAt=e.target.value; renderMusicInfo(); renderBeats(); touch();});

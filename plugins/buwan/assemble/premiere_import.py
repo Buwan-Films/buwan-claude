@@ -17,9 +17,9 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from common import Clip, load_json, log, save_json
+from common import Clip, BTS_CAMERAS, load_json, log, save_json
 
-MANGO, TEAL = 7, 10
+MANGO, TEAL, ROSE = 7, 10, 6   # Premiere label indices; Rose = 05 Reactions & BTS
 VIDEO_EXT = {".mov", ".mp4", ".mxf", ".m4v", ".avi", ".mts"}
 AERIAL = ("drone", "dji", "aerial", "mavic")
 
@@ -64,6 +64,8 @@ def build(project: Path, clips: dict[str, Clip], folder: Path) -> dict:
         label, desc = -1, ""
         if any(k in camera.lower() for k in AERIAL):
             label = TEAL
+        if BTS_CAMERAS.search(camera):
+            label, desc = ROSE, "BTS for social"
         if t.get("speech"):
             label = MANGO
             desc = f"{t.get('hint') or 'talk'}: {t.get('text', '')[:300]}"
@@ -73,7 +75,7 @@ def build(project: Path, clips: dict[str, Clip], folder: Path) -> dict:
                     "speech": bool(t.get("speech")), "srt": t.get("srt") if t.get("speech") else None, "raw": raw_p})
         seen.add(str(mov))
     m = {"version": 1, "kind": "enhanced", "folder": str(folder), "root_bin": root_bin, "clips": out,
-         "counts": {"clips": len(out), "speech": sum(1 for c in out if c["speech"]), "drone": sum(1 for c in out if c["label"] == TEAL),
+         "counts": {"clips": len(out), "speech": sum(1 for c in out if c["speech"]), "drone": sum(1 for c in out if c["label"] == TEAL), "bts": sum(1 for c in out if c["label"] == ROSE),
                     "smoothed": sum(1 for c in out if c["desc"] == "smoothed (best cut)"),
                     "cameras": sorted({c["bin"].split("/", 1)[1] for c in out})}}
     return m
@@ -88,6 +90,6 @@ def cmd(a, clips: dict[str, Clip]):
     save_json(out, m)
     c = m["counts"]
     log(f"wrote {out}\n  {c['clips']} enhanced clips from {folder.name} -> bin '{m['root_bin']}' ({', '.join(c['cameras'])}); "
-        f"{c['speech']} with speech (Mango), {c['drone']} drone (Teal), {c['smoothed']} smoothed")
+        f"{c['speech']} with speech (Mango), {c['drone']} drone (Teal), {c['bts']} BTS (Rose), {c['smoothed']} smoothed")
     log(f"  next, through the bridge: node <buwan-premiere>/scripts/premiere-snippet.js enhanced \"{out}\"")
     return out
