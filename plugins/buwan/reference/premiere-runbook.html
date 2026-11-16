@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Buwan Premiere Runbook</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -53,6 +52,7 @@ h1 {
   line-height: 1.08; margin: 0; text-wrap: balance; letter-spacing: -.01em;
 }
 .lede { color: var(--muted); max-width: 62ch; margin: 0; font-size: 17px; }
+.lede a, .hint a, p a { color: var(--accent); }
 h2 { font-family: var(--display); font-weight: 700; font-size: 24px; line-height: 1.2; margin: 0; text-wrap: balance; }
 h3 { font-weight: 600; font-size: 16px; margin: 0; }
 p { margin: 0; max-width: 65ch; }
@@ -122,8 +122,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 <div class="wrap">
   <header>
     <div class="eyebrow"><span class="moon" aria-hidden="true"></span>Buwan Films · Premiere Pro</div>
-    <h1>Editing a wedding in Premiere with Claude</h1>
-    <p class="lede">Claude does the prep: importing, bins, colors, culling, syncing, audio cleanup and the first cut. You handle the creative work. Copy the prompts on this page and paste them into Claude.</p>
+    <h1>Editing in Premiere with Claude</h1>
+    <p class="lede">Laptop setup and every job, for weddings, prenups, corporate events and commercials. Claude makes the enhanced clips, imports them, transcribes the speech and, when you ask, syncs the vows, plots the story and builds the cut. You make the calls. Copy the prompts and paste them into Claude. The whole studio flow, by role: <a href="https://claude.ai/artifact/XspJWQPLCpuhofjkyzse7d">Buwan Films Workflow</a>.</p>
   </header>
 
   <!-- ONE-TIME SETUP -->
@@ -163,7 +163,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <div>
             <label for="s4">Install the fonts, LUTs and graphics kit</label>
             <div class="prompt"><pre>/buwan:setup-kit</pre><button type="button">Copy</button></div>
-            <p class="hint">It takes 3–6 minutes.</p>
+            <p class="hint">It takes 3–6 minutes. It also installs the local transcription (whisper) and the stabilizer.</p>
           </div>
         </li>
         <li class="check">
@@ -199,6 +199,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
             <label for="s6">Check that everything is ready</label>
             <div class="prompt"><pre>/buwan:check</pre><button type="button">Copy</button></div>
             <p class="hint">Claude lists anything that's missing and tells you how to fix it.</p>
+            <p class="hint">Updates: when the owner says the rules changed, run <code>/plugin marketplace update buwan-films</code>, then <code>/reload-plugins</code>.</p>
           </div>
         </li>
       </ul>
@@ -208,7 +209,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
   <!-- EVERY JOB -->
   <section>
     <div class="section-label">Every job</div>
-    <h2>A wedding, start to finish</h2>
+    <h2>A job, start to finish</h2>
     <div class="legend">
       <span><i class="dot you" aria-hidden="true"></i>You do this</span>
       <span><i class="dot" aria-hidden="true"></i>Claude does this</span>
@@ -217,15 +218,24 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     <div class="track">
 
       <div class="phase you">
+        <div class="tc"><strong>Before</strong><span>weeks ahead</span></div>
+        <div class="body">
+          <div class="who">Owner + you</div>
+          <h2>Plan on the Storyboard page</h2>
+          <p>The job is planned on the <a href="https://claude.ai/artifact/LJpY3x7t19hgkKZuE1Ed9D">Buwan Storyboard</a>: brief, music, beats, cards, the shot list the crew ticks on the day, and the BTS social plan. After the client signs off, export the bundle (.zip). You unzip it into the job in step 2.</p>
+        </div>
+      </div>
+
+      <div class="phase you">
         <div class="tc"><strong>Step 1</strong><span>1 min</span></div>
         <div class="body">
           <div class="who">You</div>
-          <h2>Open this wedding's own session</h2>
-          <p>Every wedding gets its own session, named after the couple, so you can come back to it days later. Open Terminal and run these two lines, changing <code>Ana-Ben</code> to the couple's names:</p>
+          <h2>Open this job's own session</h2>
+          <p>Every job gets its own session, named after the client, so you can come back to it days later. Open Terminal and run these two lines, changing <code>Ana-Ben</code> to the couple's or client's name:</p>
           <div class="prompt"><pre>herdr --session Ana-Ben</pre><button type="button">Copy</button></div>
           <div class="prompt"><pre>cd ~/Buwan && claude -n Ana-Ben --dangerously-skip-permissions</pre><button type="button">Copy</button></div>
-          <p class="hint">The first line opens a Herdr session for this wedding. The second starts Claude inside it, with the couple's names as the session name.</p>
-          <p class="hint">This lets Claude work without asking you to approve each step. Your original footage stays protected either way.</p>
+          <p class="hint">The first line opens a Herdr session for this job. The second starts Claude inside it, with the name as the session name.</p>
+          <p class="hint">The last option lets Claude work without asking you to approve each step. Your raw footage stays protected either way: the plugin blocks any write into the raw, card and sources folders.</p>
         </div>
       </div>
 
@@ -234,16 +244,18 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <div class="body">
           <div class="who">You</div>
           <h2>Make the job folder and the Premiere project</h2>
-          <p>In Finder, create this inside <code>Buwan/projects/</code>. Name it with the wedding date and the couple's names, and give each shooter their own folder.</p>
+          <p>In Finder, create this inside <code>Buwan/projects/</code>. Name it with the date, the client and the shoot type (<code>wedding</code>, <code>prenup</code>, <code>corporate</code> or <code>commercial</code>): the shoot type tells the engine how to treat the footage.</p>
 <pre class="tree">2026-11-14_Ana-Ben_wedding/
 ├─ footage/
-│  ├─ 1-Main/
-│  ├─ 2-Creative/
-│  ├─ 3-Reactions/
+│  ├─ 1-Creative/Glider/
+│  ├─ 2-Main/
+│  ├─ 3-3rd Cam/
 │  ├─ 4-Drone/
-│  └─ Audio/          <span class="dim">← audio recorder / lav files</span>
+│  ├─ Audio/          <span class="dim">← audio recorder / lav files</span>
+│  └─ 5-BTS/          <span class="dim">← behind the scenes for social, kept as shot</span>
 ├─ music/
-└─ edit/</pre>
+└─ edit/
+   └─ storyboard/     <span class="dim">← unzip the Storyboard bundle here</span></pre>
           <p>Then in Premiere:</p>
           <ol>
             <li><b>File → New → Project</b>. Save it in the <code>edit</code> folder as <code>Ana-Ben_v1.prproj</code>.</li>
@@ -259,76 +271,104 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <div class="phase you">
         <div class="tc"><strong>Step 3</strong><span>5 min</span></div>
         <div class="body">
-          <div class="who">You</div>
+          <div class="who">You + data wrangler</div>
           <h2>Add the clips and the music</h2>
-          <p><b>Clips:</b> copy each shooter's card into their folder. Don't import anything into Premiere. Claude does that.</p>
-          <p><b>Music:</b> pick two tracks from Artlist and save them in the <code>music</code> folder:</p>
-          <ul>
-            <li><code>01_intro</code>: the opening hook, with no talking over it</li>
-            <li><code>02_story</code>: the main track, which runs to the end. Claude puts the kiss on its biggest moment, so choose one that builds.</li>
-          </ul>
+          <p><b>Clips:</b> copy each card into its camera folder, then make a second copy on another drive. Never format a card until the job is closed. Don't import anything into Premiere: Claude does that.</p>
+          <p><b>Music:</b> the tracks from the storyboard, licensed on Artlist, saved in the <code>music</code> folder. Weddings use two (<code>01_intro</code> with no talking over it, <code>02_story</code> that builds to the end); prenups and commercials use one. Place them in your sequence yourself.</p>
           <p>With Artlist connected, you can ask Claude for a track, for example:</p>
           <div class="prompt"><pre>Use Artlist to find an emotional, building wedding track for 02_story and save it in the job's music folder</pre><button type="button">Copy</button></div>
-          <p class="hint">If Claude only gives you a link, open it on artlist.io, download the track, and save it in <code>music</code> yourself. You can also drag tracks in from Artlist's panel in Premiere, and Claude will find them there.</p>
+          <p class="hint">If Claude only gives you a link, open it on artlist.io, download the track, and save it in <code>music</code> yourself. Keep the licence ID: <code>/buwan:deliver</code> asks for it.</p>
         </div>
       </div>
 
       <div class="phase">
-        <div class="tc"><strong>Step 4</strong><span>15–25 min</span></div>
+        <div class="tc"><strong>Step 4</strong><span>about 40 min for 5 h</span></div>
         <div class="body">
           <div class="who">Claude</div>
-          <h2>Start the prep</h2>
-          <p>Paste this, with your job's name and the look you want:</p>
-          <div class="prompt"><pre>/buwan-premiere:wedding-day 2026-11-14_Ana-Ben --footage "projects/2026-11-14_Ana-Ben_wedding/footage" --music "projects/2026-11-14_Ana-Ben_wedding/music" --grade warm</pre><button type="button">Copy</button></div>
-          <p class="hint">Use <code>warm</code> for daytime or garden weddings and <code>cool</code> for hotel, ballroom or cloudy days.</p>
-          <p>Claude asks what time the video screens, then works on its own and updates you as it goes. When it's done, your Premiere project has:</p>
+          <h2>The basics: enhanced clips</h2>
+          <p>Paste this, with your job's name:</p>
+          <div class="prompt"><pre>/buwan-premiere:wedding-day 2026-11-14_Ana-Ben_wedding --footage "projects/2026-11-14_Ana-Ben_wedding/footage"</pre><button type="button">Copy</button></div>
+          <p class="hint">Same command for every shoot type; the folder name sets the type.</p>
+          <p>Claude asks what time the video screens, then writes a new folder next to your footage, <code>footage_ENHANCED_&lt;date-time&gt;</code>, with every clip of the day. Your footage folder is only read.</p>
           <ul>
-            <li>Every clip imported and sorted into the studio bins, with the studio color labels</li>
-            <li>Bad clips (black, out of focus, false starts) moved into <code>00 Rejected</code>, with a reason for each</li>
-            <li>All cameras synced by sound, with one <b>SYNC</b> sequence per moment. Turn on Multi-Camera on each one.</li>
-            <li>Speech clips with the silences cut out, and an <b>A-Roll clean</b> sequence so you can hear the whole day quickly</li>
-            <li>The studio LUT on every camera clip, and dialogue leveled and cleaned up</li>
+            <li>Exposure and white balance fixed on every clip that needs it (weddings keep their natural warmth; corporate and commercial jobs stay brand-true)</li>
+            <li>Shaky Creative / Glider shots cut to their best part and smoothed</li>
+            <li>Every other clip copied as it is, including <code>5-BTS</code></li>
+            <li><b>No grade</b>: the look comes later, in Premiere</li>
           </ul>
+          <p>Then it stops. Bring the folder into Premiere:</p>
+          <div class="prompt"><pre>Import the enhanced folder into Premiere</pre><button type="button">Copy</button></div>
+          <p class="hint">One bin per camera. Drone clips are Teal, clips with speech are Mango with their first words in Description (search a word from the vows to find the clip), BTS clips are Rose. No sequences are made for you.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="tc"><strong>Step 5</strong><span>during the day</span></div>
+        <div class="body">
+          <div class="who">Claude</div>
+          <h2>New cards, transcripts and missing shots</h2>
+          <p>Each time new cards land in the camera folders:</p>
+          <div class="prompt"><pre>/buwan:sync 2026-11-14_Ana-Ben_wedding</pre><button type="button">Copy</button></div>
+          <p>Only the new clips are fixed and added to the same enhanced folder. Then every clip with speech is transcribed on this laptop (vows, mass, speeches; keynotes and panels for corporate; testimonials for commercials). Ask for the import again: only the new clips come in.</p>
+          <p class="hint">Ask Claude which must-have shots from the storyboard are still missing, and tell the lead shooter while they can still get them.</p>
         </div>
       </div>
 
       <div class="phase you">
-        <div class="tc"><strong>Step 5</strong><span>20–40 min</span></div>
+        <div class="tc"><strong>Step 6</strong><span>on request</span></div>
         <div class="body">
           <div class="who">You + Claude</div>
-          <h2>Pick the story</h2>
-          <div class="prompt"><pre>/buwan:plot</pre><button type="button">Copy</button></div>
-          <p>Claude transcribes the vows, letters and speeches and puts together a story in order. Read it, tell Claude what to change, then approve it. Check the spelling of any names or places Claude flags.</p>
-        </div>
-      </div>
-
-      <div class="phase">
-        <div class="tc"><strong>Step 6</strong><span>10 min</span></div>
-        <div class="body">
-          <div class="who">Claude</div>
-          <h2>Claude builds the first cut</h2>
-          <p>Once you approve the story, Claude makes a new sequence called <b>SDE Cut</b>. It's cut to the music, with the kiss on the music's peak, already graded and leveled. Your other sequences aren't touched. Claude also checks the pacing against the studio rules.</p>
+          <h2>Vows, speeches and interviews</h2>
+          <p>Name the clips of one moment, every angle plus the lav or recorder file:</p>
+          <div class="prompt"><pre>/buwan:multicam 2026-11-14_Ana-Ben_wedding --moment "Bride vows" --type vows --clips C0823 C0017 ZOOM0003</pre><button type="button">Copy</button></div>
+          <p class="hint">The angles are synced on the best audio, the dead air is cut on every angle, and the audio is cleaned. Types: interview, vows, speech, keynote, panel, testimonial, voiceover.</p>
         </div>
       </div>
 
       <div class="phase you">
-        <div class="tc"><strong>Step 7</strong><span>until screening</span></div>
+        <div class="tc"><strong>Step 7</strong><span>20–40 min</span></div>
+        <div class="body">
+          <div class="who">You + Claude</div>
+          <h2>Story-Lock</h2>
+          <div class="prompt"><pre>/buwan:plot</pre><button type="button">Copy</button></div>
+          <p>Claude puts the real transcript lines into the storyboard's beats, word for word, Taglish kept. Prenups get a Shot-Lock (the best take per planned shot); commercials follow the approved script. Read it, tell Claude what to change, then approve it. Check the spelling of any names Claude flags.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="tc"><strong>Step 8</strong><span>10–30 min</span></div>
+        <div class="body">
+          <div class="who">Claude, then you</div>
+          <h2>Rough cut and the proof gate</h2>
+          <div class="prompt"><pre>/buwan:rough-cut</pre><button type="button">Copy</button></div>
+          <p>B-roll from the ticked shots, holds and bursts where the storyboard says, cut to the music. The proof gate then measures the pacing for the shoot type. Fix what fails, or write why you are overriding it.</p>
+          <p class="hint">Same-day edit with a screening tonight: <code>/buwan:sde</code> runs Story-Lock to export compressed. The gates still apply.</p>
+        </div>
+      </div>
+
+      <div class="phase you">
+        <div class="tc"><strong>Step 9</strong><span>until screening</span></div>
         <div class="body">
           <div class="who">You</div>
-          <h2>Finish and export</h2>
-          <p>Watch the SDE Cut. Swap any shots you don't like, adjust timing and add speed ramps. Then run each of these in order:</p>
+          <h2>Finish, export and deliver</h2>
+          <p>Watch the cut. Swap any shots you don't like, adjust timing and add speed ramps. Then run these in order:</p>
           <div class="table-wrap">
             <table>
               <thead><tr><th>Prompt</th><th>What it does</th></tr></thead>
               <tbody>
-                <tr><td><code>/buwan:graphics</code></td><td>Adds the title and logo from the Buwan kit</td></tr>
-                <tr><td><code>/buwan:sfx</code></td><td>Adds whooshes, risers and hits</td></tr>
-                <tr><td><code>/buwan:review</code></td><td>A final watch-through with Claude</td></tr>
-                <tr><td><code>/buwan:export</code></td><td>Exports the master to the <code>exports</code> folder</td></tr>
-                <tr><td><code>/buwan:clipper</code></td><td>Makes vertical reels for Instagram and TikTok</td></tr>
+                <tr><td><code>/buwan:audio</code></td><td>Dialogue −17 LUFS, peaks −6, music bed −20 dB</td></tr>
+                <tr><td><code>/buwan:grade</code></td><td>The look. Pick the Buwan LUT once by hand in Lumetri (Creative → Look); Claude copies it to every camera clip and checks it</td></tr>
+                <tr><td><code>/buwan:graphics</code></td><td>Cards and captions from the Buwan kit, with the storyboard's text</td></tr>
+                <tr><td><code>/buwan:title</code> · <code>/buwan:end-card</code></td><td>The couple's names, then the logo end card as the last shot</td></tr>
+                <tr><td><code>/buwan:sfx</code></td><td>Whooshes, risers and hits under the dialogue</td></tr>
+                <tr><td><code>/buwan:review</code></td><td>A watch-down with the owner, against the storyboard</td></tr>
+                <tr><td><code>/buwan:export</code></td><td>The masters into <code>exports</code></td></tr>
+                <tr><td><code>/buwan:clipper</code></td><td>Vertical reels</td></tr>
+                <tr><td><code>/buwan:deliver</code></td><td>Delivery note, music licence record, backup check, then archive</td></tr>
               </tbody>
             </table>
           </div>
+          <p class="hint">BTS posts are the BTS person's job with <code>/buwan:bts</code>, never before the earliest post date.</p>
         </div>
       </div>
 
@@ -341,27 +381,26 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     <div class="two">
       <div class="note">
         <h3>More clips arrive during the day</h3>
-        <p>Put them in the same shooter folders and paste:</p>
-        <div class="prompt"><pre>/buwan-premiere:wedding-day 2026-11-14_Ana-Ben --new-clips</pre><button type="button">Copy</button></div>
-        <p class="hint">Claude only adds the new clips. If they change the story, it makes an SDE Cut v2 and leaves v1 alone.</p>
+        <p>Put them in the same camera folders and paste:</p>
+        <div class="prompt"><pre>/buwan:sync 2026-11-14_Ana-Ben_wedding</pre><button type="button">Copy</button></div>
+        <p class="hint">Only the new clips are fixed, added and transcribed. Then ask for the import again.</p>
       </div>
       <div class="note">
-        <h3>Corporate events</h3>
-        <p>Start with this instead of Step 4:</p>
-        <div class="prompt"><pre>/buwan:intake 2026-11-20_Acme corporate "/path/to/footage"</pre><button type="button">Copy</button></div>
-        <p class="hint">Then run <code>/buwan:assemble</code>, then <code>/buwan-premiere:premiere-apply</code>, and continue from Step 5.</p>
+        <h3>Prenup, corporate and commercial jobs</h3>
+        <p>The same steps. Name the folder with the shoot type, e.g. <code>2026-11-20_Acme_corporate</code> or <code>2026-12-02_Brand_commercial</code>.</p>
+        <p class="hint">If the folder name doesn't say it, add <code>--shoot corporate</code> (or prenup, commercial) the first time.</p>
       </div>
     </div>
     <div class="note">
-      <h3>Coming back to a wedding later (enhancements, revisions)</h3>
-      <p>Days or weeks after the wedding, reopen that wedding's session. Claude remembers everything from before: the story you picked, the cut, the notes.</p>
+      <h3>Coming back to a job later (enhancements, revisions)</h3>
+      <p>Days or weeks later, reopen that job's session. Claude remembers everything from before: the story you picked, the cut, the notes. Client revision notes go through <code>/buwan:review</code>.</p>
       <p><b>If the laptop hasn't restarted</b>, reattach the Herdr session:</p>
       <div class="prompt"><pre>herdr session attach Ana-Ben</pre><button type="button">Copy</button></div>
       <p><b>If the laptop has restarted</b>, or the session above is gone, reopen Claude by name:</p>
       <div class="prompt"><pre>herdr --session Ana-Ben</pre><button type="button">Copy</button></div>
       <div class="prompt"><pre>cd ~/Buwan && claude --resume Ana-Ben --dangerously-skip-permissions</pre><button type="button">Copy</button></div>
       <p class="hint">Forgot the name? Run <code>cd ~/Buwan && claude --resume</code> with no name to pick from a list of past sessions.</p>
-      <p class="hint">Before you work in the session, open that wedding's project in Premiere (<code>edit/Ana-Ben_v1.prproj</code>). Only work on one wedding at a time in Premiere, because it only has one project open.</p>
+      <p class="hint">Before you work in the session, open that job's project in Premiere (<code>edit/Ana-Ben_v1.prproj</code>). Only work on one job at a time in Premiere, because it only has one project open.</p>
     </div>
     <div class="note">
       <h3>If Claude can't reach Premiere</h3>
@@ -370,7 +409,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <li>Check that <b>Window → Extensions → MCP Bridge</b> says Running.</li>
         <li>Close any pop-up windows in Premiere, then try again.</li>
       </ol>
-      <p class="hint">Claude never changes your original footage, never deletes anything from your project, and always builds its cuts as new sequences.</p>
+      <p class="hint">Claude never changes your original footage, never deletes anything from your project, and builds any cut as a new sequence.</p>
     </div>
   </section>
 
@@ -400,5 +439,3 @@ document.querySelectorAll('.check input').forEach(function (box) {
   });
 });
 </script>
-
-</body></html>

@@ -92,8 +92,8 @@ Restart Claude Code. If the CHANGELOG mentions kit changes, run `/buwan:setup-ki
 
 Example: `/buwan:intake 2026-11-15_Santos-Reyes wedding E:\Cards\Santos-Reyes`
 
-### Premiere Pro, wedding day
-`/buwan-premiere:wedding-day 2026-11-15_Santos-Reyes --footage /Volumes/<SSD>/<raw folder>` — with the project already made and the music placed, the engine makes the working copy, culls, categorizes, cuts the dead air and judges the shaky creative shots; the bridge then builds the bins with label colors, the speech subclips, the A-Roll clean, the Steady picks and the STABILIZE sequence in the open project, and writes `EDITOR_START_HERE.md`. Then it stops. `--new-clips` when the shooters hand over more cards. `/buwan:multicam` when you want the vows or an interview synced.
+### Premiere Pro, any shoot day
+`/buwan-premiere:wedding-day 2026-11-15_Santos-Reyes_wedding --footage /Volumes/<SSD>/<raw folder>` — with the project already made and the music placed: the basics (the `_ENHANCED_` folder with every clip, exposure and white balance fixed, shaky glider shots smoothed, `5-BTS` copied as shot, no grade), then it stops. "Import the enhanced folder into Premiere" brings it in (`premiere-import` → bridge step `enhanced`). `/buwan:sync` for each new card. `/buwan:multicam` when you want the vows or an interview synced. Step by step with copyable prompts: the [Premiere Runbook](https://claude.ai/artifact/EB1wxv3VXbFY1b8oitFuik).
 
 ### The music-driven SDE in one line
 Put the footage and a `music/` folder (`01_intro.wav`, `02_story.wav`) next to each other, then: `/buwan:sde <project>`. The engine culls, syncs the cameras, organizes, and — after you approve the Story-Lock — builds the timeline cut to your music, with the kiss on the music's peak. Import the FCPXML and refine.
