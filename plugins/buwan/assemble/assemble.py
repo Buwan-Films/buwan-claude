@@ -36,7 +36,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from common import Clip, scan_media, probe_clip, save_json, load_json, log, slug  # noqa: E402
+from common import Clip, scan_media, probe_clip, save_json, load_json, log, slug, shoot_type, SHOOT_TYPES  # noqa: E402
+SHOOT_HELP = "wedding | prenup | corporate | commercial (default: the project folder suffix, e.g. _corporate; remembered in edit/assemble/shoot.json)"
 
 AUD = {".wav", ".aif", ".aiff", ".mp3", ".m4a", ".flac", ".aac"}
 
@@ -180,14 +181,15 @@ def cmd_exposure(a):
     clips = [c for c in load_clips(project).values() if c.camera != "music"]
     cull_res = load_json(adir(project) / "cull.json") if (adir(project) / "cull.json").exists() else []
     ep = adir(project) / "exposure.json"
+    shoot = shoot_type(project, getattr(a, "shoot", None))
     res = exposure(clips, load_categories(project, a.categories), {m["path"] for m in cull_res if m["reject"]}, a.workers,
-                   a.look, None if a.remeasure or not ep.exists() else load_json(ep))
+                   a.look, None if a.remeasure or not ep.exists() else load_json(ep), shoot)
     save_json(adir(project) / "exposure.json", res)
     rep = ["# Exposure before the look", "", "| Clip | Camera | Avg luma | Fix (EV) | Why |", "|---|---|---|---|---|"]
     for v in sorted(res.values(), key=lambda x: (-abs(x["ev"]), x["name"])):
         if v["ev"] or v.get("low_key"):
             rep.append(f"| {v['name']} | {v['camera']} | {v.get('yavg', '')} | {v['ev']:+.2f} | {v['reason']} |")
-    rep += ["", "# White balance", "", "Natural warmth is kept; only casts beyond it are pulled back, gently. Aerials and clips without neutral areas are left alone.", "",
+    rep += ["", "# White balance", "", (f"Shoot type: {shoot}. " + ("Natural warmth is kept; only casts beyond it are pulled back, gently." if shoot in ("wedding", "prenup") else "Clean and brand-true: less warmth is kept than on a wedding, so products and brand colours read true.")) + " Aerials and clips without neutral areas are left alone.", "",
             "| Clip | Camera | Temp | Tint | Fix | Why |", "|---|---|---|---|---|---|"]
     for v in sorted(res.values(), key=lambda x: -(abs((x.get("wb_shift") or [0, 0])[0]) + abs((x.get("wb_shift") or [0, 0])[1]))):
         if v.get("wb") or "changes through" in v.get("wb_reason", ""):
@@ -216,7 +218,7 @@ def cmd_speech(a):
     saved = load_json(mp) if mp.exists() else []
     if a.moment:
         if not (a.type and a.clips):
-            raise SystemExit("speech: --moment needs --type (interview|vows|speech) and --clips")
+            raise SystemExit("speech: --moment needs --type (interview|vows|speech|keynote|panel|testimonial|voiceover) and --clips")
         new = {"name": a.moment, "type": a.type, "clips": a.clips}
         saved = [m for m in saved if m["name"] != a.moment] + [new]
         save_json(mp, saved)
@@ -255,7 +257,7 @@ def cmd_update(a):
     log(f"update: {len(new)} new clips since the last run" + (": " + ", ".join(Path(p).name for p in new[:30]) + (" …" if len(new) > 30 else "") if new else ""))
     cmd_cull(types.SimpleNamespace(project=a.project, workers=4, remeasure=False))
     cmd_steady(types.SimpleNamespace(project=a.project, workers=4, gimbal=a.gimbal, remeasure=False))
-    cmd_exposure(types.SimpleNamespace(project=a.project, categories=None, workers=6, look="warm", remeasure=False))
+    cmd_exposure(types.SimpleNamespace(project=a.project, categories=None, workers=6, look="warm", remeasure=False, shoot=getattr(a, "shoot", None)))
     wc = load_json(adir(project) / "workcopy.json") if (adir(project) / "workcopy.json").exists() else {}
     from workcopy import _footage_root
     source = Path(wc.get("source") or wc.get("raw_copy") or _footage_root(project))
@@ -269,7 +271,7 @@ def cmd_update(a):
     if not getattr(a, "no_transcribe", False):
         # after the render, so the new clips are in the editor's hands first; anything not transcribed yet
         # (the basics' clips on the first sync, then each new card) gets its transcript
-        cmd_transcribe(types.SimpleNamespace(project=a.project, clips=None, language=getattr(a, "language", "auto"), redo=False, limit=0))
+        cmd_transcribe(types.SimpleNamespace(project=a.project, clips=None, language=getattr(a, "language", "auto"), redo=False, limit=0, shoot=getattr(a, "shoot", None)))
 
 
 def cmd_transcribe(a):
@@ -280,7 +282,8 @@ def cmd_transcribe(a):
     if a.clips:
         want = [x.lower() for x in a.clips]
         only = {p for p, c in clips.items() if any(w in p.lower() for w in want)}
-    transcribe.transcribe(project, clips, only=only, language=a.language, redo=a.redo, limit=a.limit)
+    transcribe.transcribe(project, clips, only=only, language=a.language, redo=a.redo, limit=a.limit,
+                          shoot=shoot_type(project, getattr(a, "shoot", None)))
 
 
 def cmd_premiere_import(a):
@@ -592,19 +595,21 @@ def main():
     s.add_argument("project"); s.add_argument("--footage"); s.add_argument("--out", help="the _ENHANCED_ folder to add to (default: the newest one)")
     s.add_argument("--new-folder", action="store_true", help="start a new _ENHANCED_ folder instead"); s.add_argument("--gimbal", nargs="*"); s.add_argument("--workers", type=int, default=3)
     s.add_argument("--no-transcribe", action="store_true", help="skip the transcripts after the render"); s.add_argument("--language", default="auto")
+    s.add_argument("--shoot", help=SHOOT_HELP)
     s.set_defaults(f=cmd_update)
     s = sub.add_parser("transcribe", help="transcripts of every camera clip with speech (local whisper), clips already done skipped -> edit/transcripts/")
     s.add_argument("project"); s.add_argument("--clips", nargs="+", help="only clips whose path contains one of these (e.g. C0823 2-Main/6)")
     s.add_argument("--language", default="auto", help="auto | tl | en"); s.add_argument("--redo", action="store_true"); s.add_argument("--limit", type=int, default=0)
+    s.add_argument("--shoot", help=SHOOT_HELP)
     s.set_defaults(f=cmd_transcribe)
     s = sub.add_parser("premiere-import", help="edit/premiere/enhanced.json: the _ENHANCED_ folder for the bridge step `enhanced` (bins per camera, speech clips Mango, drone Teal, transcript in Description)")
     s.add_argument("project"); s.add_argument("--folder", help="the _ENHANCED_ folder (default: the newest)"); s.add_argument("--out")
     s.set_defaults(f=cmd_premiere_import)
     s = sub.add_parser("bycategory"); s.add_argument("project"); s.add_argument("--raw", help="the RAW_COPY folder (default: from edit/SOURCES.md)"); s.add_argument("--categories"); s.set_defaults(f=cmd_bycategory)
     s = sub.add_parser("exposure"); s.add_argument("project"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=6)
-    s.add_argument("--look", default="warm", choices=["warm", "cool", "bw"]); s.add_argument("--remeasure", action="store_true", help="read the footage again instead of reusing exposure.json"); s.set_defaults(f=cmd_exposure)
+    s.add_argument("--look", default="warm", choices=["warm", "cool", "bw"]); s.add_argument("--remeasure", action="store_true", help="read the footage again instead of reusing exposure.json"); s.add_argument("--shoot", help=SHOOT_HELP); s.set_defaults(f=cmd_exposure)
     s = sub.add_parser("look"); s.add_argument("project"); s.add_argument("--reference", required=True, help="the studio's finished film to match"); s.add_argument("--name", default="Buwan_Film"); s.add_argument("--out"); s.add_argument("--strength", type=float, default=1.0); s.set_defaults(f=cmd_look)
-    s = sub.add_parser("speech"); s.add_argument("project"); s.add_argument("--moment", help="e.g. \"Bride vows\""); s.add_argument("--type", choices=["interview", "vows", "speech"]); s.add_argument("--clips", nargs="+", help="the moment's clips, relative to the raw folder or full paths (cameras + lav/recorder)"); s.add_argument("--moments", help="a JSON list of {name, type, clips} (default: every moment saved in speech_moments.json)"); s.add_argument("--source"); s.add_argument("--out", help="add to an earlier _SPEECH_ folder"); s.add_argument("--workers", type=int, default=3); s.set_defaults(f=cmd_speech)
+    s = sub.add_parser("speech"); s.add_argument("project"); s.add_argument("--moment", help="e.g. \"Bride vows\""); s.add_argument("--type", choices=["interview", "vows", "speech", "keynote", "panel", "testimonial", "voiceover"]); s.add_argument("--clips", nargs="+", help="the moment's clips, relative to the raw folder or full paths (cameras + lav/recorder)"); s.add_argument("--moments", help="a JSON list of {name, type, clips} (default: every moment saved in speech_moments.json)"); s.add_argument("--source"); s.add_argument("--out", help="add to an earlier _SPEECH_ folder"); s.add_argument("--workers", type=int, default=3); s.set_defaults(f=cmd_speech)
     s = sub.add_parser("render"); s.add_argument("project"); s.add_argument("--source", help="the raw folder (read only; default: the original from workcopy.json)"); s.add_argument("--out", help="continue an earlier run"); s.add_argument("--look", help="bake this .cube in (default: no grade; the look is applied in the editing app)"); s.add_argument("--categories"); s.add_argument("--workers", type=int, default=3); s.add_argument("--limit", type=int, default=0); s.add_argument("--only", choices=["shaky", "clip", "wb", "fixed", "copy"], help="fixed = only the clips with a fix (nothing copied); copy = only copy the clips with no fix"); s.add_argument("--redo", action="store_true", help="re-render clips already in --out (e.g. --only fixed --redo after an engine update)"); s.add_argument("--reencode-all", action="store_true", help="render the clips with no fix to HEVC 10-bit too, instead of copying the originals"); s.set_defaults(f=cmd_render)
     s = sub.add_parser("music"); s.add_argument("project"); s.add_argument("--intro"); s.add_argument("--main", required=True); s.set_defaults(f=cmd_music)
     s = sub.add_parser("sync"); s.add_argument("project"); s.add_argument("--anchor"); s.add_argument("--trusted", nargs="*"); s.set_defaults(f=cmd_sync)

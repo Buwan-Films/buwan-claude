@@ -127,6 +127,7 @@ td .save{color:var(--gate);font-weight:600;white-space:nowrap}
       <button type="button" id="t-wedding" data-t="wedding" aria-pressed="true">Wedding</button>
       <button type="button" id="t-prenup" data-t="prenup" aria-pressed="false">Prenup</button>
       <button type="button" id="t-corporate" data-t="corporate" aria-pressed="false">Corporate</button>
+      <button type="button" id="t-commercial" data-t="commercial" aria-pressed="false">Commercial / reels</button>
     </div>
     <div class="legend">
       <span><i class="sw"></i>Standard step</span>
@@ -202,7 +203,7 @@ td .save{color:var(--gate);font-weight:600;white-space:nowrap}
     <div><b>Raw stays untouched</b>Two copies of every card. Claude Code only reads the raw folders and never deletes anything.</div>
     <div><b>Gates do not move</b>Sign-off, Story-Lock or Shot-Lock, the proof gate, review and the backup check apply in same-day mode too.</div>
     <div><b>Brand from the kit</b>Cards, titles and the end card come from the Buwan Video Component Kit only.</div>
-    <div class="gap"><b>Open: corporate basics</b>The basics are written for weddings. The engine has to accept the corporate type.</div>
+    <div><b>One engine, four shoot types</b>The project folder ends in the shoot type (_wedding, _prenup, _corporate, _commercial). Only the white balance changes: weddings keep warmth, corporate and commercial stay brand-true.</div>
     <div class="gap"><b>Open: CRM</b>Clients, bookings, contracts and payments come next, once this flow is settled.</div>
   </section>
 </div>
@@ -289,6 +290,39 @@ prenup:{line:"<b>Prenup.</b> No ceremony and no transcript: the film is built fr
   ["g","Backup check","two copies",0,"data editor"],
   ["s","Archive and close","Kept for the wedding: the film often opens the reception.",0,"owner"]]}},
 
+commercial:{line:"<b>Commercial / reels.</b> Scripted: the client approves the script before the shoot. Fast cutting, the hook in the first seconds, the product held, every spot cut to its length. 9:16 is its own film.",
+ plan:{when:"Before the shoot · Storyboard page",steps:[
+  ["s","Brief and usage","Brand guide, product, talent, platforms, paid or organic, usage term, lengths (60 / 30 / 15 / 6 s) and ratios.",0,"owner"],
+  ["s","Script","Voice-over, supers, offer, claims and talent lines, approved by the client word for word.",0,"owner editor"],
+  ["b","Shot flow","Hook, problem, product hero, details, people using it, testimonial, offer, CTA, logo.",["template"],"owner editor"],
+  ["x","Shot list","Per camera, the hook and product hero first; a text-safe plate for every super; 9:16 framing noted.",["shot list"],"owner editor lead"],
+  ["s","Music and look","One track licensed for commercial and paid-ad use; the look matched to the brand.",0,"owner editor"],
+  ["g","Script-Lock","client signs off script, supers, music, talent",0,"owner"],
+  ["s","Releases and bundle","Talent and location releases ready; bundle into <code>edit/storyboard/</code>.",0,"owner editor"]]},
+ shoot:{when:"Shoot day",steps:[
+  ["s","Brief the crew","Product and talent call times, 16:9 and 9:16 framing, white balance in Kelvin.",0,"lead shoot"],
+  ["x","Shoot the list","Hook and product hero first; tick each shot, note the clip name.",["shot list"],"lead shoot"],
+  ["r","Voice-over and testimonials","VO recorded clean; testimonials on lav.",["/buwan:multicam"],"shoot editor"],
+  ["s","Two copies of every card","Camera folders, second drive.",0,"data"],
+  ["s","Enhance","The basics with brand-true white balance: products read true.",["/buwan:basics"],"data"],
+  ["x","Coverage report","Must-haves missing before talent and product leave.",["shot list"],"data lead"]]},
+ edit:{when:"Days after the shoot",steps:[
+  ["s","Set up and import","Bins per camera; one timeline per length and ratio.",["premiere-import"],"editor"],
+  ["b","Takes on the script","Best take of each scripted line; testimonials exactly as said.",["/buwan:plot"],"editor"],
+  ["g","Editor approves","the selects against the script",0,"editor"],
+  ["b","Cut the spots","Hook in 2–3 s, product hero held, 60 / 30 / 15 / 6 s and the 9:16 each cut as its own film.",["/buwan:rough-cut"],"editor"],
+  ["g","Proof gate","1–2 s average, hook ≤ 3 s, hero ≤ 6 s, on the spot length",0,"editor"],
+  ["s","Grade","Brand-true; product colours checked against the real product.",["/buwan:grade"],"editor"],
+  ["s","Audio, supers, SFX","VO −17 LUFS; supers, offer and claims from the script, in the safe zones.",["/buwan:audio","/buwan:graphics","/buwan:sfx"],"editor"],
+  ["b","Review","Against the approved script, then the client's notes.",["/buwan:review"],"owner editor"],
+  ["g","Client approves","every length and ratio",0,"owner"]]},
+ deliver:{when:"Before the campaign starts",steps:[
+  ["s","Export","Spots per length, 9:16 reels, 1:1 / 4:5 feed, clean versions without supers.",["/buwan:export"],"editor"],
+  ["s","Delivery note","Files, usage bought, music licence for paid ads, releases on file.",["/buwan:deliver"],"editor owner"],
+  ["s","Send and revisions","Rounds counted against the contract.",0,"owner editor"],
+  ["g","Backup check","two copies",0,"data editor"],
+  ["s","Archive and close","Masters and project files kept for future cutdowns.",0,"owner"]]}},
+
 corporate:{line:"<b>Corporate.</b> Run of show, keynotes and exec soundbites; steady cutting; names, titles and partner logos must be exact.",
  plan:{when:"Before the event · Storyboard page",steps:[
   ["s","Brief and run of show","Client contact, agenda with times, speakers with correct titles, sponsor list, brand guide.",0,"owner"],
@@ -302,7 +336,7 @@ corporate:{line:"<b>Corporate.</b> Run of show, keynotes and exec soundbites; st
   ["s","Brief the crew","Board feed or lav for every talk; cameras per session.",0,"lead shoot"],
   ["x","Shoot the list","Sessions and sponsors ticked as they happen.",["shot list"],"lead shoot"],
   ["s","Two copies of every card","Camera folders, second drive.",0,"data"],
-  ["s","Enhance","Same engine as the basics.",["/buwan:basics","plugin gap"],"data"],
+  ["s","Enhance","The basics, clean and brand-true white balance for corporate.",["/buwan:basics"],"data"],
   ["s","New cards","Keynotes and panels transcribed as they land.",["/buwan:sync"],"data"],
   ["x","Coverage report","Missing logos or speakers flagged during the event.",["shot list"],"data lead"],
   ["r","Keynotes and panels","Angles synced on the board feed or lav.",["/buwan:multicam"],"editor"]]},

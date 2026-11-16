@@ -22,6 +22,10 @@ Follow the house rules and the editor's app playbook for the exact preset steps.
 | Prenup | Prenup film | as the wedding master; often plays at the reception, so the export date comes from the wedding date |
 | Prenup | Save-the-date | 1080×1920 and 1920×1080, ≤ 60s, the save-the-date card from the storyboard |
 | Prenup | Clipper 9:16 teasers | 1080×1920, hook in first 3s |
+| Commercial | Spots 60 / 30 / 15 / 6 s | 1920×1080 (or 3840×2160) H.264 for web; ProRes 422 HQ master if the client or broadcaster asks; captions burned in for social |
+| Commercial | Reels 9:16 | 1080×1920, the primary deliverable for reels, hook in the first 2–3 s, text in the safe zones |
+| Commercial | Feed 1:1 / 4:5 | 1080×1080 / 1080×1350 |
+| Commercial | Clean versions | each spot without supers, for the client's own edits |
 | Corporate | 16:9 recap | 1920×1080, H.264, AAC 320 kbps |
 | Corporate | 1:1 LinkedIn cut | 1080×1080, H.264, captions burned in |
 | Corporate | Clipper 9:16 reels/stories | 1080×1920 |

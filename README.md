@@ -8,13 +8,13 @@ One studio standard for every Buwan editor, in every editing app. Claude Code lo
 | `buwan-premiere` | Premiere editors only | The Premiere Pro bridge (premiere-pro-mcp 1.11.5) + the apply layer: everything the engine decided, done inside the open Premiere project (`/buwan-premiere:premiere-apply`, `/buwan-premiere:wedding-day`) |
 
 ## The studio flow — plan, shoot, edit, deliver
-Every job runs the same four phases, for **wedding, prenup and corporate** shoots: [**Studio flow**](https://claude.ai/artifact/XspJWQPLCpuhofjkyzse7d) (pick a shoot type and a role to see only your steps). Planning happens on the [**Storyboard**](https://claude.ai/artifact/LJpY3x7t19hgkKZuE1Ed9D) page: brief, music, beats, cards and the **shot list** the shooters tick on the day. Its bundle goes into the job at `edit/storyboard/`, and `/buwan:plot`, `/buwan:rough-cut`, `/buwan:graphics` and `/buwan:review` start from it.
+Every job runs the same four phases, for **wedding, prenup, corporate and commercial / reels** shoots (the project folder ends in the type: `_wedding`, `_prenup`, `_corporate`, `_commercial`): [**Studio flow**](https://claude.ai/artifact/XspJWQPLCpuhofjkyzse7d) (pick a shoot type and a role to see only your steps). Planning happens on the [**Storyboard**](https://claude.ai/artifact/LJpY3x7t19hgkKZuE1Ed9D) page: brief, music, beats, cards and the **shot list** the shooters tick on the day. Its bundle goes into the job at `edit/storyboard/`, and `/buwan:plot`, `/buwan:rough-cut`, `/buwan:graphics` and `/buwan:review` start from it.
 
 - Who does what (owner, lead shooter, shooters, audio, data wrangler, editor): [docs/ROLES.md](docs/ROLES.md)
 - The steps in order, per shoot type: [docs/STUDIO-WORKFLOW.md](docs/STUDIO-WORKFLOW.md)
 
-## What happens on a new wedding project
-Claude Code makes **enhanced clips** from the raw footage and stops. The raw folder is only read; every run writes a new folder next to it, `<raw>_ENHANCED_<date-time>/`, with the same camera/card folders and clip names (HEVC 10-bit `.mov`). No copying, no dedupe, no file organizing, **no grade**.
+## What happens on a new project
+The same for every shoot type: Claude Code makes **enhanced clips** from the raw footage and stops. Only the white balance policy follows the type (weddings and prenups keep natural warmth; corporate and commercial jobs are brand-true). The raw folder is only read; every run writes a new folder next to it, `<raw>_ENHANCED_<date-time>/`, with the same camera/card folders and clip names (HEVC 10-bit `.mov`). No copying, no dedupe, no file organizing, **no grade**.
 
 | | How |
 |---|---|

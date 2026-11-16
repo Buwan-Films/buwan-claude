@@ -11,9 +11,9 @@ One person can hold more than one role. On a small wedding the lead shooter is o
 
 | When | What you do | Where |
 |---|---|---|
-| Booking | Brief: shoot type, films promised, date, venue, team, deadlines, revision rounds in the contract | Storyboard page → Brief and team |
+| Booking | Brief: shoot type (wedding, prenup, corporate, commercial / reels), films promised, date, venue, team, deadlines, revision rounds in the contract | Storyboard page → Brief and team |
 | Weeks before | Build the storyboard with the editor: beats, music, cards, shot list. Get the client's sign-off on beats, music, names and spellings | [Storyboard](https://claude.ai/artifact/LJpY3x7t19hgkKZuE1Ed9D) |
-| Weeks before | Licence the music (Artlist) and keep the licence ID | Storyboard → Music |
+| Weeks before | Licence the music (Artlist) and keep the licence ID. Commercials: a licence that covers paid ads, the usage the client bought, talent and location releases, and the client's sign-off on the script | Storyboard → Music |
 | Before the day | Export the storyboard bundle (.zip) and send it to the editor; share the Shot list view with the shooters | Storyboard → Export |
 | After the edit | Taste review with the editor; decide on client requests that break house rules | `/buwan:review` |
 | Delivery | Send the link and the message the editor drafted; track revision rounds; say when the cards may be formatted | `/buwan:deliver` → `exports/DELIVERY.md` |

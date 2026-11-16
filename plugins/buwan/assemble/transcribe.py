@@ -49,6 +49,23 @@ HINTS = {
     "interview/message": ["i love you", "mahal kita", "mahal na mahal", "when i first", "first time i saw", "nung una",
                           "message", "dear", "sana", "ingat", "happy for you"],
 }
+# corporate and commercial speech sounds different: these replace the wedding hints for those jobs
+HINTS_BY_SHOOT = {
+    "corporate": {
+        "keynote/talk": ["ladies and gentlemen", "good morning everyone", "good afternoon everyone", "our company", "this year",
+                         "our team", "our vision", "our mission", "growth", "thank you for joining", "magandang umaga"],
+        "panel/Q&A": ["next question", "the question is", "panel", "moderator", "to add to that", "great question", "follow up"],
+        "awards": ["the award goes to", "and the winner", "awardee", "congratulations to", "in recognition", "please welcome on stage"],
+        "interview/message": ["for me", "what i like", "the experience", "message", "i think", "we hope"],
+    },
+    "commercial": {
+        "testimonial": ["i've been using", "i have been using", "i love how", "i recommend", "since i started", "changed my",
+                        "my favorite", "gamit ko", "sobrang"],
+        "script/voice-over": ["introducing", "now available", "order now", "visit", "available at", "limited time", "promo",
+                              "for only", "discover", "experience the", "get yours"],
+        "interview/message": ["for me", "what i like", "i think", "we started", "our brand", "our story"],
+    },
+}
 JUNK = re.compile(r"^[\s\W_]*$|^\s*[\[(].*[\])]\s*$|♪|\b(subtitles? by|thanks for watching|subscribe|amara\.org)\b", re.I)
 JUNK_LINES = {"thank you.", "thank you", "you", "bye.", "bye", "okay.", "the end.", "."}
 
@@ -119,9 +136,10 @@ def _srt_time(sec: float) -> str:
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
-def _hint(text: str) -> str:
+def _hint(text: str, shoot: str = "wedding") -> str:
     low = " " + text.lower() + " "
-    score = {k: sum(low.count(w) for w in words) for k, words in HINTS.items()}
+    hints = HINTS_BY_SHOOT.get(shoot, HINTS)
+    score = {k: sum(low.count(w) for w in words) for k, words in hints.items()}
     k = max(score, key=score.get)
     return k if score[k] >= 2 else "talk"
 
@@ -137,7 +155,7 @@ def _extract(c: Clip, wav: Path) -> bool:
 
 
 def transcribe(project: Path, clips: dict[str, Clip], only: set[str] | None = None, language: str = "auto",
-               redo: bool = False, limit: int = 0, threads: int = 8) -> dict:
+               redo: bool = False, limit: int = 0, threads: int = 8, shoot: str = "wedding") -> dict:
     ad = project / "edit" / "assemble"
     idx_path = ad / "transcripts.json"
     index = {} if redo or not idx_path.exists() else load_json(idx_path)
@@ -194,7 +212,7 @@ def transcribe(project: Path, clips: dict[str, Clip], only: set[str] | None = No
                 speech = words >= MIN_WORDS and spoken >= MIN_SPOKEN
                 index[c.path] = {"speech": speech, "words": words, "spoken_s": round(spoken, 1), "duration": round(c.duration, 1),
                                  "camera": c.camera, "language": (d.get("result") or {}).get("language"),
-                                 "hint": _hint(text) if speech else None, "text": text[:400], "srt": str(srt)}
+                                 "hint": _hint(text, shoot) if speech else None, "text": text[:400], "srt": str(srt)}
             for f in (wav, Path(str(wav) + ".json")):
                 f.unlink(missing_ok=True)
         n_done += len(batch)

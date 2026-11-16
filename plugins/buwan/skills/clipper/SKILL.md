@@ -15,3 +15,4 @@ Reels re-enter the pipeline at 01: they get their own Story-Lock, gate and expor
 5. **Gate**: proof gate on the reel's EDL (fast cutting is expected; holds optional), audio: keep the house dialogue mix unless the owner sets a social loudness (common platform target is −14 LUFS, true peak −1 dBFS — ask before using it), grade inherits the film's.
 6. **Export** `exports/<project>_reel-<n>_v1.mp4`, H.264 1080×1920, 23.976 or 30 fps per platform, AAC 320 kbps. Write a caption + 5 hashtags per reel for the editor to post (couple names only with the couple's permission).
 Corporate: also a 1:1 1080×1080 LinkedIn cut of the recap.
+Commercial / reels: the 9:16 is planned and cut as its own film, not clipped from the 16:9; the Clipper only makes extra teasers or cutdowns the client asked for.

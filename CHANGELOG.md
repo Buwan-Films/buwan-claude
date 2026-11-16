@@ -1,5 +1,20 @@
 # Changelog
 
+## buwan 1.18.0 · buwan-premiere 1.12.0 — 2026-11-17  (/plugin marketplace update buwan-films, update both plugins, /reload-plugins)
+**Corporate in the basics, and a new shoot type: commercial / reels.**
+- The engine knows the shoot type: the project folder suffix (`_wedding`, `_prenup`, `_corporate`, `_commercial`; `_reels` and `_ads` count as commercial) or `--shoot <type>` on `exposure`, `update` and `transcribe`. The type is remembered in `edit/assemble/shoot.json`. Default: wedding.
+- **White balance per type:** weddings and prenups keep natural warmth, as before (+0.3 stops). Corporate (+0.1) and commercial (+0.08) jobs are clean and brand-true, so products and brand colours read true. Blue casts and tint are fixed the same way for every type. `exposure_report.md` names the policy it used.
+- **Transcript labels per type:** corporate uses keynote/talk · panel/Q&A · awards · interview; commercial uses testimonial · script/voice-over · interview. Weddings keep vows · mass · speech/toast · interview/message.
+- **`/buwan:multicam` moment types:** `keynote` → KEYNOTES/, `panel` → PANELS/, `testimonial` → TESTIMONIALS/, `voiceover` → VOICEOVER/.
+- **Commercial / reels:**
+  - Script-Lock: the client approves the script before the shoot.
+  - Beats: hook → problem → product hero → details → people → testimonial → offer → CTA → logo.
+  - Proof gate: 1–2 s average, the first cut ≤ 3 s, the longest shot ≤ 6 s, the length on a 6/15/30/60/90 s spot.
+  - Deliverables: spots per length, 9:16 reels as their own film, 1:1 and 4:5 feed, clean versions.
+  - Delivery: a music licence that covers paid ads, the usage the client bought, talent and location releases.
+- The Storyboard page and the Studio flow page have the commercial type. `/buwan-premiere:wedding-day` runs the same for any shoot day.
+- The self-test passes.
+
 ## buwan 1.17.0 — 2026-11-17  (/plugin marketplace update buwan-films, /reload-plugins)
 **Plan → shoot → edit → deliver, for wedding, prenup and corporate.**
 - **00 Plan:** the Storyboard page is now the first step of every job. Its bundle goes into `edit/storyboard/` (`/buwan:intake` makes the folder). `/buwan:plot` uses `storyboard.json` as the skeleton and puts the real transcript lines into the planned beats. Planned words never go on screen unless someone said them. Beats with no matching line are listed as "Planned, not found". `/buwan:rough-cut` starts from the planned shots, cameras, hold/burst and the clip names the shooters ticked. `/buwan:graphics` takes the card text the client signed off. `/buwan:review` lists planned beats, must-have shots and changed cards that are missing from the cut.

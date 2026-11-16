@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 // Buwan proof gate: measures an EDL against the house pacing targets.
-// Usage: node proof-gate.js <file.edl> [--type wedding|prenup|corporate] [--mode speech|cut|sde] [--fps 23.976]
+// Usage: node proof-gate.js <file.edl> [--type wedding|prenup|corporate|commercial] [--mode speech|cut|sde] [--fps 23.976]
 //   sde = the picture cut of a same-day edit, measured against the SDE reference (two peaks, vow 3-4s shots, final hold 25-30s, title last)
 // Exit code: 0 = all PASS, 1 = at least one FAIL, 2 = could not read the EDL.
 const fs = require("fs");
 
 const args = process.argv.slice(2);
-const file = args.find((a) => !a.startsWith("--") && !/^(wedding|prenup|corporate|speech|cut|sde|[\d.]+)$/.test(a));
+const file = args.find((a) => !a.startsWith("--") && !/^(wedding|prenup|corporate|commercial|speech|cut|sde|[\d.]+)$/.test(a));
 const opt = (name, def) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 && args[i + 1] ? args[i + 1] : def;
 };
-const type = opt("type", /_corporate([\\/]|$)/i.test(file || "") ? "corporate" : /_prenup([\\/]|$)/i.test(file || "") ? "prenup" : "wedding");
+const type = opt("type", /_corporate([\\/]|$)/i.test(file || "") ? "corporate" : /_prenup([\\/]|$)/i.test(file || "") ? "prenup" : /_(commercials?|reels?|ads?)([\\/]|$)/i.test(file || "") ? "commercial" : "wedding").replace(/^(commercials|reels?|ads?)$/, "commercial");
 const mode = opt("mode", "cut");
 const fpsArg = parseFloat(opt("fps", "23.976"));
 const tcBase = Math.round(fpsArg); // timecode counts frames at the rounded rate (NDF)
@@ -143,6 +143,14 @@ if (mode === "speech") {
   const burstShare = durs.filter((d) => d <= 2).length / durs.length;
   add("Share of 1-2s burst shots", "-", `${Math.round(burstShare * 100)}%`, "INFO");
   add("Film length (highlights)", "6-10 min", `${(total / 60).toFixed(1)} min`, total >= 360 && total <= 600 ? "PASS" : "WARN");
+} else if (type === "commercial") {
+  // Commercials and brand reels: fast, a hook in the first seconds, the product hero held, cut to a spot length.
+  add("Average shot length", "1.0-2.0s", fmt(avg), avg >= 0.9 && avg <= 2.2 ? "PASS" : "FAIL");
+  add("Hook (first cut)", "<= 3s", fmt(durs[0]), durs[0] <= 3 ? "PASS" : "FAIL", `#${shots[0].num}`);
+  const longest = Math.max(...durs), li = durs.indexOf(longest);
+  add("Longest shot (product hero)", "<= 6s", fmt(longest), longest <= 6 ? "PASS" : "WARN", `#${shots[li].num}@${tcOf(shots[li].recIn)}`);
+  const spots = [6, 15, 30, 60, 90], near = spots.find((x) => Math.abs(total - x) <= 1.5);
+  add("Spot length", "6/15/30/60/90s +/-1.5", `${total.toFixed(1)}s`, near ? "PASS" : total <= 90 ? "WARN" : "FAIL", near ? `${near}s spot` : "brand reel or off-length");
 } else if (type === "prenup") {
   // Prenup: no ceremony, one music track. Bursts on the playful beat against long holds on the moments that land.
   add("Average shot length", "2.5-3.0s (+/-15%)", fmt(avg), avg >= 2.1 && avg <= 3.5 ? "PASS" : "FAIL");

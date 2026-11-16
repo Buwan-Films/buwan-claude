@@ -12,6 +12,8 @@ Studio policy (Philippine weddings, the Buwan Warm look goes on later):
   - green/magenta tint is corrected most of the way (TINT_PULL) - it is never a look
   - every fix is capped at MAX_STOPS per axis; a clip with too few neutral pixels (a colourful stage, LED walls,
     a close-up of flowers) or a cast that swings between keyframes (mixed light) is left alone and listed
+Corporate and commercial jobs (POLICY): clean and brand-true, so less warmth is kept and more of it is pulled back;
+product and brand colours must read true. Blue and tint are treated the same as for weddings.
 The fix is a per-channel gain that keeps the brightness (Rec.709 luma weights), applied in the render
 together with the exposure fix. Stored per clip in exposure.json as "wb": [r, g, b] gains.
 """
@@ -34,6 +36,10 @@ TINT_PULL = 0.9
 MAX_STOPS = 0.5
 MAX_SPREAD = 0.35        # keyframe-to-keyframe swing (stops) above which the light is mixed: no fix
 MIN_FIX = 0.04           # smaller fixes are not worth a render change
+# warmth kept / pulled per shoot type: weddings and prenups keep the natural warmth (the warm look goes on later);
+# corporate and commercial work is neutral and brand-true
+POLICY = {"wedding": (WARM_KEEP, WARM_PULL), "prenup": (WARM_KEEP, WARM_PULL),
+          "corporate": (0.10, 0.85), "commercial": (0.08, 0.9)}
 
 
 def _frames(path: str, max_frames: int = 24) -> np.ndarray | None:
@@ -99,7 +105,8 @@ def _gains(dt: float, dg: float) -> list[float]:
     return [round(r / k, 4), round(gg / k, 4), round(b / k, 4)]
 
 
-def decide(m: dict, camera: str = "") -> dict:
+def decide(m: dict, camera: str = "", shoot: str = "wedding") -> dict:
+    warm_keep, warm_pull = POLICY.get(shoot, POLICY["wedding"])
     if any(k in (camera or "").lower() for k in AERIAL):
         return {"wb": None, "wb_reason": "aerial (sky and foliage, nothing neutral to read): left alone"}
     if "temp" not in m:
@@ -107,8 +114,8 @@ def decide(m: dict, camera: str = "") -> dict:
     if m["wb_spread"] > MAX_SPREAD:
         return {"wb": None, "wb_reason": f"the light changes through the clip (swing {m['wb_spread']:.2f} stops): left alone, check by eye"}
     t, g = m["temp"], m["tint"]
-    if t > WARM_KEEP:
-        dt = min(MAX_STOPS, (t - WARM_KEEP) * WARM_PULL)
+    if t > warm_keep:
+        dt = min(MAX_STOPS, (t - warm_keep) * warm_pull)
     elif t < -COOL_KEEP:
         dt = max(-MAX_STOPS, (t + COOL_KEEP) * COOL_PULL)
     else:

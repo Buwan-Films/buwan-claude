@@ -11,7 +11,7 @@ Prerequisites: an approved `edit/paper-edit_vN.md` and `edit/selects_vN.edl` fro
 ## Rules (from the Edit Pipeline)
 - The speech spine is locked. Don't reorder or trim lines without the editor's OK.
 - **B-roll last, serving the story**: every shot matches or elevates the line under it — never decoration.
-- Pacing: bursts ~1–2s/shot at the energy peak (up to ~30 cuts/30s), **15–20s unbroken holds** on vows and first looks, average ~2.5–3s. Prenup: 2.5–3s average, a burst on the playful beat, 6s+ holds on intimate and golden-hour shots, 2–5 min. Corporate: steady 1.5–2.5s, holds on speakers.
+- Pacing: bursts ~1–2s/shot at the energy peak (up to ~30 cuts/30s), **15–20s unbroken holds** on vows and first looks, average ~2.5–3s. Commercial / reels: 1–2s average, the hook in the first 2–3s, the product hero held (≤ 6s), every cutdown (60 / 30 / 15 / 6s) its own timeline; 9:16 framed for the platform's safe zones. Prenup: 2.5–3s average, a burst on the playful beat, 6s+ holds on intimate and golden-hour shots, 2–5 min. Corporate: steady 1.5–2.5s, holds on speakers.
 - Where the storyboard marks a beat `hold` or `burst`, cut it that way unless the footage can't carry it; say which beats changed.
 - Cuts land on beat and on key words.
 

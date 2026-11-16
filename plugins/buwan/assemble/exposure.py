@@ -73,7 +73,8 @@ def decide(m: dict, band: tuple[float, float] = BAND) -> dict:
     return {"ev": round(ev, 2), "reason": why}
 
 
-def exposure(clips: list[Clip], categories: dict, rejected: set, workers: int = 6, look: str = "warm", previous: dict | None = None) -> dict:
+def exposure(clips: list[Clip], categories: dict, rejected: set, workers: int = 6, look: str = "warm", previous: dict | None = None,
+             shoot: str = "wedding") -> dict:
     band = load_band(look)
     todo = [c for c in clips if c.kind == "video" and c.path not in rejected and categories.get(c.path) not in NO_FIX]
     prev = {p: v for p, v in (previous or {}).items() if v.get("yavg") is not None and v.get("frames")}
@@ -84,10 +85,10 @@ def exposure(clips: list[Clip], categories: dict, rejected: set, workers: int = 
             res[c.path] = {"name": c.name, "camera": c.camera, **m, **decide(m, band)}
             w = {k: prev[c.path][k] for k in WB_KEYS if k in prev[c.path]}
             if "wb_frames" in w:
-                res[c.path].update(w | whitebalance.decide(w, c.camera))
+                res[c.path].update(w | whitebalance.decide(w, c.camera, shoot))
     todo = [c for c in todo if c.path not in res]
     wb_todo = [c for c in clips if c.path in res and "wb_frames" not in res[c.path]]
-    log(f"exposure: {look} band {band[0]:.0f}-{band[1]:.0f}; measuring {len(todo)} camera clips (keyframes), {len(res)} reused")
+    log(f"exposure: {shoot}, {look} band {band[0]:.0f}-{band[1]:.0f}; measuring {len(todo)} camera clips (keyframes), {len(res)} reused")
     def both(c):
         return measure(c), whitebalance.measure(c.path)
 
@@ -105,7 +106,7 @@ def exposure(clips: list[Clip], categories: dict, rejected: set, workers: int = 
                 log(f"exposure: {c.name}: {e}")
             if m is not None:
                 res[c.path] = {"name": c.name, "camera": c.camera, **m, **decide(m, band)}
-            res[c.path].update({"wb_frames": 0} | (w or {}) | whitebalance.decide(w or {}, c.camera))
+            res[c.path].update({"wb_frames": 0} | (w or {}) | whitebalance.decide(w or {}, c.camera, shoot))
             if i % 100 == 0 or i == len(futs):
                 log(f"exposure + white balance {i}/{len(futs)}")
     fixed = [v for v in res.values() if v["ev"]]

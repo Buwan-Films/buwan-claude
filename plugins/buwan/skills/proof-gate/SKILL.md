@@ -1,7 +1,7 @@
 ---
 name: proof-gate
-description: The Buwan proof gate — measures every cut in an EDL against the house pacing targets (wedding bursts and holds, prenup bursts and holds to one track, corporate steady cutting) and gives PASS / FAIL with fixes. Use after a rough cut or any recut, before audio polish, or when an editor asks "check pacing" or "run the proof gate".
-argument-hint: "<path to .edl> [wedding|prenup|corporate] [speech|cut|sde]"
+description: The Buwan proof gate — measures every cut in an EDL against the house pacing targets (wedding bursts and holds, prenup bursts and holds to one track, corporate steady cutting, commercial fast cutting to a spot length) and gives PASS / FAIL with fixes. Use after a rough cut or any recut, before audio polish, or when an editor asks "check pacing" or "run the proof gate".
+argument-hint: "<path to .edl> [wedding|prenup|corporate|commercial] [speech|cut|sde]"
 ---
 
 # Proof gate
@@ -9,10 +9,10 @@ argument-hint: "<path to .edl> [wedding|prenup|corporate] [speech|cut|sde]"
 Run the measurement script, then interpret it. Arguments: $ARGUMENTS
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/proof-gate.js" <file.edl> --type <wedding|prenup|corporate> --mode <speech|cut>
+node "${CLAUDE_PLUGIN_ROOT}/scripts/proof-gate.js" <file.edl> --type <wedding|prenup|corporate|commercial> --mode <speech|cut>
 ```
 
-- Infer `--type` from the project folder name (`_wedding` / `_prenup` / `_corporate`) if not given. Prenup cut targets: average 2.5–3 s, a burst of ≥12 cuts in 30 s on the playful beat, at least one 6 s+ hold, 2–5 min.
+- Infer `--type` from the project folder name (`_wedding` / `_prenup` / `_corporate` / `_commercial`, `_reels`) if not given. Prenup cut targets: average 2.5–3 s, a burst of ≥12 cuts in 30 s on the playful beat, at least one 6 s+ hold, 2–5 min. Commercial targets: average 1–2 s, the first cut within 3 s (the hook), the longest shot ≤ 6 s (the product hero), the length on a spot (6 / 15 / 30 / 60 / 90 s ± 1.5 s); measure each cutdown on its own.
 - `--mode speech` = the Story-Lock selects EDL (speech only). It checks structure: total length, 4-part timing when part markers exist, and that no line is cut mid-word (event shorter than 0.5s).
 - `--mode cut` = the picture cut with b-roll (export the V1/picture track as CMX3600 from the app). It checks the pacing targets.
 

@@ -166,6 +166,36 @@ def tc(seconds: float, fps: Fraction = SEQ_FPS, base: float = 3600.0) -> str:
     return f"{s // 3600:02d}:{(s // 60) % 60:02d}:{s % 60:02d}:{ff:02d}"
 
 
+# ---------- shoot type ----------
+SHOOT_TYPES = ("wedding", "prenup", "corporate", "commercial")
+SHOOT_ALIASES = {"commercials": "commercial", "reel": "commercial", "reels": "commercial", "ads": "commercial",
+                 "ad": "commercial", "event": "corporate", "prewedding": "prenup", "pre-wedding": "prenup"}
+
+
+def shoot_type(project: Path | str, override: str | None = None, remember: bool = True) -> str:
+    """The job's shoot type: --shoot if given (remembered in edit/assemble/shoot.json), else that file,
+    else the project folder's suffix (<date>_<client>_<type>), else wedding."""
+    project = Path(project)
+    f = project / "edit" / "assemble" / "shoot.json"
+    if override:
+        t = SHOOT_ALIASES.get(override.lower(), override.lower())
+        if t not in SHOOT_TYPES:
+            raise SystemExit(f"unknown shoot type {override!r}: use one of {', '.join(SHOOT_TYPES)}")
+        if remember:
+            save_json(f, {"type": t})
+        return t
+    if f.exists():
+        t = load_json(f).get("type")
+        if t in SHOOT_TYPES:
+            return t
+    m = re.search(r"_([A-Za-z-]+)$", project.resolve().name)
+    if m:
+        t = SHOOT_ALIASES.get(m.group(1).lower(), m.group(1).lower())
+        if t in SHOOT_TYPES:
+            return t
+    return "wedding"
+
+
 def slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 

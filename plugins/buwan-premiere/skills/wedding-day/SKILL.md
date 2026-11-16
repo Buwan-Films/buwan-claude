@@ -6,6 +6,8 @@ argument-hint: "<YYYY-MM-DD>_<Couple> --footage <raw folder on the SSD>"
 
 # Wedding day — Premiere Pro
 
+The same run works for any shoot day — prenup, corporate event, commercial / reels: name the project with its type (`<date>_<client>_corporate`) or pass `--shoot <type>`; only the white balance policy changes (see `/buwan:basics`).
+
 Load `/buwan:house-rules` and `/buwan:basics`. `/buwan:basics` is the whole run; this skill adds the Premiere hand-off and the clock. Keep a running clock (ask for the screening time once) and report after every phase: done · time used · time left.
 
 **Scope is the basics, then stop:** the `<raw>_ENHANCED_<date-time>/` folder with every clip of the day: the clips that need it rendered with their exposure / white balance fix or shaky Creative/Glider best cut + glide, every other clip copied as it is (instant clone on the same drive); no grade. No working copy, no dedupe, no file organizing, no speech work, no grade, no sync, no story, no cut, no music, no sequence to cut in.

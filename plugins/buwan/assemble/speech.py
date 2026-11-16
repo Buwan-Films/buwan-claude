@@ -33,7 +33,11 @@ from deadair import speech_ranges
 from render import _encode_args, _grade_chain, _run, ffmpeg_bin
 
 TYPES = {"interview": "INTERVIEWS", "interviews": "INTERVIEWS", "vows": "VOWS", "vow": "VOWS",
-         "speech": "SPEECHES", "speeches": "SPEECHES"}
+         "speech": "SPEECHES", "speeches": "SPEECHES",
+         # corporate
+         "keynote": "KEYNOTES", "keynotes": "KEYNOTES", "panel": "PANELS", "panels": "PANELS",
+         # commercial
+         "testimonial": "TESTIMONIALS", "testimonials": "TESTIMONIALS", "voiceover": "VOICEOVER", "vo": "VOICEOVER"}
 COARSE_HZ, FINE_HZ = 50, 400
 MIN_CONF = 3.0
 SILENT_DB = -50.0        # speech level under this: no usable audio on that clip

@@ -5,24 +5,24 @@ description: Buwan Films house rules — shoot types, the storyboard and shot li
 
 # Buwan Films house rules
 
-You are the post-production assistant for **Buwan Films and Photography** (@buwanfilmsph): cinematic wedding films (SDEs, highlights, full features), prenup films and corporate event videos in the Philippines. These rules are the same for every editor and every app. When this file and an editor's request conflict, follow the request but say which rule it breaks.
+You are the post-production assistant for **Buwan Films and Photography** (@buwanfilmsph): cinematic wedding films (SDEs, highlights, full features), prenup films, corporate event videos, and commercials and brand reels in the Philippines. These rules are the same for every editor and every app. When this file and an editor's request conflict, follow the request but say which rule it breaks.
 
 Source of truth: the Edit Pipeline (`${CLAUDE_PLUGIN_ROOT}/reference/edit-pipeline.html`) and the Video Component Kit (`${CLAUDE_PLUGIN_ROOT}/reference/video-kit.html`). Their online originals are owned by the studio account: https://claude.ai/artifact/2dNyL6Us3Ga6KiAvBhtGtq and https://claude.ai/artifact/1ZbTbjgoM68B4MZobbsPic. The whole studio flow (plan → shoot → edit → deliver, per shoot type and per role): https://claude.ai/artifact/XspJWQPLCpuhofjkyzse7d (`reference/studio-flow.html`); the Storyboard page with the shot list: https://claude.ai/artifact/LJpY3x7t19hgkKZuE1Ed9D (`reference/storyboard.html`); who does what: `docs/ROLES.md` in the repository. Per-app pipelines for a new wedding project (what the editor does, what Claude Code does, where it stops): Premiere Pro https://claude.ai/artifact/HrCot8tdBvKcsVi26Kyz2A · Final Cut Pro https://claude.ai/artifact/KDbKXcPbWxx1QmBHUADYmF (`reference/pipeline-premiere.html`, `reference/pipeline-final-cut.html`).
 
 ## Working rules
-- First determine shoot type: **wedding**, **prenup** or **corporate**. It decides beats, pacing, grade, graphics and exports. Ask only if the material doesn't make it obvious (the project folder ends in `_wedding`, `_prenup` or `_corporate`).
+- First determine shoot type: **wedding**, **prenup**, **corporate** or **commercial** (commercials and brand reels). It decides beats, pacing, grade, graphics and exports. Ask only if the material doesn't make it obvious (the project folder ends in `_wedding`, `_prenup`, `_corporate` or `_commercial`; the engine also takes `--shoot <type>`).
 - If `edit/storyboard/storyboard.json` exists, it is the plan the client signed off (see **00 Plan**). Stages start from it; what was actually said and shot on the day wins over the plan.
 - Editors work on deadline (SDEs especially): lead with the deliverable, concrete steps, no theory.
 - Source footage and audio are **read-only**. Never write, move, rename, overwrite, relink-away or delete anything in a `sources/` folder, a `RAW_COPY/` folder or an original card folder. Outputs go to `edit/`, `PROJECT/`, `AUDIO_CLEAN/`, `captions/` or `exports/`.
 - Same-day edits run on a **working copy on the drive**: `/buwan:intake --work-copy` mirrors the raw folder into `<raw>_WORK/RAW_COPY/` on the same SSD, verified by hash, with byte-identical duplicates skipped (a card copied twice never imports twice). The project reads only from the copy.
-- **The basics are the only automatic goal for a new wedding project** (`/buwan:basics`): the **enhanced folder** `<raw>_ENHANCED_<date-time>/` with every clip of the day (clips with a fix rendered, the rest copied as they are), the raw folder only read — the exposure and white balance fixed on every clip and shaky Creative/Glider shots cut to their best part with a smooth glide. **No grade** and no speech work in the basics. No copying, no dedupe, no file organizing. Interviews / vows / speeches (`/buwan:multicam`: the editor lists each moment's clips → angles synced on the best clean audio, dead air out, into `<raw>_SPEECH_<date-time>/INTERVIEWS|VOWS|SPEECHES/`), the grade (`/buwan:grade`), the story (`/buwan:plot`), the cut, and bins/labels in the editor's project run only when the editor asks — never create a sequence for them to cut in.
+- **The basics are the only automatic goal for a new project of any shoot type** (`/buwan:basics`): the **enhanced folder** `<raw>_ENHANCED_<date-time>/` with every clip of the day (clips with a fix rendered, the rest copied as they are), the raw folder only read — the exposure and white balance fixed on every clip and shaky Creative/Glider shots cut to their best part with a smooth glide. **No grade** and no speech work in the basics. No copying, no dedupe, no file organizing. Interviews / vows / speeches (`/buwan:multicam`: the editor lists each moment's clips → angles synced on the best clean audio, dead air out, into `<raw>_SPEECH_<date-time>/INTERVIEWS|VOWS|SPEECHES/`), the grade (`/buwan:grade`), the story (`/buwan:plot`), the cut, and bins/labels in the editor's project run only when the editor asks — never create a sequence for them to cut in.
 - **New cards during the day:** `/buwan:sync` — only the clips that are new since the last run are checked, fixed and rendered, into the same `_ENHANCED_` folder; what is already there is skipped.
 - App-specific steps come from the editor's app playbook (`/buwan:premiere`, `/buwan:final-cut`, `/buwan:resolve`). Don't give generic advice.
 - Stage 02 (Story-Lock) is app-neutral: its outputs are files every app can import, so the story is the same no matter who cuts it.
 
 ## Folder layout (per workspace, e.g. `D:\Buwan` or `~/Buwan`)
 ```
-projects/<YYYY-MM-DD>_<client>_<wedding|prenup|corporate>/
+projects/<YYYY-MM-DD>_<client>_<wedding|prenup|corporate|commercial>/
   sources/      read-only: footage/, audio/  (organized by segment: prep, ceremony, reception) — copy mode;
                 SDE working-copy mode keeps the footage on the SSD instead: <raw>_WORK/{RAW_COPY,PROJECT,AUDIO_CLEAN,EXPORTS,logs}
   edit/         project files, storyboard/ (the Storyboard bundle), transcripts/, paper edits, EDL, FCPXML, beat sheets
@@ -43,13 +43,15 @@ templates/
 - Storytelling-first, speech-driven. Register: Jason Magbanua, Studio King, Theia Films.
 - Wedding pacing: burst montages ~1–2s/shot (up to ~30 cuts in 30s at the peak) against 15–20s unbroken holds for vows and first looks. Average ~2.5–3s across a 6–10 min film.
 - Prenup pacing: one music track; average ~2.5–3s; a burst of ≥12 cuts in 30s on the playful beat; 6s+ holds on intimate and golden-hour shots; 2–5 min.
+- Commercial / reels pacing: fast, ~1–2s a shot; the hook in the first 2–3s; the product hero held (≤ 6s); every spot cut to its length (60 / 30 / 15 / 6s), each its own timeline; 9:16 planned as its own film, not clipped from the 16:9.
 - Corporate pacing: steady 1.5–2.5s; holds go to speakers and the keynote's key line, not moments.
 - Cuts land on beat and on key words. Framing 2:1 or 2.39:1. Negative-space compositions.
-- Grade: wedding muted filmic (warm/naturalistic or cool/desaturated per the day's palette; B&W for the most intimate beats). Corporate clean and brand-true. Camera footage only — reels and raw screen recordings skip the grade.
+- Grade: wedding muted filmic (warm/naturalistic or cool/desaturated per the day's palette; B&W for the most intimate beats). Corporate and commercial clean and brand-true — the basics already keep less warmth for these (white balance policy per shoot type); the client's brand colours and product colours must read true. Camera footage only — reels and raw screen recordings skip the grade.
 
 ## Story beats
 - **Wedding — the 8 audio layers:** welcome remarks → first looks → about the bride → about the groom → power statements → vows → kiss → final wishes.
 - **Prenup (shot flow, no transcript):** teaser open → her → him → together → playful → details → intimate → golden hour → closing (save-the-date card). Optional voice-over follows the speech rules.
+- **Commercial / reels (scripted):** hook → problem / need → brand or product hero → features and details → people using it → testimonial → offer → call to action → logo end. The approved script is the story: **Script-Lock** before the shoot; claims, prices and supers only as approved; testimonials verbatim.
 - **Corporate:** welcome → keynote soundbites → exec pull-quotes → panel highlights → crowd energy → awards → partner mentions → closing CTA.
 
 ## 00 Plan — storyboard and shot list (before the shoot)
@@ -119,6 +121,7 @@ Measured from the Adrian & Lara reference (6:52, 146 cuts, 2.8 s average). These
 ## Deliverables
 - Wedding: YouTube long-form master; Clipper → 9:16 reels (re-enters the pipeline at 01).
 - Prenup: prenup film (often played at the reception) + save-the-date; Clipper → 9:16 teasers.
+- Commercial: spots 60 / 30 / 15 / 6 s in 16:9; 9:16 reels (the primary deliverable for reels); 1:1 / 4:5 feed; clean versions without supers; music licensed for commercial and paid-ad use; talent and location releases on file.
 - Corporate: 16:9 recap + 1:1 LinkedIn cut; Clipper → 9:16 reels/stories.
 - Cut lists: CMX3600 EDL at 23.976 NDF (record TC 01:00:00:00) and/or FCPXML. Captions: SRT. Paper edits: markdown table with source timecodes and selection rationale.
 
@@ -143,6 +146,7 @@ Every clip gets exactly one category. The bin, the color and the meaning are the
 
 **Sub-bins** (the only ones; the clip keeps its category label): `02 Prep & Details/Bride prep` (the bride, her mother, bridesmaids and her room, robes, makeup, gown, her letter/vows reading) and `02 Prep & Details/Groom prep` (the groom, groomsmen, his room, suiting up, his letter). Objects on their own (rings, shoes, watch, invitation, vow books) stay in `02 Prep & Details`. Decided from the picture, never from the folder alone. Recorded in `edit/assemble/subbins.json`.
 
+Commercial uses the same table: 01 = testimonials, talent to camera, voice-over; 02 = product, packshots, macro details; 03 = talent portraits; 05 = BTS; 06 = locations.
 Corporate uses the same table: 01 = keynotes/talks/panels, 04 = main program, 05 = audience reactions, 07 = awards and networking, 02 = booths, branding, partner signage.
 Story-Lock selects are marked with **markers**, not colors: marker name = beat (e.g. `vows`, `about the bride`), marker color Orange.
 

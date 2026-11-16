@@ -1,7 +1,7 @@
 ---
 name: basics
-description: The Buwan same-day basics — what Claude Code does for a new wedding project and nothing more: an ENHANCED folder with every clip of the day, made from the raw footage into a new folder on every run, the raw files never touched — every clip checked for exposure and white balance; the clips that need a fix rendered with it, shaky Creative/Glider shots cut to their best part with a smooth glide, every other clip copied as it is (an instant clone on the same drive); no grade. No working copy, no dedupe, no file organizing, no speech work, no grade, no sync, no story, no cut, no music. Use when an editor says "basics", "enhance the clips", "fix the exposure", "fix the white balance", "prep the footage", "start the wedding project", "run it on the cards", or drops a footage folder for a wedding. Works for any editing app (fixed clips are HEVC 10-bit .mov, the rest are the camera originals).
-argument-hint: "<YYYY-MM-DD>_<Couple> --footage <raw folder on the SSD>"
+description: The Buwan same-day basics — what Claude Code does for a new project of any shoot type (wedding, prenup, corporate, commercial / reels) and nothing more: an ENHANCED folder with every clip of the day, made from the raw footage into a new folder on every run, the raw files never touched — every clip checked for exposure and white balance; the clips that need a fix rendered with it, shaky Creative/Glider shots cut to their best part with a smooth glide, every other clip copied as it is (an instant clone on the same drive); no grade. No working copy, no dedupe, no file organizing, no speech work, no grade, no sync, no story, no cut, no music. Use when an editor says "basics", "enhance the clips", "fix the exposure", "fix the white balance", "prep the footage", "start the wedding project", "start the event / commercial / prenup project", "run it on the cards", or drops a footage folder for a shoot. Works for any editing app (fixed clips are HEVC 10-bit .mov, the rest are the camera originals).
+argument-hint: "<YYYY-MM-DD>_<Client>_<wedding|prenup|corporate|commercial> --footage <raw folder on the SSD> [--shoot <type>]"
 ---
 
 # The basics — enhanced clips, the raw untouched
@@ -10,12 +10,14 @@ Load `/buwan:house-rules`. The engine does the work (`node "${CLAUDE_PLUGIN_ROOT
 
 **The rule:** the raw folder is only ever read. Every run writes into a new folder next to it, `<raw>_ENHANCED_<YYYYMMDD-HHMM>/`, with the same camera/card folders and clip names: the clips with a fix as new `.mov` files, every other clip copied as it is (the original file, same name and extension). So the folder holds **every clip of the day** and the editor imports one folder. Nothing is deduplicated, moved or reorganized.
 
+**Shoot type:** the engine reads it from the project folder's suffix (`_wedding`, `_prenup`, `_corporate`, `_commercial`; `_reels` counts as commercial) or from `--shoot <type>` (remembered in `edit/assemble/shoot.json`). It changes one thing in the basics: the white balance. Weddings and prenups keep the natural warmth; corporate and commercial jobs are made clean and brand-true (less warmth kept), so products and brand colours read true. Everything else is the same for every shoot type.
+
 **Scope — two things, then stop:**
 
 | # | What | Engine | What the editor gets |
 |---|---|---|---|
 | 1 | **Exposure on every clip** | `exposure <project>` | every camera clip measured (8-bit, keyframes); outside the studio brightness band (`kit/grade/targets.json`, 55–150) it gets a gentle fix, at most ±1.5 EV, never clipping highlights; low-key shots (rings on black) left alone and listed. `edit/exposure_report.md` |
-| 1b | **White balance on every clip** | same pass (`exposure <project>`) | the colour cast read from each clip's neutral surfaces (whites, greys, walls); natural warmth is kept (up to +0.3 stops), only the warmth beyond it is pulled back partly; a blue cast or a green/magenta tint is corrected most of the way; at most 0.5 stops, brightness kept. Aerials (drone), clips with nothing neutral and clips whose light changes are left alone and listed. Second table in `edit/exposure_report.md` |
+| 1b | **White balance on every clip** | same pass (`exposure <project>`) | the colour cast read from each clip's neutral surfaces (whites, greys, walls); natural warmth is kept (weddings and prenups up to +0.3 stops; corporate +0.1, commercial +0.08), only the warmth beyond it is pulled back partly; a blue cast or a green/magenta tint is corrected most of the way; at most 0.5 stops, brightness kept. Aerials (drone), clips with nothing neutral and clips whose light changes are left alone and listed. Second table in `edit/exposure_report.md` |
 | 2 | **Shaky Creative/Glider shots** | `steady <project> [--gimbal …]` | the best cut of each shaky clip on the Creative/Glider camera, then a smooth glide (vid.stab, two passes, a slight zoom to hide the moving edge). Other cameras are left alone |
 
 Then `render <project>` fills the folder:
@@ -24,20 +26,20 @@ Then `render <project>` fills the folder:
 
 **No grade** — the look is applied in the editing app with `/buwan:grade`. `render_log.csv` in the folder says what was done to each clip (`kind` = shaky / clip / copy).
 
-Interviews, letters, speeches and vows go through like every other clip (exposure and white balance fixed, original audio, full length). Merging their angles, the best audio and the dead air are `/buwan:multicam`, run by the editor.
+Interviews, letters, speeches, vows, keynotes and testimonials go through like every other clip (exposure and white balance fixed, original audio, full length). Merging their angles, the best audio and the dead air are `/buwan:multicam`, run by the editor.
 
 **Not in scope — only when the editor asks:** interviews / vows / speeches (`/buwan:multicam`), the grade (`/buwan:grade`), the story (`/buwan:plot`), the cut (`/buwan:rough-cut`, `/buwan:sde`), Premiere bins and labels (`/buwan-premiere:premiere-apply`), music, graphics, export.
 
 ## Run (unattended; only the fixed clips render — typically 15–25 % of the day, ~40 min for 5 h of footage on Apple Silicon; the copies take seconds)
 1. `scan <project> --footage "<raw folder>"` → `cull <project>` (unusable clips — black, false starts — are left out of the render and listed). No copy, no dedupe.
 2. `steady <project>` (ask which Creative cards were on the gimbal if the folders don't say).
-3. `exposure <project>` (exposure and white balance in one pass).
+3. `exposure <project>` (exposure and white balance in one pass; add `--shoot <type>` if the folder name doesn't end in the shoot type).
    - A run made before white balance existed: `exposure <project>` (reuses the exposure readings), then `render <project> --only fixed --redo --out <that _ENHANCED_ folder>` re-renders every clip with an exposure or white-balance fix, in place.
 4. `render <project>` for everything, straight away (a new folder; pass `--out` only to continue a run that stopped). `--workers 5` on a 10-core Mac. `--only fixed` renders the fixed clips without copying the rest; `--only copy` only copies the clips with no fix. Shaky clips come out first: spot-check one while the rest renders. A short test (`--only shaky|clip --limit 2 --out <folder>`) only after an engine update or with a new camera.
 5. Report a table: what · result · check by hand. **Stop.** Premiere editors with the bridge open can bring the folder in with one command: `premiere-import <project>` → bridge step `enhanced` (camera bins, drone Teal). Transcripts of the speech clips come with the first `/buwan:sync`.
 
 ## New clips from the shooters
-The wedding is still going and new cards keep coming: `/buwan:sync <project>` — only the new clips are checked, fixed and rendered, into the same `_ENHANCED_` folder (the clips already there are skipped). Run it as often as cards arrive.
+The shoot is still going and new cards keep coming: `/buwan:sync <project>` — only the new clips are checked, fixed and rendered, into the same `_ENHANCED_` folder (the clips already there are skipped). Run it as often as cards arrive.
 
 ## Needs
 - ffmpeg with vid.stab: `~/.buwan/ffmpeg-vidstab/bin/ffmpeg` (`scripts/build-ffmpeg-vidstab.sh`, called by `/buwan:setup-kit`). Without it the shaky clips are cut to their best part but not stabilized, and the log says so.

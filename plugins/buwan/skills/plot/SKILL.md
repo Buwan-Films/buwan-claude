@@ -14,6 +14,7 @@ If `edit/storyboard/storyboard.json` exists (the Storyboard page's export, unzip
 - A planned beat with no matching line: say so in the paper edit (**Planned, not found**) and suggest a montage or a cut; don't invent.
 - A strong line that fits no planned beat: still offer it, marked **Not in the storyboard**. The day wins over the plan.
 - Keep the storyboard's beat ids in the paper edit (`beat` column) so the rough cut, graphics and review can match them.
+- **Commercial / reels: Script-Lock.** The client approves the script (voice-over, supers, talent lines) before the shoot; it is the storyboard. At Story-Lock pick the best take of every scripted line and the testimonial lines exactly as said — never rewrite a testimonial or add a claim. Supers and claims come only from the approved script.
 - **Prenup:** there is usually no speech. The storyboard's shot flow is the story; Story-Lock becomes **Shot-Lock**: the best take per planned shot (from the shot list's `clips`), in storyboard order, written as the paper edit with `line` = the shot. Voice-over lines, if recorded, follow the speech rules.
 
 ## 1. Transcribe once
@@ -23,7 +24,7 @@ If `edit/storyboard/storyboard.json` exists (the Storyboard page's export, unzip
 - Expect **Taglish**. Keep the original wording. Never clean up, translate or "fix" vows or speeches. Mark unclear words `[?]`.
 
 ## 2. Tag
-Tag every usable line with one beat: wedding = the 8 audio layers; corporate = the 8 corporate beats; prenup = the storyboard's shot flow (teaser open · her · him · together · playful · details · intimate · golden hour · closing). Note the speaker (camera + voice; confirm names with the editor — "Speaker 3 = Tito Terry").
+Tag every usable line with one beat: wedding = the 8 audio layers; corporate = the 8 corporate beats; commercial = hook · problem / need · brand or product hero · features · people using it · testimonial · offer · call to action · logo; prenup = the storyboard's shot flow (teaser open · her · him · together · playful · details · intimate · golden hour · closing). Note the speaker (camera + voice; confirm names with the editor — "Speaker 3 = Tito Terry").
 
 **Controls the editor can set (ask once; defaults in brackets):** speakers to include [couple + family + best friends; MC/host excluded]; story focus [personal vows & journey, family, friends' stories, ceremony moments]; content to exclude [legal formalities, MC talking, vendor/supplier mentions, "thank you for coming" speeches]; film length [SDE 4–7 min, highlights 6–10]; dialogue density [medium]. SDE: the letters outrank the ceremony audio — a letter opens the spine; "do you take / I do" is punctuation between letter lines.
 

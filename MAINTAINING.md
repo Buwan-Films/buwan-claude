@@ -20,7 +20,7 @@ The rules live in this repository. The claude.ai artifacts are the visual versio
 | Studio flow (plan → shoot → edit → deliver, per shoot type and role) | the Studio flow artifact, then save its page as `plugins/buwan/reference/studio-flow.html`; the text version is `docs/STUDIO-WORKFLOW.md` |
 | Roles | `docs/ROLES.md` (keep in step with the Studio flow's role filter) |
 | Storyboard and shot list | the Storyboard artifact, then save its page as `plugins/buwan/reference/storyboard.html`. Its export (`storyboard.json`: beats, `kind`, `pace`, `cam`, `must`, `got`, `clips`, card `slots`) is read by `skills/plot`, `rough-cut`, `graphics`, `review` — change those when the fields change |
-| Shoot types (wedding, prenup, corporate) | `house-rules/SKILL.md` (beats, pacing, deliverables), `scripts/proof-gate.js` (prenup targets in the `type === "prenup"` branch) |
+| Shoot types (wedding, prenup, corporate, commercial) | `house-rules/SKILL.md` (beats, pacing, deliverables); `scripts/proof-gate.js` (the `prenup` and `commercial` branches); engine: `assemble/common.py` `shoot_type` (folder suffix, aliases, `edit/assemble/shoot.json`), `assemble/whitebalance.py` `POLICY` (warmth kept per type), `assemble/transcribe.py` `HINTS_BY_SHOOT`, `assemble/speech.py` `TYPES` (moment folders) |
 | Delivery, revisions, backup, archive | `skills/deliver/SKILL.md` |
 | Per-app pipeline pages | `plugins/buwan/reference/pipeline-premiere.html`, `pipeline-final-cut.html` — edit the artifact, save the page here |
 | Rule card every session starts with | `plugins/buwan/scripts/session-start.js` |

@@ -260,8 +260,8 @@ pre.pv{margin:0;background:var(--ink);border:1px solid var(--line2);border-radiu
     <input class="title" id="p_title" placeholder="Film title, e.g. Mara &amp; Paolo SDE" aria-label="Film title">
     <div class="grid">
       <label class="f"><span>Couple or client</span><input class="i" id="p_client" placeholder="Mara &amp; Paolo"></label>
-      <label class="f"><span>Shoot type</span><select class="i" id="p_type"><option value="wedding">Wedding</option><option value="prenup">Prenup / Pre-wedding</option><option value="corporate">Corporate</option></select></label>
-      <label class="f"><span>Film</span><select class="i" id="p_film"><option>SDE</option><option>Highlight film</option><option>Full feature</option><option>Prenup film</option><option>Save-the-date</option><option>Reel (9:16)</option><option>Recap (16:9)</option></select></label>
+      <label class="f"><span>Shoot type</span><select class="i" id="p_type"><option value="wedding">Wedding</option><option value="prenup">Prenup / Pre-wedding</option><option value="corporate">Corporate</option><option value="commercial">Commercial / reels</option></select></label>
+      <label class="f"><span>Film</span><select class="i" id="p_film"><option>SDE</option><option>Highlight film</option><option>Full feature</option><option>Prenup film</option><option>Save-the-date</option><option>Reel (9:16)</option><option>Recap (16:9)</option><option data-commercial>Commercial 60 / 30 / 15 s</option><option data-commercial>Brand reel (9:16)</option></select></label>
       <label class="f"><span>Event date</span><input class="i" id="p_date" type="date"></label>
       <label class="f"><span>Venue</span><input class="i" id="p_venue" placeholder="Church, reception"></label>
       <label class="f"><span>Source clip name (for the EDL)</span><input class="i" id="p_clip" placeholder="VOWS_AUDIO.wav"></label>
@@ -379,10 +379,24 @@ Timecodes and speaker names are optional. An SRT file's text also works." aria-l
 /* ---------- constants ---------- */
 var STORY={prenup:["Teaser open","Her","Him","Together","Playful","Details","Intimate","Golden hour","Closing"],
   wedding:["Welcome remarks","First looks","About the bride","About the groom","Power statements","Vows","Kiss","Final wishes"],
-  corporate:["Welcome","Keynote soundbites","Exec pull-quotes","Panel highlights","Crowd energy","Awards","Partner mentions","Closing CTA"]};
+  corporate:["Welcome","Keynote soundbites","Exec pull-quotes","Panel highlights","Crowd energy","Awards","Partner mentions","Closing CTA"],
+  commercial:["Hook","Problem / need","Brand or product hero","Features and details","People using it","Testimonial","Offer","Call to action","Logo end"]};
 var SHOTS=["Establishing / facade","Details","BTS","Candids","Reactions","Beauty shots","Pogi shots","Interview","Letter reading","Portraits","Ceremony","Reception program","Party","Drone"];
 var SHOTS_PRENUP=["Establishing / location","Details (ring, hands, props)","Her solo (beauty)","Him solo (pogi)","Couple portrait","Walking / movement","Interaction prompt","Candid laughter","Intimate close-up","Wide / negative space","Golden hour / silhouette","Drone","BTS","Voice-over / interview"];
-function shots(){return P&&P.type==="prenup"?SHOTS_PRENUP:SHOTS;}
+var SHOTS_COMMERCIAL=["Hook shot (first 2 s)","Product hero","Product detail / macro","Lifestyle / in use","Talent to camera","Testimonial interview","Location / establishing","Text-safe plate (clean background for supers)","Logo / packshot","Drone","BTS (for social)"];
+function shots(){return P&&P.type==="prenup"?SHOTS_PRENUP:P&&P.type==="commercial"?SHOTS_COMMERCIAL:SHOTS;}
+/* Brand work (corporate and commercial) drops the Italiana script face. */
+function brandWork(){return P.type==="corporate"||P.type==="commercial";}
+var BRIEF_PH={wedding:"Mood, outfits, locations, must-have shots, deadlines. Shooter and editors.",prenup:"Mood, outfits, locations, must-have shots, deadlines. Shooter and editors.",
+  corporate:"Run of show, speakers and their titles, partner list, brand guide, deadlines. Shooter and editors.",
+  commercial:"Brand guide, product, talent, usage (platforms, paid ads, term), deliverable lengths (60 / 30 / 15 / 6 s) and aspect ratios (9:16, 1:1, 16:9), deadlines. Shooter and editors."};
+var FILM_DEFAULT={wedding:"SDE",prenup:"Prenup film",corporate:"Recap (16:9)",commercial:"Commercial 60 / 30 / 15 s"};
+/* The commercial film lengths only show for commercial work; switching type moves the film to that type's default when the old one no longer fits. */
+function filmOpts(){var sel=$("p_film"),com=P.type==="commercial";
+  Array.prototype.forEach.call(sel.options,function(o){var c=o.hasAttribute("data-commercial");o.hidden=c&&!com;o.disabled=c&&!com;});
+  if(!com&&/^(Commercial 60|Brand reel)/.test(P.film||"")) P.film=FILM_DEFAULT[P.type]||"SDE";
+  if(com&&["SDE","Highlight film","Full feature","Prenup film","Save-the-date"].indexOf(P.film)>=0) P.film=FILM_DEFAULT.commercial;
+  sel.value=P.film||""; $("p_brief").placeholder=BRIEF_PH[P.type]||BRIEF_PH.wedding;}
 var CAMS=["Creative / Glider","Main","3rd Cam","Drone","Audio"];
 /* Older storyboards used other camera names; they map onto the studio card folders the engine reads. */
 var CAM_MAP={"Main cam":"Main","B-cam":"3rd Cam","Creative / glider":"Creative / Glider","Roving / reaction":"3rd Cam"};
@@ -445,7 +459,7 @@ var cap={db:null,dl:null,sample:null,assets:null}, boards=[], dbState="wait", re
 function normMusic(p){p.music=p.music||{};["t1","t2"].forEach(function(t){p.music[t]=p.music[t]||{};});p.music.switchAt=p.music.switchAt||"";return p;}
 function lenSec(v){v=String(v||"").trim(); if(!v) return 0; var m=v.match(/^(\d+):(\d{1,2})$/); if(m) return +m[1]*60+ +m[2]; var n=parseFloat(v); return n>0?n:0;}
 /* Where the film changes from track 1 to track 2, and how long each track has to carry. */
-function oneTrack(){return P.type==="prenup";}
+function oneTrack(){return P.type==="prenup"||P.type==="commercial";}
 function musicSplit(){
   var F=P.beats.filter(function(b){return !b.out;}),i=-1,sw=oneTrack()?"":P.music.switchAt,k;
   if(sw) for(k=0;k<F.length;k++) if(F[k].id===sw){i=k;break;}
@@ -543,7 +557,23 @@ function corporateFlow(){
     newBeat({kind:"card",tpl:"end",slots:{main:"Buwan Films",label:"@buwanfilmsph"}})
   ];
 }
-function flowFor(t){return t==="prenup"?prenupFlow():t==="corporate"?corporateFlow():weddingFlow();}
+/* A commercial or brand reel is planned from the hook and the product. Copy and testimonials are never invented here:
+   they come from the approved script or the interview at Script-Lock. */
+function commercialFlow(){
+  var M=function(story,shot,st,cam,pace,dur,note,must){return newBeat({kind:"montage",story:story,shot:shot,shotType:st,cam:cam,pace:pace,dur:dur,note:note||"",must:!!must});};
+  return [
+    M("Hook","The strongest image first: the product in motion or a face reacting, readable with the sound off.","Hook shot (first 2 s)","Creative / Glider","burst",3,"The hook lands in the first 2–3 s",true),
+    M("Problem / need","The moment before the product: the need or the problem, shown rather than told.","Lifestyle / in use","Main","",5),
+    M("Brand or product hero","Product hero: clean light, a slow push-in or turntable, the logo readable.","Product hero","Main","hold",4,"Held, never cut short",true),
+    M("Features and details","Macro on textures, materials and the one feature that sells it.","Product detail / macro","Creative / Glider","burst",5),
+    M("People using it","Talent using the product in a real setting, natural reactions, a clean frame for supers.","Lifestyle / in use","3rd Cam","",6,"",true),
+    newBeat({kind:"aroll",story:"Testimonial",speaker:"Customer or talent",cam:"Main",words:"",note:"Filled from the approved script or the interview at Script-Lock"}),
+    newBeat({kind:"card",tpl:"stamp",story:"Offer",slots:{label:"Offer",main:"Offer from the approved script"},note:"Exact wording, price and terms come from the client"}),
+    newBeat({kind:"card",tpl:"lower",story:"Call to action",slots:{main:"Call to action from the approved script",label:"Website or handle"},note:"Kept inside the platform safe zone on 9:16"}),
+    newBeat({kind:"card",tpl:"end",story:"Logo end",slots:{main:P.client||"Brand logo",label:""},note:"The client's logo or packshot from the brand guide"})
+  ];
+}
+function flowFor(t){return t==="prenup"?prenupFlow():t==="corporate"?corporateFlow():t==="commercial"?commercialFlow():weddingFlow();}
 
 /* ---------- saving ----------
    Each save carries a revision number. A device only overwrites the page's copy with edits made here,
@@ -623,7 +653,7 @@ function opt(list,val,blank){var h=blank!=null?'<option value="">'+esc(blank)+'<
   list.forEach(function(x){h+='<option'+(x===val?" selected":"")+'>'+esc(x)+'</option>';});
   if(val&&list.indexOf(val)<0) h+='<option selected>'+esc(val)+'</option>'; return h;}
 function cardFace(b){
-  var t=TPL[b.tpl]?b.tpl:"title",s=b.slots||{},corp=P.type==="corporate";
+  var t=TPL[b.tpl]?b.tpl:"title",s=b.slots||{},corp=brandWork();
   var sc=s.script&&!corp?'<div class="sc">'+esc(s.script)+'</div>':"", mn=s.main?'<div class="mn">'+esc(s.main)+'</div>':"", lb=s.label?'<div class="lb">'+esc(s.label)+'</div>':"", h="";
   if(t==="title") h=sc+mn+(mn&&lb?'<div class="rl"></div>':"")+lb;
   else if(t==="quote") h='<div class="lb" style="font-size:4cqw;letter-spacing:0;text-indent:0;line-height:.6">&ldquo;</div>'+mn+lb;
@@ -636,7 +666,7 @@ function cardFace(b){
 var assetUrl={};
 function okId(id){return typeof id==="string"&&/^[A-Za-z0-9_-]{8,64}$/.test(id);}
 function imgSrc(id){return assetUrl[id]||"/_blob/"+id;}
-function pegName(){return P.type==="wedding"?"frame grab":P.type==="corporate"?"reference photo":"peg photo";}
+function pegName(){return P.type==="wedding"?"frame grab":brandWork()?"reference photo":"peg photo";}
 function frameHtml(b){
   var hasImg=b.kind!=="card"&&okId(b.img),chipsIn=(hasImg&&b.imgAi?'<span class="ai">AI preview</span>':"")+(b.pace?'<span>'+esc(b.pace==="hold"?"Hold":b.pace==="burst"?"Burst":b.pace)+'</span>':"");
   var pace=chipsIn?'<div class="chips">'+chipsIn+'</div>':"";
@@ -681,7 +711,7 @@ function rowHtml(b,n){
     h+='<label class="f"><span>Card</span><select class="i" data-f="tpl">';
     Object.keys(TPL).forEach(function(x){h+='<option value="'+x+'"'+(x===t?" selected":"")+'>'+TPL[x].n+'</option>';});
     h+='</select></label>';
-    TPL[t].slots.forEach(function(s){ if(s==="script"&&P.type==="corporate") return;
+    TPL[t].slots.forEach(function(s){ if(s==="script"&&brandWork()) return;
       h+=inp(b,"slot:"+s,SLOTN[s],s==="script"?"one word":"",s==="main"?"wide":"",(b.slots||{})[s]||"");});
   }
   if(!speech) h+=inp(b,"dur","Seconds",k==="card"?String((TPL[b.tpl]||TPL.title).hold):"8");
@@ -706,7 +736,7 @@ function renderBeats(){
   var el=$("beats"),nm=numbers(),h="",ms=musicSplit(),sw=ms.i>0?ms.F[ms.i].id:null,first=ms.F.length?ms.F[0].id:null;
   var mdiv=function(n){var nm2=P.music["t"+n].name;return '<div class="mdiv">Music · track '+n+(nm2?" · "+esc(nm2):"")+'</div>';};
   P.beats.forEach(function(b){ if(b.out&&!showOut) return; if(sw&&b.id===first) h+=mdiv(1); if(sw&&b.id===sw) h+=mdiv(2); h+=rowHtml(b,nm[b.id]); });
-  if(!h) h='<div class="empty">'+(P.type==="prenup"?'A prenup is planned shot by shot, not from a transcript.':'No beats yet. Before the shoot, start from the '+P.type+' shot flow; the speech beats stay empty until the transcript. After the shoot, paste a transcript above and split it, or add a beat by hand.')+'<br><button type="button" class="btn pri" data-flow style="margin-top:12px">Start from the '+P.type+' shot flow</button></div>';
+  if(!h) h='<div class="empty">'+(P.type==="prenup"?'A prenup is planned shot by shot, not from a transcript.':P.type==="commercial"?'No beats yet. A commercial is planned from the hook and the product; copy and testimonials stay empty until Script-Lock.':'No beats yet. Before the shoot, start from the '+P.type+' shot flow; the speech beats stay empty until the transcript. After the shoot, paste a transcript above and split it, or add a beat by hand.')+'<br><button type="button" class="btn pri" data-flow style="margin-top:12px">Start from the '+P.type+' shot flow</button></div>';
   el.className="beats"+(view==="board"?" board":""); el.innerHTML=h;
 }
 /* ---------- shot list ---------- */
@@ -781,7 +811,7 @@ function renderMusicInfo(){
   ms.F.forEach(function(b,k){o+='<option value="'+b.id+'"'+(k===ms.i?" selected":"")+'>'+esc(beatTag(b,k+1))+'</option>';});
   $("m_switch").innerHTML=o; var one=oneTrack();
   $("trk_t2").hidden=one; $("m_switch_wrap").hidden=one; $("m_t1_head").textContent=one?"Track · the whole film":"Track 1 · intro";
-  $("m_sub").textContent=one?"One track for a prenup: it carries the whole film.":"Two tracks a film: track 1 for the intro, track 2 from the story to the end.";
+  $("m_sub").textContent=one?(P.type==="commercial"?"One track for a commercial, licensed for commercial and paid-ad use.":"One track for a prenup: it carries the whole film."):"Two tracks a film: track 1 for the intro, track 2 from the story to the end.";
   [["t1",ms.a,ms.da,1],["t2",ms.b,ms.db,ms.i+1]].forEach(function(r){
     var t=r[0],list=r[1],dur=r[2],from=r[3],tr=P.music[t],el=$("m_"+t+"_cover"),L=lenSec(tr.len),txt,warn=false;
     if(!list.length) txt=t==="t2"&&ms.i<0?"Not placed yet. Choose where track 2 starts below.":"Covers no beats.";
@@ -801,7 +831,7 @@ function renderMusicInfo(){
 function renderMeta(){
   ["title","client","type","film","date","venue","clip","editor","brief"].forEach(function(f){$("p_"+f).value=P[f]||"";});
   ["t1","t2"].forEach(function(t){["name","url","bpm","len"].forEach(function(k){$("m_"+t+"_"+k).value=P.music[t][k]||"";});});
-  $("script").value=P.script||""; $("exBanner").hidden=!P.example;
+  filmOpts(); $("script").value=P.script||""; $("exBanner").hidden=!P.example;
   $("vEdit").setAttribute("aria-pressed",view==="edit"); $("vBoard").setAttribute("aria-pressed",view==="board"); $("vShots").setAttribute("aria-pressed",view==="shots");
 }
 function renderAll(){renderMeta();renderSummary();renderBeats();setSave();}
@@ -851,7 +881,7 @@ function doPlot(){
   if(!lines.length){ if($("script").value.trim()){doSplit();toast("Split the transcript first, then plot.");} else toast("Paste and split a transcript first."); return; }
   if(lines.length>220){toast("That is "+lines.length+" lines. Plot works on up to 220 at a time; leave out the obvious filler first.");return;}
   var names=stories(),wed=P.type==="wedding";
-  var prompt="You are the story editor for Buwan Films, a Philippine studio that cuts "+(wed?"cinematic wedding films":P.type==="prenup"?"cinematic prenup and pre-wedding films":"corporate event films")+". This is a "+P.film+" for "+(P.client||"a client")+". The film is driven by speech (expect Taglish) intercut with b-roll on music. Below are the transcript lines, numbered. Plot them. Do not rewrite, translate or correct any line.\n\n"+
+  var prompt="You are the story editor for Buwan Films, a Philippine studio that cuts "+(wed?"cinematic wedding films":P.type==="prenup"?"cinematic prenup and pre-wedding films":P.type==="commercial"?"commercials and brand reels":"corporate event films")+". This is a "+P.film+" for "+(P.client||"a client")+". The film is driven by speech (expect Taglish) intercut with b-roll on music. Below are the transcript lines, numbered. Plot them. Do not rewrite, translate or correct any line.\n\n"+
     "Story beats, in film order: "+names.join(" → ")+".\n"+
     "For each line decide:\n- s: the story beat it belongs to (exactly one of the names above, or \"\" if none)\n- p: 1 to keep it in the film, 0 to leave it out. Keep the strongest lines for emotional build. Callbacks and paired constructions rank highest. Leave out repeats, filler, housekeeping and logistics."+(wed?" A 6 to 10 minute film holds roughly 25 to 45 spoken lines.":"")+"\n- o: for kept lines, its position in the film (1 = first). Order for emotional build following the story beats: quiet open, rising narrative, emotional peak, breathing-room resolution. Use each number once.\n- k: \"a\" if the speaker should be seen saying it (vows, punchlines, the line that lands), \"b\" if it plays under footage\n- sh: for \"b\" lines, one concrete shot this crew would plausibly have filmed that day, in under 14 words. Otherwise \"\".\n- st: for \"b\" lines, one of: "+shots().join(", ")+". Otherwise \"\".\n- pc: \"hold\" for a line that deserves a long unbroken take, \"burst\" for a line that sits in a fast-cut montage, otherwise \"\"\n- w: why you kept it or left it out, under 12 words\n\n"+
     "Answer with only a JSON array, one flat object per line, no nesting and no commentary, like [{\"i\":0,\"s\":\""+names[0]+"\",\"p\":1,\"o\":1,\"k\":\"b\",\"sh\":\"...\",\"st\":\"Candids\",\"pc\":\"\",\"w\":\"...\"}]\n\nLines:\n"+
@@ -930,12 +960,13 @@ function expEDL(){
 }
 function storiesOf(list){var s=[];list.forEach(function(b){if(b.story&&s.indexOf(b.story)<0)s.push(b.story);});return s.join(", ");}
 function expBrief(){
-  var ms=musicSplit(),F=ms.F,speech=F.some(function(b){return (b.kind==="aroll"||b.kind==="broll");}),L=[],tn={wedding:"wedding",prenup:"prenup / pre-wedding",corporate:"corporate event"}[P.type]||P.type;
+  var ms=musicSplit(),F=ms.F,speech=F.some(function(b){return (b.kind==="aroll"||b.kind==="broll");}),L=[],tn={wedding:"wedding",prenup:"prenup / pre-wedding",corporate:"corporate event",commercial:"commercial / brand reel"}[P.type]||P.type;
   var holds=F.filter(function(b){return b.pace==="hold";}).length,bursts=F.filter(function(b){return b.pace==="burst";}).length,tot=ms.da+ms.db;
   L.push("Search the Artlist music catalog for a Buwan Films "+String(P.film).toLowerCase()+(String(P.film).toLowerCase().indexOf(P.type)>=0?"":" ("+tn+")")+(P.client?" for "+P.client:"")+".");
   if(P.brief) L.push("","Brief from the storyboard:",P.brief.length>900?P.brief.slice(0,900)+"…":P.brief);
   L.push("","House style: cinematic and storytelling-first. Cuts land on the beat, with fast bursts at 1–2 seconds a shot against unbroken holds of 15–20 seconds. This storyboard has "+holds+" holds and "+bursts+" bursts.");
   if(speech) L.push("Spoken lines play over the music, so prefer instrumentals or sparse vocals that leave room for a voice.");
+  if(P.type==="commercial") L.push("This is a commercial: the licence must cover commercial and paid-ad use on every platform it runs on. The track needs a clean edit point for 60, 30, 15 and 6 s cut-downs.");
   var peak=function(list){var t=0,best=null;for(var k=0;k<list.length;k++){var d=estSec(list[k]);if(list[k].pace==="burst"&&(!best||d>best.d))best={t:t,b:list[k],d:d};t+=d;}return best;};
   if(ms.i>0){
     L.push("","Track 1, the intro: at least "+fmt(ms.da)+" long. It covers "+(storiesOf(ms.a)||"the opening")+". Quiet and atmospheric, building gently.");
@@ -965,7 +996,7 @@ function expShots(){
 }
 function expScript(){return "# "+(P.title||"Untitled")+"\n\n"+(P.script||P.beats.filter(function(b){return b.words;}).map(function(b){return (b.tc?b.tc+" ":"")+(b.speaker?b.speaker+": ":"")+b.words;}).join("\n"))+"\n";}
 function expRules(){
-  return "# Editing rules · Buwan Films\n\n- Story first, driven by speech. Never clean up vows, letters or speeches: keep the wording exactly as said, Taglish included.\n- Audio: dialogue −17 LUFS, peaks −6 dBFS, music bed −20 dB.\n- Timeline 23.976 fps, record start 01:00:00:00. Framing 2:1 or 2.39:1.\n- Pacing ("+P.type+"): "+(P.type==="wedding"?"bursts at 1–2 s a shot against 15–20 s unbroken holds for vows and first looks; about 2.5–3 s a shot on average across 6–10 minutes.":P.type==="prenup"?"bursts at 1–2 s a shot against long unbroken holds for the lines that land; about 2.5–3 s a shot on average.":"steady 1.5–2.5 s a shot; holds go to speakers and the keynote's key line.")+"\n- Music: "+(P.type==="prenup"?"one track for the whole film.":"two tracks a film, track 1 for the intro and track 2 from the story to the end.")+"\n- Cuts land on the beat and on key words.\n- Story beats: "+stories().join(" → ")+".\n- Graphics follow the brand kit: gold on ink, Cormorant Garamond for names and headings, Cinzel for letterspaced labels"+(P.type!=="corporate"?", Italiana for one accent word at a time":"; no script face on corporate work")+", film grain 5–6%.\n- Spot-check every proper noun before captions ship.\n- Sources are read-only. Deliver real, trimmable clips, never a flat render.\n";
+  return "# Editing rules · Buwan Films\n\n- Story first, driven by speech. Never clean up vows, letters or speeches: keep the wording exactly as said, Taglish included.\n- Audio: dialogue −17 LUFS, peaks −6 dBFS, music bed −20 dB.\n- Timeline 23.976 fps, record start 01:00:00:00. Framing 2:1 or 2.39:1.\n"+(P.type==="commercial"?"- Copy, offers and testimonials come from the approved script or the interview, word for word. Never write copy in the edit.\n":"")+"- Pacing ("+P.type+"): "+(P.type==="commercial"?"fast: about 1–2 s a shot, the hook in the first 2–3 s, the product hero held, lengths cut to 60/30/15/6 s.":P.type==="wedding"?"bursts at 1–2 s a shot against 15–20 s unbroken holds for vows and first looks; about 2.5–3 s a shot on average across 6–10 minutes.":P.type==="prenup"?"bursts at 1–2 s a shot against long unbroken holds for the lines that land; about 2.5–3 s a shot on average.":"steady 1.5–2.5 s a shot; holds go to speakers and the keynote's key line.")+"\n- Music: "+(P.type==="commercial"?"one track with a commercial licence that covers paid-ad use.":P.type==="prenup"?"one track for the whole film.":"two tracks a film, track 1 for the intro and track 2 from the story to the end.")+(P.type==="commercial"?"\n- 9:16 first for reels, with the platform UI safe zones kept clear of supers, captions and the logo; then 1:1 and 16:9.":"")+"\n- Cuts land on the beat and on key words.\n- Story beats: "+stories().join(" → ")+".\n- Graphics follow the brand kit: gold on ink, Cormorant Garamond for names and headings, Cinzel for letterspaced labels"+(!brandWork()?", Italiana for one accent word at a time":"; no script face on corporate or commercial work")+", film grain 5–6%.\n- Spot-check every proper noun before captions ship.\n- Sources are read-only. Deliver real, trimmable clips, never a flat render.\n";
 }
 function cardDoc(b){
   return '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>'+esc(TPL[b.tpl].n)+'</title>\n<!-- Buwan Films card. 1920×1080. Change the words below; keep the .stage size. -->\n<link rel="preconnect" href="https://fonts.googleapis.com">\n<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Cinzel:wght@400;500&family=Italiana&display=swap" rel="stylesheet">\n<style>\nhtml,body{margin:0;background:#000}\n.stage{width:1920px;height:1080px;position:relative;overflow:hidden}\n@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}\n.cd .in>*{animation:up .9s cubic-bezier(.2,.7,.2,1) both}\n.cd .in>*:nth-child(2){animation-delay:.25s}.cd .in>*:nth-child(3){animation-delay:.5s}.cd .in>*:nth-child(4){animation-delay:.7s}\n'+$("cardcss").textContent.trim()+'\n</style>\n</head>\n<body>\n<div class="stage">'+cardFace(b)+'</div>\n</body>\n</html>\n';
@@ -1122,6 +1153,7 @@ $("beats").addEventListener("click",function(e){
 ["title","client","type","film","date","venue","clip","editor","brief"].forEach(function(f){
   $("p_"+f).addEventListener(f==="type"||f==="film"||f==="date"?"change":"input",function(e){P[f]=e.target.value;
     if(f==="editor"){try{localStorage.setItem("buwan.sb.editor",P.editor);}catch(x){}}
+    if(f==="type") filmOpts();
     renderSummary(); if(f==="type"){renderBeats();} touch();});
 });
 $("script").addEventListener("input",function(e){ if(!P.example){P.script=e.target.value;touch();} });
