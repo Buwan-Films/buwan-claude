@@ -1,0 +1,545 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Wedding Film Playbook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a production binder. Sticky tab bar, one working view per tab, shot rows read like a call sheet. */
+:root{
+  --bg:#F3F3EF; --surface:#FFFFFF; --ink:#1C2023; --muted:#5B646A; --line:#DCDDD7;
+  --accent:#8E621A; --accent-soft:#F2E8D4;
+  --must:#B3261E; --must-bg:#FBE8E5; --should:#8A5D00; --should-bg:#FFF2D2; --bonus:#2B7149; --bonus-bg:#E3F2E8;
+  --frame:#E9EAE5; --frame-line:#C9CBC3;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#131517; --surface:#1B1E21; --ink:#ECEDE9; --muted:#A1A9AE; --line:#2D3135;
+  --accent:#DDAA5C; --accent-soft:#33291A;
+  --must:#F2877D; --must-bg:#3A1E1B; --should:#E9C266; --should-bg:#352C16; --bonus:#7FCB9C; --bonus-bg:#1A3024;
+  --frame:#24282B; --frame-line:#3A3F43; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#131517; --surface:#1B1E21; --ink:#ECEDE9; --muted:#A1A9AE; --line:#2D3135;
+  --accent:#DDAA5C; --accent-soft:#33291A;
+  --must:#F2877D; --must-bg:#3A1E1B; --should:#E9C266; --should-bg:#352C16; --bonus:#7FCB9C; --bonus-bg:#1A3024;
+  --frame:#24282B; --frame-line:#3A3F43; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{padding-block:40px 20px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(30px,5vw,46px);line-height:1.05;margin:8px 0 10px;text-wrap:balance}
+.lede{color:var(--muted);max-width:62ch;margin:0}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.tabs .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.tabs a{flex:none;padding:14px 14px 12px;color:var(--muted);text-decoration:none;font-weight:600;font-size:14px;border-bottom:2px solid transparent}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{padding-block:28px 64px}
+h2{font-family:var(--f-display);font-weight:700;font-size:26px;margin:0 0 6px;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:19px;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 20px;max-width:65ch}
+.mono{font-family:var(--f-mono);font-size:12px;letter-spacing:.03em}
+
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;margin-bottom:22px}
+.group{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.group .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:4px}
+.chip{font:inherit;font-size:13px;font-weight:500;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.progress{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:24px}
+.bar{flex:1 1 200px;height:8px;background:var(--frame);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.progress .stat{font-variant-numeric:tabular-nums;font-size:14px}
+.progress .stat b{font-weight:600}
+.linkbtn{font:inherit;font-size:13px;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:4px}
+
+/* segments */
+.seg{margin-bottom:30px}
+.seg-head{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.seg-head .mono{color:var(--accent)}
+.seg-head .count{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+.tip{margin:10px 0 4px;font-size:14px;color:var(--muted);max-width:75ch}
+.tip strong{color:var(--ink)}
+.rows{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:24px 1fr auto;gap:12px;align-items:start;padding:11px 0;border-bottom:1px dashed var(--line)}
+.row input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--accent);cursor:pointer}
+.row label{cursor:pointer;min-width:0}
+.row .note{display:block;font-size:13px;color:var(--muted)}
+.row.done label{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--frame-line)}
+.tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.cam{font-family:var(--f-mono);font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pri{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pri.must{background:var(--must-bg);color:var(--must)}
+.pri.should{background:var(--should-bg);color:var(--should)}
+.pri.bonus{background:var(--bonus-bg);color:var(--bonus)}
+.empty{color:var(--muted);font-style:italic;padding:10px 0}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:28px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.tc{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hl{color:var(--accent);font-weight:600}
+
+/* storyboard cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-bottom:34px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.frame{position:relative;aspect-ratio:16/9;max-width:100%;background:
+  linear-gradient(var(--frame-line),var(--frame-line)) 33.33% 0/1px 100% no-repeat,
+  linear-gradient(var(--frame-line),var(--frame-line)) 66.66% 0/1px 100% no-repeat,
+  linear-gradient(var(--frame-line),var(--frame-line)) 0 33.33%/100% 1px no-repeat,
+  linear-gradient(var(--frame-line),var(--frame-line)) 0 66.66%/100% 1px no-repeat,
+  var(--frame);display:grid;place-items:center;color:var(--muted);font-size:12px}
+.frame .slate{position:absolute;top:8px;left:8px;font-family:var(--f-mono);font-size:11px;background:var(--surface);color:var(--ink);padding:2px 7px;border-radius:4px}
+.frame .move{position:absolute;bottom:8px;right:10px;font-family:var(--f-mono);font-size:11px;color:var(--accent)}
+.card-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px;flex:1}
+.card-body h3{font-size:17px}
+dl.spec{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:13px}
+dl.spec dt{color:var(--muted)}
+dl.spec dd{margin:0;font-family:var(--f-mono);font-size:12px;padding-top:1px}
+.card .note{font-size:13px;color:var(--muted);margin-top:auto;border-top:1px dashed var(--line);padding-top:10px}
+
+/* steps + panels */
+ol.steps{list-style:none;counter-reset:s;margin:0 0 30px;padding:0;display:grid;gap:10px}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:44px 1fr;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+ol.steps li::before{content:counter(s,decimal-leading-zero);font-family:var(--f-mono);color:var(--accent);font-size:14px;padding-top:2px}
+ol.steps b{display:block;font-weight:600}
+ol.steps span{color:var(--muted);font-size:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-bottom:28px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;min-width:0}
+.panel h3{margin-bottom:10px}
+.panel ul{margin:0;padding-left:18px;display:grid;gap:6px;font-size:14px}
+.panel li::marker{color:var(--accent)}
+.callout{border-left:3px solid var(--must);background:var(--must-bg);padding:12px 16px;border-radius:0 8px 8px 0;font-size:14px;margin-bottom:24px}
+.callout strong{color:var(--must)}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:28px}
+.act{padding:16px;border-top:3px solid var(--accent);background:var(--surface);border-radius:0 0 10px 10px;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.act .mono{color:var(--accent)}
+.act p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+section[hidden]{display:none}
+@media (max-width:560px){
+  .row{grid-template-columns:24px 1fr}
+  .row .tags{grid-column:2;justify-content:flex-start}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top wrap">
+  <div class="eyebrow">Catholic wedding · Philippines · Director's binder</div>
+  <h1>Wedding Film Playbook</h1>
+  <p class="lede">Shot list, storyboard, crew plan and tech notes for a Filipino Catholic wedding, from bride prep to the SDE showing. Tick shots off as you plan; your checks stay in this browser.</p>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap">
+    <a href="#shots" data-tab="shots">Shot list</a>
+    <a href="#storyboard" data-tab="storyboard">Storyboard</a>
+    <a href="#crew" data-tab="crew">Crew &amp; run of show</a>
+    <a href="#tech" data-tab="tech">Tech &amp; edit</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- SHOT LIST -->
+<section id="v-shots" data-view="shots">
+  <h2>Shot list</h2>
+  <p class="sub">Every segment of the ceremony and reception with the camera that owns it and its priority. When the program runs late, filter to MUST and chase only those.</p>
+
+  <div class="toolbar">
+    <div class="group" role="group" aria-label="Filter by priority">
+      <span class="lbl">Priority</span>
+      <button class="chip" id="p-all" data-p="all" aria-pressed="true">All</button>
+      <button class="chip" id="p-must" data-p="must" aria-pressed="false">Must</button>
+      <button class="chip" id="p-should" data-p="should" aria-pressed="false">Should</button>
+      <button class="chip" id="p-bonus" data-p="bonus" aria-pressed="false">Bonus</button>
+    </div>
+    <div class="group" role="group" aria-label="Filter by camera">
+      <span class="lbl">Camera</span>
+      <button class="chip" id="c-all" data-c="all" aria-pressed="true">All</button>
+      <button class="chip" id="c-a" data-c="A" aria-pressed="false">Cam A</button>
+      <button class="chip" id="c-b" data-c="B" aria-pressed="false">Cam B</button>
+      <button class="chip" id="c-c" data-c="C" aria-pressed="false">Cam C</button>
+      <button class="chip" id="c-audio" data-c="Audio" aria-pressed="false">Audio</button>
+    </div>
+  </div>
+
+  <div class="progress">
+    <div class="stat"><b id="done-n">0</b> of <span id="total-n">0</span> shots checked</div>
+    <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+    <div class="stat">Must: <b id="must-n">0</b>/<span id="must-t">0</span></div>
+    <button class="linkbtn" id="reset">Clear all checks</button>
+  </div>
+
+  <div id="segments"></div>
+</section>
+
+<!-- STORYBOARD -->
+<section id="v-storyboard" data-view="storyboard" hidden>
+  <h2>Storyboard</h2>
+  <p class="sub">A wedding storyboard is a story plan, a list of must-get shots and a map for the edit. You can't redo the vows, so storyboard the SDE or highlights film; the full ceremony is multicam coverage.</p>
+
+  <h3 style="margin-bottom:10px">Beat sheet · 4-minute SDE</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Scene</th><th>Time</th><th>What we see</th><th>Emotion</th><th>Audio</th></tr></thead>
+    <tbody>
+      <tr><td class="tc">SC 01</td><td class="tc">0:00–0:20</td><td>Opening: establishing shots and details</td><td>Quiet, anticipation</td><td>Piano intro + VO: "Dear love..."</td></tr>
+      <tr><td class="tc">SC 02</td><td class="tc">0:20–1:00</td><td>Bride and groom preparation</td><td>Excitement, nerves</td><td>VO from the letters</td></tr>
+      <tr><td class="tc">SC 03</td><td class="tc">1:00–1:40</td><td>Parents' first look, bridal car</td><td>Emotional</td><td>Music build</td></tr>
+      <tr><td class="tc">SC 04</td><td class="tc">1:40–2:30</td><td>Entrance + groom's reaction</td><td class="hl">Climax 1</td><td>Music swell, no VO</td></tr>
+      <tr><td class="tc">SC 05</td><td class="tc">2:30–3:15</td><td>Vows, rings, coins, candle, veil and cord</td><td>The heart</td><td class="hl">Real vows audio</td></tr>
+      <tr><td class="tc">SC 06</td><td class="tc">3:15–3:40</td><td>Kiss, recessional, petals</td><td>Joy</td><td>Chorus or drop</td></tr>
+      <tr><td class="tc">SC 07</td><td class="tc">3:40–4:00</td><td>Closing: one quiet final shot</td><td>Resolution</td><td>Last VO line</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 style="margin-bottom:10px">Shot cards</h3>
+  <p class="sub">One card per key shot. Replace the empty frame with a stick-figure sketch or a phone photo from your ocular visit at the real angle.</p>
+  <div class="cards" id="cards"></div>
+
+  <h3 style="margin-bottom:12px">How to build it</h3>
+  <ol class="steps">
+    <li><div><b>Find the story</b><span>Interview the couple before the wedding. Look for the hook: how they met, an inside joke, the quiet dad who will cry. "From jeepney to altar" can open on a jeepney shot.</span></div></li>
+    <li><div><b>Choose music and voice-over first</b><span>Mark the song's intro, build, drop and outro. Decide where VO comes from: letters, interviews, vows, the priest's lines.</span></div></li>
+    <li><div><b>Write the beat sheet</b><span>Split the film into scenes aligned to the music, with time, emotion and audio for each.</span></div></li>
+    <li><div><b>Break each scene into shot cards</b><span>Scene and shot number, size, angle, movement, lens, fps, camera, audio, length in the edit, priority.</span></div></li>
+    <li><div><b>Add visuals</b><span>Stick figures and arrows are enough. Pinterest or ShotDeck references help. Photos from the actual church are best.</span></div></li>
+    <li><div><b>Merge with the run of show</b><span>Put every shot on the day's timeline and assign it to Cam A, B, C or the photographer.</span></div></li>
+    <li><div><b>Tag priorities</b><span>MUST, SHOULD, BONUS. When the day runs late, chase only MUST.</span></div></li>
+    <li><div><b>Make a crew version</b><span>One page per shooter with only their shots. Brief the crew the day before, at the venue if you can.</span></div></li>
+    <li><div><b>Edit from the storyboard</b><span>Build a Premiere sequence with a marker per scene on the music beats, label clips by scene at ingest, then drop clips onto markers.</span></div></li>
+  </ol>
+
+  <div class="grid2">
+    <div class="panel"><h3>Tools</h3><ul>
+      <li><b>Storyboarder</b> (free): fast drawing, PDF export</li>
+      <li><b>Boords / StudioBinder</b>: pro storyboards with shot lists and crew sharing</li>
+      <li><b>Canva</b>: reusable template</li>
+      <li><b>Google Sheets</b>: shot list the crew can open on their phones</li>
+      <li><b>Paper + 16:9 template</b>: fastest for brainstorming</li>
+    </ul></div>
+    <div class="panel"><h3>Habits that pay off</h3><ul>
+      <li>Keep a master template. About 70% of every Catholic wedding follows the same flow.</li>
+      <li>Leave free slots for the unplanned: Lolo crying, the ring bearer tripping.</li>
+      <li>Show the couple a mood board, not the full storyboard.</li>
+      <li>After each wedding, note what you got, what you missed and what to add.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- CREW -->
+<section id="v-crew" data-view="crew" hidden>
+  <h2>Crew &amp; run of show</h2>
+  <p class="sub">Minimum three shooters plus a photographer, each with a fixed job, so nobody blocks anyone else's frame.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Position</th><th>Where</th><th>Owns</th></tr></thead>
+    <tbody>
+      <tr><td class="tc">CAM A</td><td>Front, side of the altar</td><td>Groom's face, vows, the couple's reactions. Locked on the groom when the doors open.</td></tr>
+      <tr><td class="tc">CAM B</td><td>Back or middle of the aisle, choir loft</td><td>Wides of the church, entrance, recessional, veil and cord from above</td></tr>
+      <tr><td class="tc">CAM C</td><td>Roaming on gimbal</td><td>Details, guests, parents, emotional reactions, petal exit</td></tr>
+      <tr><td class="tc">PHOTO</td><td>Coordinated with Cam A</td><td>Stills; agree on lanes so you stay out of each other's shots</td></tr>
+      <tr><td class="tc">AUDIO</td><td>Lav + recorders</td><td>Groom lav (catches the bride's vows), lectern recorder, church board line out</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 style="margin-bottom:10px">Run of show (sample)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Time</th><th>Event</th><th>Cam A</th><th>Cam B</th><th>Cam C</th><th>Photo</th></tr></thead>
+    <tbody>
+      <tr><td class="tc">09:00</td><td>Bride prep</td><td>—</td><td>Details, coins, cord, candle</td><td>Moments, Dad's first look</td><td>Details</td></tr>
+      <tr><td class="tc">09:00</td><td>Groom prep</td><td>Groom + interviews</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td class="tc">12:30</td><td>Bridal car, church exterior</td><td>Set up altar position</td><td>Set up aisle wide</td><td>Car arrival, drone</td><td>Arrival</td></tr>
+      <tr><td class="tc">14:00</td><td>Entrance</td><td class="hl">Groom's reaction</td><td>Wide aisle</td><td>Gimbal on bride</td><td>Bride</td></tr>
+      <tr><td class="tc">14:45</td><td>Vows, rings, coins, candle</td><td>OTS, tight faces</td><td>Wide</td><td>Parents, macro rings and coins</td><td>Couple</td></tr>
+      <tr><td class="tc">15:10</td><td>Veil and cord</td><td>Profile under veil</td><td>Top-down from loft</td><td>Sponsors' hands</td><td>Couple</td></tr>
+      <tr><td class="tc">15:40</td><td>Kiss, recessional</td><td>Tight kiss</td><td>Wide kiss</td><td>Backing gimbal, petals</td><td>Exit</td></tr>
+      <tr><td class="tc">18:00</td><td>Reception</td><td>Entrance, speeches</td><td>Doves, wides</td><td>First dance orbit, money dance</td><td>All</td></tr>
+      <tr><td class="tc">20:00</td><td>SDE showing</td><td class="hl">Couple's reaction</td><td>Guests' reaction</td><td>Room wide</td><td>Couple</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid2">
+    <div class="panel"><h3>Before the day</h3><ul>
+      <li>Ocular visit; ask the coordinator or sacristan about parish rules on altar access, flash and fixed spots.</li>
+      <li>Get the vows script and the program or missalette.</li>
+      <li>Brief the crew the day before with the storyboard.</li>
+      <li>Shoot photos of the real angles for the storyboard frames.</li>
+    </ul></div>
+    <div class="panel"><h3>On the day</h3><ul>
+      <li>Sync timecode or clap on every camera before the ceremony.</li>
+      <li>Check the groom's lav before the entrance and again before the vows.</li>
+      <li>Program running late? Switch to MUST shots only.</li>
+      <li>Back up all cards on-site before leaving the venue.</li>
+    </ul></div>
+  </div>
+
+  <h3 style="margin-bottom:10px">Priority tags</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Tag</th><th>Meaning</th><th>Examples</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pri must">Must</span></td><td>Can't be missed</td><td>Groom's reaction, vows, rings, kiss, recessional</td></tr>
+      <tr><td><span class="pri should">Should</span></td><td>Adds a lot to the story</td><td>Parents' first look, coins in slow motion</td></tr>
+      <tr><td><span class="pri bonus">Bonus</span></td><td>If there's time</td><td>Drone, creative angles, funny guest moments</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- TECH -->
+<section id="v-tech" data-view="tech" hidden>
+  <h2>Tech &amp; edit</h2>
+  <p class="sub">Camera settings, lens kit and the storytelling structure for the SDE or highlights film.</p>
+
+  <div class="callout"><strong>Inside the church:</strong> no flash, and usually no moving in front of the altar during the Consecration. Shoot it on a telephoto from a distance.</div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Setting</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td class="tc">24 fps</td><td>Cinematic real time: prep, homily, speeches</td></tr>
+      <tr><td class="tc">50/60 fps</td><td>Slow-motion option: bride's entrance, coins, kiss</td></tr>
+      <tr><td class="tc">120 fps</td><td>Doves, petals, rice, confetti</td></tr>
+      <tr><td class="tc">Shutter 1/(2×fps)</td><td>180° rule: 1/50 at 24 fps, 1/125 at 60 fps, 1/250 at 120 fps</td></tr>
+      <tr><td class="tc">Log profile</td><td>Only if you have time to grade; watch mixed tungsten and daylight in churches</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Lens</th><th>Job</th></tr></thead>
+    <tbody>
+      <tr><td class="tc">24–70mm</td><td>All-around, gimbal work, reception</td></tr>
+      <tr><td class="tc">70–200mm</td><td>Ceremony from a distance, groom's reaction, vows, Communion</td></tr>
+      <tr><td class="tc">35mm / 50mm f/1.4</td><td>Prep rooms and low light</td></tr>
+      <tr><td class="tc">100mm macro</td><td>Rings, coins, details</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 style="margin-bottom:10px">Three-act SDE</h3>
+  <div class="acts">
+    <div class="act"><div class="mono">ACT I · Anticipation</div><p>Voice-over from a letter or interview over details and preparation.</p></div>
+    <div class="act"><div class="mono">ACT II · Ceremony</div><p>Entrance, groom's reaction, vows in their real audio, the kiss.</p></div>
+    <div class="act"><div class="mono">ACT III · Celebration</div><p>Recessional, petals, reception, then one quiet final shot.</p></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel"><h3>Edit tricks</h3><ul>
+      <li>Use the real vows audio as part of the soundtrack.</li>
+      <li>Match cut: the bride's hand at prep to her hand at the altar.</li>
+      <li>Sound design: church bells, coins, applause, laughter.</li>
+      <li>Mix real time with slow motion so it feels alive.</li>
+      <li>Keep the SDE to 3–5 minutes.</li>
+    </ul></div>
+    <div class="panel"><h3>Fast SDE workflow</h3><ul>
+      <li>Premiere template sequence with one marker per scene, placed on the music beats.</li>
+      <li>Label clips by scene number while ingesting.</li>
+      <li>Drop selects onto their marker; trim to the card's planned length.</li>
+      <li>Film the couple watching the SDE: it's the ending of the full film.</li>
+    </ul></div>
+  </div>
+</section>
+</main>
+
+<script>
+const SEGMENTS = [
+  {id:"prep", name:"Preparation", tip:"<strong>Don't rush it.</strong> The story starts here, and the interviews become the voice-over for the whole film.", shots:[
+    ["Gown hanging by a window in natural light","C","should"],
+    ["Flat lay and macro: shoes, rings, invitation, perfume, veil","B","must"],
+    ["Arrhae (13 coins), cord, unity candle, Bible","B","must","There's no time for these at the church"],
+    ["Last pull of the zipper or button, with Mom","C","must"],
+    ["Dad seeing the bride for the first time","C","must"],
+    ["Groom fixing cufflinks or tie with friends or Dad","A","should"],
+    ["Bride in the mirror (reflection shot)","C","should"],
+    ["Hands putting on a ring or earrings","C","bonus"],
+    ["The couple's letters to each other","B","should","For a letter reading in the SDE"],
+    ["Interviews: couple and parents","A","must","\"When did you know?\" · \"What advice would you give your child?\""],
+    ["Bridal car arrival and church exterior (drone if allowed)","C","should"]
+  ]},
+  {id:"proc", name:"Processional", tip:"Shoot at <strong>50/60 fps</strong> so the bride's entrance can go slow motion.", shots:[
+    ["Symmetrical wide of the aisle from altar or choir loft, on tripod","B","must"],
+    ["Groom's reaction as the doors open","A","must","The most important shot of the day. Don't leave it."],
+    ["Bride backlit at the door, then slow push-in","C","must"],
+    ["Low-angle gimbal tracking the bride","C","should"],
+    ["Parents' hand-off and mano, close on the hands","A","must"],
+    ["Flower girls and bearers at their eye level","C","bonus"],
+    ["Guest reactions: lolas crying, friends smiling","C","bonus"]
+  ]},
+  {id:"word", name:"Liturgy of the Word", tip:"A breather for the crew, but stay alert for soundbites.", shots:[
+    ["Readers at the lectern, medium shot","B","should"],
+    ["Couple listening, holding hands (side two-shot)","A","should"],
+    ["Priest's funny or meaningful homily lines","Audio","should","Clean recording from the lectern"],
+    ["B-roll: stained glass, candles, ceiling, light rays","C","bonus"]
+  ]},
+  {id:"rite", name:"Rite of Marriage", tip:"<strong>The heart of the film.</strong> Check the groom's lav before the vows: this is the most important audio of the day.", shots:[
+    ["Vows over the shoulder, both directions","A","must"],
+    ["Tight close-ups: eyes, lips, tears","A","must"],
+    ["Parents reacting during the vows","C","must"],
+    ["Macro of the ring going on (pre-focused)","C","must"],
+    ["Ring exchange, medium with faces","B","should"],
+    ["Arrhae coins pouring into the bride's hands, slow-mo with sound","C","must"],
+    ["Unity candle flame, shallow depth of field","C","should"],
+    ["Faces in candlelight, rack focus from flame to faces","A","should"]
+  ]},
+  {id:"veil", name:"Veil & Cord Rite", tip:"Comes after the Lord's Prayer. Get Cam B up to the choir loft before it starts.", shots:[
+    ["High angle showing the cord's figure 8","B","must"],
+    ["Sponsors' hands pinning the veil","C","should"],
+    ["Couple in profile under the veil, backlit","A","should"],
+    ["Cord resting on their shoulders","C","bonus"]
+  ]},
+  {id:"euch", name:"Eucharist & Communion", tip:"<strong>No flash</strong>, and don't move in front of the altar during the Consecration. Use the telephoto.", shots:[
+    ["Couple kneeling in prayer, silhouette or soft light","B","should"],
+    ["Offertory: parents or couple bringing the gifts","C","bonus"],
+    ["Couple receiving Communion, side angle, discreet","A","should"]
+  ]},
+  {id:"sign", name:"Signing of the Contract", tip:"Some parishes do this right after the vows. Check the program.", shots:[
+    ["Pen signing the names, close-up","C","must"],
+    ["Couple smiling while signing","A","should"],
+    ["Sponsors signing one after another (montage)","C","bonus"],
+    ["Hands side by side on the contract","C","bonus"]
+  ]},
+  {id:"kiss", name:"Kiss & Presentation", tip:"Two angles at once. Watch for the look between them just before the kiss.", shots:[
+    ["The look before the kiss","A","must"],
+    ["Kiss, wide","B","must"],
+    ["Kiss, tight","A","must"],
+    ["Guests applauding and cheering","C","should"]
+  ]},
+  {id:"exit", name:"Recessional & Exit", tip:"Cam C leads the couple out, walking backwards.", shots:[
+    ["Gimbal backing up in front of the couple","C","must"],
+    ["Petal or rice shower, slow-mo, backlit","C","must"],
+    ["Couple opening the church doors (silhouette)","B","should"],
+    ["Drone: couple with all the guests outside","C","bonus"],
+    ["BTS of family and entourage photos at the altar","B","bonus"]
+  ]},
+  {id:"recep", name:"Reception", tip:"Film the room watching the SDE: it becomes the ending of the full film.", shots:[
+    ["Venue details before guests arrive (slider or gimbal)","C","should"],
+    ["Grand entrance, low angle, wide and tight","A","must"],
+    ["First dance, 360° gimbal orbit","C","must"],
+    ["Money dance: bills pinned on, aunties joining in","C","should"],
+    ["Doves release at 120 fps","B","should"],
+    ["Speeches with clean audio, plus the couple's reactions","A","must"],
+    ["Cake cutting and wine toast, close on the hands","C","bonus"],
+    ["Couple and guests reacting while the SDE plays","A","must"]
+  ]}
+];
+
+const CARDS = [
+  {slate:"SC01 · SH01", title:"Window light on the gown", size:"WS → CU", angle:"Eye level", move:"Slow slider", lens:"35mm", fps:"24", cam:"C", audio:"Room tone + VO", len:"4 s", pri:"should", note:"Opening image. Let the light do the work."},
+  {slate:"SC02 · SH02", title:"Bride in the mirror", size:"MS", angle:"Over the shoulder", move:"Static", lens:"50mm f/1.4", fps:"24", cam:"C", audio:"Letter VO", len:"3 s", pri:"should", note:"Focus on the reflection, not the shoulder."},
+  {slate:"SC03 · SH01", title:"Dad's first look", size:"CU on Dad", angle:"3/4", move:"Handheld", lens:"85mm", fps:"60", cam:"C", audio:"Natural", len:"4 s", pri:"must", note:"Position before the bride turns around."},
+  {slate:"SC04 · SH03", title:"Groom's reaction at the doors", size:"CU", angle:"Eye level, 3/4", move:"Static → slow push-in", lens:"70–200mm", fps:"60", cam:"A", audio:"Groom lav", len:"4 s", pri:"must", note:"Don't leave this shot no matter what."},
+  {slate:"SC05 · SH02", title:"Vows over the shoulder", size:"CU", angle:"OTS from behind the bride", move:"Static", lens:"70–200mm", fps:"24", cam:"A", audio:"Groom lav, real vows", len:"8 s", pri:"must", note:"Audio carries this scene. Lav check before."},
+  {slate:"SC05 · SH05", title:"Coins pouring", size:"ECU", angle:"High 3/4", move:"Static", lens:"100mm macro", fps:"60", cam:"C", audio:"Coin sound", len:"3 s", pri:"must", note:"Pre-focus on the bride's open hands."},
+  {slate:"SC06 · SH02", title:"Petal shower exit", size:"MS", angle:"Low, backlit", move:"Gimbal backing up", lens:"24–70mm", fps:"120", cam:"C", audio:"Music drop", len:"4 s", pri:"must", note:"Brief the petal throwers on timing."},
+  {slate:"SC07 · SH01", title:"Quiet final shot", size:"WS", angle:"Eye level", move:"Static", lens:"35mm", fps:"24", cam:"B", audio:"Last VO line", len:"6 s", pri:"should", note:"The couple embracing, or walking away."}
+];
+
+const KEY = "wfp-checks-v1";
+let checks = {};
+try { checks = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch(e) { checks = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(checks)); } catch(e) {} };
+let fP = "all", fC = "all";
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const camLabel = c => c === "Audio" ? "AUDIO" : "CAM " + c;
+
+function renderShots(){
+  const host = document.getElementById("segments");
+  let html = "", shown = 0;
+  SEGMENTS.forEach((seg, si) => {
+    const rows = seg.shots.map((s, i) => ({id: seg.id + "-" + i, text:s[0], cam:s[1], pri:s[2], note:s[3]}))
+      .filter(r => (fP === "all" || r.pri === fP) && (fC === "all" || r.cam === fC));
+    if (!rows.length) return;
+    shown += rows.length;
+    const doneN = seg.shots.filter((_, i) => checks[seg.id + "-" + i]).length;
+    html += `<div class="seg"><div class="seg-head"><span class="mono">${String(si+1).padStart(2,"0")}</span><h3>${seg.name}</h3><span class="count mono">${doneN}/${seg.shots.length}</span></div>
+      <p class="tip">${seg.tip}</p><ul class="rows">` +
+      rows.map(r => `<li class="row${checks[r.id] ? " done" : ""}">
+        <input type="checkbox" id="ck-${r.id}" data-id="${r.id}"${checks[r.id] ? " checked" : ""}>
+        <label for="ck-${r.id}">${esc(r.text)}${r.note ? `<span class="note">${esc(r.note)}</span>` : ""}</label>
+        <span class="tags"><span class="cam">${camLabel(r.cam)}</span><span class="pri ${r.pri}">${r.pri}</span></span></li>`).join("") +
+      `</ul></div>`;
+  });
+  host.innerHTML = shown ? html : `<p class="empty">No shots match these filters.</p>`;
+  updateProgress();
+}
+
+function updateProgress(){
+  let total = 0, done = 0, mt = 0, md = 0;
+  SEGMENTS.forEach(seg => seg.shots.forEach((s, i) => {
+    const on = !!checks[seg.id + "-" + i];
+    total++; if (on) done++;
+    if (s[2] === "must") { mt++; if (on) md++; }
+  }));
+  document.getElementById("done-n").textContent = done;
+  document.getElementById("total-n").textContent = total;
+  document.getElementById("must-n").textContent = md;
+  document.getElementById("must-t").textContent = mt;
+  document.getElementById("bar").style.width = (total ? done / total * 100 : 0) + "%";
+}
+
+document.getElementById("segments").addEventListener("change", e => {
+  const id = e.target.dataset.id; if (!id) return;
+  if (e.target.checked) checks[id] = 1; else delete checks[id];
+  save(); renderShots();
+  const el = document.getElementById("ck-" + id); if (el) el.focus();
+});
+
+document.querySelectorAll("[data-p]").forEach(b => b.addEventListener("click", () => {
+  fP = b.dataset.p;
+  document.querySelectorAll("[data-p]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  renderShots();
+}));
+document.querySelectorAll("[data-c]").forEach(b => b.addEventListener("click", () => {
+  fC = b.dataset.c;
+  document.querySelectorAll("[data-c]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  renderShots();
+}));
+
+const resetBtn = document.getElementById("reset");
+let armed = false, armTimer;
+resetBtn.addEventListener("click", () => {
+  if (!armed) {
+    armed = true; resetBtn.textContent = "Click again to clear";
+    armTimer = setTimeout(() => { armed = false; resetBtn.textContent = "Clear all checks"; }, 3000);
+    return;
+  }
+  clearTimeout(armTimer); armed = false; resetBtn.textContent = "Clear all checks";
+  checks = {}; save(); renderShots();
+});
+
+document.getElementById("cards").innerHTML = CARDS.map(c => `
+  <article class="card">
+    <div class="frame"><span class="slate">${c.slate}</span>Sketch or reference photo<span class="move">${esc(c.move)}</span></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><h3>${esc(c.title)}</h3><span class="pri ${c.pri}">${c.pri}</span></div>
+      <dl class="spec">
+        <dt>Size</dt><dd>${esc(c.size)}</dd><dt>Angle</dt><dd>${esc(c.angle)}</dd>
+        <dt>Move</dt><dd>${esc(c.move)}</dd><dt>Lens</dt><dd>${esc(c.lens)}</dd>
+        <dt>FPS</dt><dd>${c.fps}</dd><dt>Camera</dt><dd>CAM ${c.cam}</dd>
+        <dt>Audio</dt><dd>${esc(c.audio)}</dd><dt>Length</dt><dd>${c.len} in edit</dd>
+      </dl>
+      <div class="note">${esc(c.note)}</div>
+    </div>
+  </article>`).join("");
+
+const TABS = ["shots","storyboard","crew","tech"];
+function route(){
+  const h = location.hash.replace("#","");
+  const tab = TABS.includes(h) ? h : "shots";
+  document.querySelectorAll("[data-view]").forEach(s => s.hidden = s.dataset.view !== tab);
+  document.querySelectorAll("nav.tabs a").forEach(a => {
+    if (a.dataset.tab === tab) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
+  });
+}
+window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
+route();
+renderShots();
+</script>
+
+</body></html>

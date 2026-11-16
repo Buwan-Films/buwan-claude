@@ -1,0 +1,404 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Buwan Premiere Runbook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column. Setup checklist first, then the job steps on a vertical track like an edit timeline. */
+:root {
+  --bg: #f3f4f7;
+  --surface: #ffffff;
+  --fg: #1b1e2b;
+  --muted: #5b6075;
+  --line: #d9dce6;
+  --accent: #3a3f9e;
+  --moon: #a87c14;
+  --code-bg: #eceef4;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10121c; --surface: #181b29; --fg: #e8e9f0; --muted: #9a9fb5; --line: #2a2e42;
+    --accent: #9fa6ff; --moon: #f0cf72; --code-bg: #1f2335;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10121c; --surface: #181b29; --fg: #e8e9f0; --muted: #9a9fb5; --line: #2a2e42;
+  --accent: #9fa6ff; --moon: #f0cf72; --code-bg: #1f2335;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--body); font-size: 16px; line-height: 1.6;
+}
+.wrap {
+  max-width: 820px; margin: 0 auto;
+  padding-block: 48px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 48px;
+}
+header { display: grid; gap: 12px; }
+.eyebrow {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--moon); display: flex; align-items: center; gap: 10px;
+}
+.moon { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset -5px -2px 0 0 var(--moon); flex: none; }
+h1 {
+  font-family: var(--display); font-weight: 700; font-size: clamp(32px, 6vw, 48px);
+  line-height: 1.08; margin: 0; text-wrap: balance; letter-spacing: -.01em;
+}
+.lede { color: var(--muted); max-width: 62ch; margin: 0; font-size: 17px; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 24px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h3 { font-weight: 600; font-size: 16px; margin: 0; }
+p { margin: 0; max-width: 65ch; }
+ul, ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 65ch; }
+code { font-family: var(--mono); font-size: .88em; background: var(--code-bg); padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+section { display: grid; gap: 16px; }
+.section-label { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+/* setup card */
+.setup { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 16px; }
+.checks { display: grid; gap: 14px; list-style: none; padding: 0; max-width: none; }
+.check { display: grid; grid-template-columns: 20px 1fr; gap: 12px; align-items: start; }
+.check > div { display: grid; gap: 8px; min-width: 0; }
+.check input { margin-top: 4px; accent-color: var(--accent); width: 16px; height: 16px; }
+.check label { cursor: pointer; font-weight: 500; }
+.check input:checked ~ div label { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+.hint { color: var(--muted); font-size: 14px; }
+
+/* prompt box */
+.prompt { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; display: grid; grid-template-columns: 1fr auto; align-items: start; min-width: 0; }
+.prompt pre { margin: 0; padding: 11px 14px; font-family: var(--mono); font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
+.prompt button { margin: 7px; font: 500 12px var(--body); color: var(--accent); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+.prompt button:hover { border-color: var(--accent); }
+.prompt button:focus-visible, .check input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* legend */
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); }
+.dot.you { border-color: var(--moon); background: var(--moon); }
+
+/* timeline */
+.track { display: grid; }
+.phase { display: grid; grid-template-columns: 76px 1fr; gap: 0 20px; }
+.tc { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 5px; text-align: right; display: grid; gap: 2px; align-content: start; font-variant-numeric: tabular-nums; }
+.tc strong { font-size: 13px; color: var(--moon); font-weight: 500; }
+.body { border-left: 2px solid var(--line); padding: 0 0 40px 24px; position: relative; display: grid; gap: 12px; min-width: 0; }
+.body::before { content: ""; position: absolute; left: -8px; top: 7px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg); border: 2px solid var(--accent); }
+.phase.you .body::before { border-color: var(--moon); background: var(--moon); }
+.phase:last-child .body { border-left-color: transparent; padding-bottom: 0; }
+.who { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.phase.you .who { color: var(--moon); }
+
+.tree { font-family: var(--mono); font-size: 13px; line-height: 1.6; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; white-space: pre; margin: 0; }
+.tree .dim { color: var(--muted); }
+
+.note { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; background: var(--surface); display: grid; gap: 8px; min-width: 0; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.two > * { min-width: 0; }
+
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; font-family: var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+tr:last-child td { border-bottom: 0; }
+
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; }
+
+@media (max-width: 620px) {
+  .phase { grid-template-columns: 1fr; }
+  .tc { text-align: left; grid-auto-flow: column; justify-content: start; gap: 10px; padding: 0 0 6px 26px; }
+  .two { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) { .prompt button { transition: border-color .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow"><span class="moon" aria-hidden="true"></span>Buwan Films · Premiere Pro</div>
+    <h1>Editing a wedding in Premiere with Claude</h1>
+    <p class="lede">Claude does the prep: importing, bins, colors, culling, syncing, audio cleanup and the first cut. You handle the creative work. Copy the prompts on this page and paste them into Claude.</p>
+  </header>
+
+  <!-- ONE-TIME SETUP -->
+  <section>
+    <div class="section-label">Once per laptop</div>
+    <h2>Set up your laptop</h2>
+    <div class="setup">
+      <ul class="checks">
+        <li class="check">
+          <input type="checkbox" id="s1">
+          <div>
+            <label for="s1">Make a folder named <code>Buwan</code> in your home folder</label>
+            <p class="hint">All your jobs go in here. In Terminal:</p>
+            <div class="prompt"><pre>mkdir -p ~/Buwan</pre><button type="button">Copy</button></div>
+          </div>
+        </li>
+        <li class="check">
+          <input type="checkbox" id="s2">
+          <div>
+            <label for="s2">Open Claude in that folder</label>
+            <div class="prompt"><pre>cd ~/Buwan && claude --dangerously-skip-permissions</pre><button type="button">Copy</button></div>
+          </div>
+        </li>
+        <li class="check">
+          <input type="checkbox" id="s3">
+          <div>
+            <label for="s3">Install the Buwan plugins</label>
+            <p class="hint">Paste each line into Claude. When it asks for your editing app, choose <b>premiere</b>, and enter your name.</p>
+            <div class="prompt"><pre>/plugin marketplace add Buwan-Films/buwan-claude</pre><button type="button">Copy</button></div>
+            <div class="prompt"><pre>/plugin install buwan@buwan-films</pre><button type="button">Copy</button></div>
+            <div class="prompt"><pre>/plugin install buwan-premiere@buwan-films</pre><button type="button">Copy</button></div>
+            <p class="hint">Quit Claude afterwards (type <code>/exit</code>) and open it again with the command from the step above.</p>
+          </div>
+        </li>
+        <li class="check">
+          <input type="checkbox" id="s4">
+          <div>
+            <label for="s4">Install the fonts, LUTs and graphics kit</label>
+            <div class="prompt"><pre>/buwan:setup-kit</pre><button type="button">Copy</button></div>
+            <p class="hint">It takes 3–6 minutes.</p>
+          </div>
+        </li>
+        <li class="check">
+          <input type="checkbox" id="s5">
+          <div>
+            <label for="s5">Add the MCP Bridge panel to Premiere</label>
+            <p class="hint">This is how Claude controls Premiere. Close Premiere, then run this in Terminal (not in Claude):</p>
+            <div class="prompt"><pre>npx -y premiere-pro-mcp@1.11.5 --install-cep</pre><button type="button">Copy</button></div>
+            <p class="hint">Open Premiere again. You should now see <b>Window → Extensions → MCP Bridge</b>.</p>
+          </div>
+        </li>
+        <li class="check">
+          <input type="checkbox" id="s7">
+          <div>
+            <label for="s7">Connect Artlist</label>
+            <p class="hint">Run this in Terminal:</p>
+            <div class="prompt"><pre>claude mcp add --transport http --scope user artlist https://mcp.artlist.io/mcp</pre><button type="button">Copy</button></div>
+            <p class="hint">Then in Claude, type <code>/mcp</code>, choose <b>artlist</b>, and sign in with the studio's Artlist account.</p>
+          </div>
+        </li>
+        <li class="check">
+          <input type="checkbox" id="s8">
+          <div>
+            <label for="s8">Install Herdr</label>
+            <p class="hint">Herdr gives each wedding its own session, so you can come back to it later. Run this in Terminal:</p>
+            <div class="prompt"><pre>brew install herdr</pre><button type="button">Copy</button></div>
+            <p class="hint">If Terminal says <code>brew: command not found</code>, install Homebrew from brew.sh first. Type <code>herdr</code> to open it. Its guide is at herdr.dev.</p>
+          </div>
+        </li>
+        <li class="check">
+          <input type="checkbox" id="s6">
+          <div>
+            <label for="s6">Check that everything is ready</label>
+            <div class="prompt"><pre>/buwan:check</pre><button type="button">Copy</button></div>
+            <p class="hint">Claude lists anything that's missing and tells you how to fix it.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- EVERY JOB -->
+  <section>
+    <div class="section-label">Every job</div>
+    <h2>A wedding, start to finish</h2>
+    <div class="legend">
+      <span><i class="dot you" aria-hidden="true"></i>You do this</span>
+      <span><i class="dot" aria-hidden="true"></i>Claude does this</span>
+    </div>
+
+    <div class="track">
+
+      <div class="phase you">
+        <div class="tc"><strong>Step 1</strong><span>1 min</span></div>
+        <div class="body">
+          <div class="who">You</div>
+          <h2>Open this wedding's own session</h2>
+          <p>Every wedding gets its own session, named after the couple, so you can come back to it days later. Open Terminal and run these two lines, changing <code>Ana-Ben</code> to the couple's names:</p>
+          <div class="prompt"><pre>herdr --session Ana-Ben</pre><button type="button">Copy</button></div>
+          <div class="prompt"><pre>cd ~/Buwan && claude -n Ana-Ben --dangerously-skip-permissions</pre><button type="button">Copy</button></div>
+          <p class="hint">The first line opens a Herdr session for this wedding. The second starts Claude inside it, with the couple's names as the session name.</p>
+          <p class="hint">This lets Claude work without asking you to approve each step. Your original footage stays protected either way.</p>
+        </div>
+      </div>
+
+      <div class="phase you">
+        <div class="tc"><strong>Step 2</strong><span>5 min</span></div>
+        <div class="body">
+          <div class="who">You</div>
+          <h2>Make the job folder and the Premiere project</h2>
+          <p>In Finder, create this inside <code>Buwan/projects/</code>. Name it with the wedding date and the couple's names, and give each shooter their own folder.</p>
+<pre class="tree">2026-11-14_Ana-Ben_wedding/
+├─ footage/
+│  ├─ 1-Main/
+│  ├─ 2-Creative/
+│  ├─ 3-Reactions/
+│  ├─ 4-Drone/
+│  └─ Audio/          <span class="dim">← audio recorder / lav files</span>
+├─ music/
+└─ edit/</pre>
+          <p>Then in Premiere:</p>
+          <ol>
+            <li><b>File → New → Project</b>. Save it in the <code>edit</code> folder as <code>Ana-Ben_v1.prproj</code>.</li>
+            <li>Create one sequence at <b>23.976 fps, 1920×1080, 48 kHz</b>. Leave it empty.</li>
+            <li>Open <b>Window → Extensions → MCP Bridge</b>. It should say <b>Running</b>.</li>
+          </ol>
+          <p>Then ask Claude:</p>
+          <div class="prompt"><pre>verify Premiere connection</pre><button type="button">Copy</button></div>
+          <p class="hint">If everything comes back ready, Claude can control Premiere.</p>
+        </div>
+      </div>
+
+      <div class="phase you">
+        <div class="tc"><strong>Step 3</strong><span>5 min</span></div>
+        <div class="body">
+          <div class="who">You</div>
+          <h2>Add the clips and the music</h2>
+          <p><b>Clips:</b> copy each shooter's card into their folder. Don't import anything into Premiere. Claude does that.</p>
+          <p><b>Music:</b> pick two tracks from Artlist and save them in the <code>music</code> folder:</p>
+          <ul>
+            <li><code>01_intro</code>: the opening hook, with no talking over it</li>
+            <li><code>02_story</code>: the main track, which runs to the end. Claude puts the kiss on its biggest moment, so choose one that builds.</li>
+          </ul>
+          <p>With Artlist connected, you can ask Claude for a track, for example:</p>
+          <div class="prompt"><pre>Use Artlist to find an emotional, building wedding track for 02_story and save it in the job's music folder</pre><button type="button">Copy</button></div>
+          <p class="hint">If Claude only gives you a link, open it on artlist.io, download the track, and save it in <code>music</code> yourself. You can also drag tracks in from Artlist's panel in Premiere, and Claude will find them there.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="tc"><strong>Step 4</strong><span>15–25 min</span></div>
+        <div class="body">
+          <div class="who">Claude</div>
+          <h2>Start the prep</h2>
+          <p>Paste this, with your job's name and the look you want:</p>
+          <div class="prompt"><pre>/buwan-premiere:wedding-day 2026-11-14_Ana-Ben --footage "projects/2026-11-14_Ana-Ben_wedding/footage" --music "projects/2026-11-14_Ana-Ben_wedding/music" --grade warm</pre><button type="button">Copy</button></div>
+          <p class="hint">Use <code>warm</code> for daytime or garden weddings and <code>cool</code> for hotel, ballroom or cloudy days.</p>
+          <p>Claude asks what time the video screens, then works on its own and updates you as it goes. When it's done, your Premiere project has:</p>
+          <ul>
+            <li>Every clip imported and sorted into the studio bins, with the studio color labels</li>
+            <li>Bad clips (black, out of focus, false starts) moved into <code>00 Rejected</code>, with a reason for each</li>
+            <li>All cameras synced by sound, with one <b>SYNC</b> sequence per moment. Turn on Multi-Camera on each one.</li>
+            <li>Speech clips with the silences cut out, and an <b>A-Roll clean</b> sequence so you can hear the whole day quickly</li>
+            <li>The studio LUT on every camera clip, and dialogue leveled and cleaned up</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase you">
+        <div class="tc"><strong>Step 5</strong><span>20–40 min</span></div>
+        <div class="body">
+          <div class="who">You + Claude</div>
+          <h2>Pick the story</h2>
+          <div class="prompt"><pre>/buwan:plot</pre><button type="button">Copy</button></div>
+          <p>Claude transcribes the vows, letters and speeches and puts together a story in order. Read it, tell Claude what to change, then approve it. Check the spelling of any names or places Claude flags.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="tc"><strong>Step 6</strong><span>10 min</span></div>
+        <div class="body">
+          <div class="who">Claude</div>
+          <h2>Claude builds the first cut</h2>
+          <p>Once you approve the story, Claude makes a new sequence called <b>SDE Cut</b>. It's cut to the music, with the kiss on the music's peak, already graded and leveled. Your other sequences aren't touched. Claude also checks the pacing against the studio rules.</p>
+        </div>
+      </div>
+
+      <div class="phase you">
+        <div class="tc"><strong>Step 7</strong><span>until screening</span></div>
+        <div class="body">
+          <div class="who">You</div>
+          <h2>Finish and export</h2>
+          <p>Watch the SDE Cut. Swap any shots you don't like, adjust timing and add speed ramps. Then run each of these in order:</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Prompt</th><th>What it does</th></tr></thead>
+              <tbody>
+                <tr><td><code>/buwan:graphics</code></td><td>Adds the title and logo from the Buwan kit</td></tr>
+                <tr><td><code>/buwan:sfx</code></td><td>Adds whooshes, risers and hits</td></tr>
+                <tr><td><code>/buwan:review</code></td><td>A final watch-through with Claude</td></tr>
+                <tr><td><code>/buwan:export</code></td><td>Exports the master to the <code>exports</code> folder</td></tr>
+                <tr><td><code>/buwan:clipper</code></td><td>Makes vertical reels for Instagram and TikTok</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- EXTRAS -->
+  <section>
+    <div class="section-label">Good to know</div>
+    <div class="two">
+      <div class="note">
+        <h3>More clips arrive during the day</h3>
+        <p>Put them in the same shooter folders and paste:</p>
+        <div class="prompt"><pre>/buwan-premiere:wedding-day 2026-11-14_Ana-Ben --new-clips</pre><button type="button">Copy</button></div>
+        <p class="hint">Claude only adds the new clips. If they change the story, it makes an SDE Cut v2 and leaves v1 alone.</p>
+      </div>
+      <div class="note">
+        <h3>Corporate events</h3>
+        <p>Start with this instead of Step 4:</p>
+        <div class="prompt"><pre>/buwan:intake 2026-11-20_Acme corporate "/path/to/footage"</pre><button type="button">Copy</button></div>
+        <p class="hint">Then run <code>/buwan:assemble</code>, then <code>/buwan-premiere:premiere-apply</code>, and continue from Step 5.</p>
+      </div>
+    </div>
+    <div class="note">
+      <h3>Coming back to a wedding later (enhancements, revisions)</h3>
+      <p>Days or weeks after the wedding, reopen that wedding's session. Claude remembers everything from before: the story you picked, the cut, the notes.</p>
+      <p><b>If the laptop hasn't restarted</b>, reattach the Herdr session:</p>
+      <div class="prompt"><pre>herdr session attach Ana-Ben</pre><button type="button">Copy</button></div>
+      <p><b>If the laptop has restarted</b>, or the session above is gone, reopen Claude by name:</p>
+      <div class="prompt"><pre>herdr --session Ana-Ben</pre><button type="button">Copy</button></div>
+      <div class="prompt"><pre>cd ~/Buwan && claude --resume Ana-Ben --dangerously-skip-permissions</pre><button type="button">Copy</button></div>
+      <p class="hint">Forgot the name? Run <code>cd ~/Buwan && claude --resume</code> with no name to pick from a list of past sessions.</p>
+      <p class="hint">Before you work in the session, open that wedding's project in Premiere (<code>edit/Ana-Ben_v1.prproj</code>). Only work on one wedding at a time in Premiere, because it only has one project open.</p>
+    </div>
+    <div class="note">
+      <h3>If Claude can't reach Premiere</h3>
+      <ol>
+        <li>Check that a project and a sequence are open in Premiere.</li>
+        <li>Check that <b>Window → Extensions → MCP Bridge</b> says Running.</li>
+        <li>Close any pop-up windows in Premiere, then try again.</li>
+      </ol>
+      <p class="hint">Claude never changes your original footage, never deletes anything from your project, and always builds its cuts as new sequences.</p>
+    </div>
+  </section>
+
+  <footer>Checkboxes are saved in your browser only.</footer>
+</div>
+
+<script>
+document.querySelectorAll('.prompt button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var pre = btn.parentElement.querySelector('pre');
+    var text = pre.textContent;
+    function done(label) { btn.textContent = label; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); }
+    function fallback() {
+      var r = document.createRange(); r.selectNodeContents(pre);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      done('Press ⌘C');
+    }
+    try { navigator.clipboard.writeText(text).then(function () { done('Copied'); }, fallback); }
+    catch (e) { fallback(); }
+  });
+});
+document.querySelectorAll('.check input').forEach(function (box) {
+  var key = 'buwan-guide-' + box.id;
+  try { box.checked = localStorage.getItem(key) === '1'; } catch (e) {}
+  box.addEventListener('change', function () {
+    try { localStorage.setItem(key, box.checked ? '1' : '0'); } catch (e) {}
+  });
+});
+</script>
+
+</body></html>

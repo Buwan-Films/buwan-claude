@@ -1,6 +1,7 @@
 # Changelog
 
 ## Docs — 2026-11-17
+- `docs/ARTIFACTS.md`: added the Wedding Film Playbook and the Premiere Runbook (copies in `reference/`), each with what is out of date against the house rules.
 - `docs/ARTIFACTS.md`: one index of the studio pages (workflow, storyboard, edit pipeline, Premiere and Final Cut pipelines, video kit, SDE reference) with what each is for, who uses it and its copy in `reference/`. Linked from the README. No plugin change; no update needed.
 
 ## buwan 1.19.0 — 2026-11-17  (/plugin marketplace update buwan-films, /reload-plugins)
